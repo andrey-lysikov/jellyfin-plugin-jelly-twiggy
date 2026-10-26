@@ -24,7 +24,7 @@ Jelly Twiggy extends the Jellyfin web client with poster badges, playback option
 
 Add the repository in **Dashboard → Plugins → Repositories**:
 
-    https://raw.githubusercontent.com/andrey-lysikov/jellyfin-plugin-jelly-twiggy/main/manifest.json
+    https://raw.githubusercontent.com/andrey-lysikov/jellyfin-plugin-jelly-twiggy/manifest/manifest.json
 
 Install **Jelly Twiggy** from the catalog and restart the server.
 
