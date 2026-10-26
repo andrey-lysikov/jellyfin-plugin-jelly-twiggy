@@ -5,7 +5,7 @@
     const dictionaries = {
         en: {
             settingsTitle: 'Jelly Twiggy',
-            menuEntry: 'Jelly Twiggy advanced settings',
+            menuEntry: 'Advanced settings (Jelly Twiggy)',
             settingsSkipSection: 'Skipping',
             settingsPlayerSection: 'Player behavior',
             autoSkipIntro: 'Auto-skip intro',
@@ -81,14 +81,11 @@
             cfgPosterBadges: 'Poster badges (quality, audio, rating)',
             cfgActiveStreams: 'Active streams button',
             cfgWatchedBy: '"Watched" row with user avatars on item pages',
-            cfgDashboard: 'Dashboard customization, devices and statistics blocks',
-            cfgHistory: 'Playback history',
-            cfgThreshold: 'Count a play as watched from (% of runtime)',
-            cfgThresholdHint: 'Plays that reach this point, or that the player reports as finished, count as a view.'
+            cfgDashboard: 'Dashboard customization, devices and statistics blocks'
         },
         ru: {
             settingsTitle: 'Jelly Twiggy',
-            menuEntry: 'Jelly Twiggy расширенные настройки',
+            menuEntry: 'Расширенные настройки (Jelly Twiggy)',
             settingsSkipSection: 'Пропуск',
             settingsPlayerSection: 'Поведение проигрывателя',
             autoSkipIntro: 'Автоматически пропускать заставку',
@@ -164,14 +161,11 @@
             cfgPosterBadges: 'Бейджи на постерах (качество, звук, рейтинг)',
             cfgActiveStreams: 'Кнопка активных потоков',
             cfgWatchedBy: 'Строка «Просмотрено» с аватарами на странице медиа',
-            cfgDashboard: 'Настройка панели управления, блоки устройств и статистики',
-            cfgHistory: 'История просмотров',
-            cfgThreshold: 'Считать просмотренным с (% длительности)',
-            cfgThresholdHint: 'Воспроизведение, дошедшее до этой отметки или завершённое плеером, считается просмотром.'
+            cfgDashboard: 'Настройка панели управления, блоки устройств и статистики'
         },
         de: {
             settingsTitle: 'Jelly Twiggy',
-            menuEntry: 'Jelly Twiggy erweiterte Einstellungen',
+            menuEntry: 'Erweiterte Einstellungen (Jelly Twiggy)',
             settingsSkipSection: 'Überspringen',
             settingsPlayerSection: 'Player-Verhalten',
             autoSkipIntro: 'Intro automatisch überspringen',
@@ -247,10 +241,7 @@
             cfgPosterBadges: 'Poster-Badges (Qualität, Ton, Bewertung)',
             cfgActiveStreams: 'Schaltfläche für aktive Streams',
             cfgWatchedBy: 'Zeile „Gesehen“ mit Benutzer-Avataren auf Medienseiten',
-            cfgDashboard: 'Dashboard-Anpassung, Geräte- und Statistikblöcke',
-            cfgHistory: 'Wiedergabeverlauf',
-            cfgThreshold: 'Als gesehen zählen ab (% der Laufzeit)',
-            cfgThresholdHint: 'Wiedergaben, die diesen Punkt erreichen oder vom Player als beendet gemeldet werden, zählen als gesehen.'
+            cfgDashboard: 'Dashboard-Anpassung, Geräte- und Statistikblöcke'
         }
     };
 

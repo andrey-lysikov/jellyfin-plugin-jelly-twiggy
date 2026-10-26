@@ -1,6 +1,8 @@
-<img src="assets/logo.png" width="128" alt="icon">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/wordmark-dark.png">
+  <img src="assets/wordmark-light.png" width="360" alt="Jelly Twiggy">
+</picture>
 
-# Jelly Twiggy
 
 Jelly Twiggy extends the Jellyfin web client with poster badges, playback options, active streams, a customizable dashboard and watch history.
 
