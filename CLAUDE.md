@@ -68,9 +68,10 @@
   grid-контейнер.
 - Синтаксис JS локально можно проверить через JavaScriptCore:
   `/System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc -e "checkSyntax('file.js')"`.
-- `manifest.json` — репозиторий плагинов Jellyfin; обновляется только release-workflow.
+- `manifest.json` — репозиторий плагинов Jellyfin, лежит в отдельной ветке `manifest` (в `main` его нет);
+  обновляется только release-workflow, `main` бот не трогает.
 - `.github/workflows/build.yml` — сборка + `node --check` JS на push/PR;
-  `release.yml` — по тегу `vX.Y.Z.W`: сборка, zip с dll, GitHub release, обновление manifest в `main`.
+  `release.yml` — по тегу `vX.Y.Z.W`: сборка, zip с dll, GitHub release, обновление manifest в ветке `manifest`.
 
 ## Ограничения и заметки
 
@@ -110,7 +111,8 @@
 - **Сегменты интро/титров:** Intro Skipper (через Media Segments API).
 - **Название:** Jelly Twiggy.
 - **Репозиторий:** https://github.com/andrey-lysikov/jellyfin-plugin-jelly-twiggy — код, релизы и
-  `manifest.json` (ссылка на raw-файл добавляется в Jellyfin как репозиторий плагинов).
+  `manifest.json` в ветке `manifest`; в Jellyfin добавляется
+  `https://raw.githubusercontent.com/andrey-lysikov/jellyfin-plugin-jelly-twiggy/manifest/manifest.json`.
 - **Сборка — только через GitHub Actions** (релиз по тегу). На локальной машине **не собираем и
   не устанавливаем** dotnet или другие тулчейны; проверка сборки — через CI.
 - **Версионирование:** 4 компонента везде (сборка, `manifest.json`, тег) — текущая **0.1.0.0**,
