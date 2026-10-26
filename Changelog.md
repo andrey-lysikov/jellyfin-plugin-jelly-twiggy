@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.6.0
+
+- Dashboard: move and resize blocks right on the page, block names match the page, no flicker on load
+- New stream card: larger poster on its own colours, user in the corner, full device and address, tech details as tags
+- Active streams: new icon, plain list without a title, opens only when something plays
+- Rating badge on seasons (from the series), centred star
+- Age ratings shown as plain "6+", "18+"
+- Plugin settings page in English, German and Russian
+- Monochrome icon in the user menu and the admin menu
+- Fix: empty "Watched" row, active streams button spacing, transcode reason text
+
 ## 0.1.5.0
 
 - Option to hide favorites everywhere: ♥ buttons, Favorites tabs and filters
