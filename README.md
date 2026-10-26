@@ -3,7 +3,6 @@
   <img src="assets/wordmark-light.png" width="360" alt="Jelly Twiggy">
 </picture>
 
-
 Jelly Twiggy extends the Jellyfin web client with poster badges, playback options, active streams, a customizable dashboard and watch history.
 
 [![Downloads](https://img.shields.io/github/downloads/andrey-lysikov/jellyfin-plugin-jelly-twiggy/total)](https://github.com/andrey-lysikov/jellyfin-plugin-jelly-twiggy/releases/latest)
@@ -12,15 +11,34 @@ Jelly Twiggy extends the Jellyfin web client with poster badges, playback option
 
 ## Features
 
-- Poster badges: quality, first audio track, and rating
+- Poster badges: resolution, HDR / DV, codec, first audio track, rating and Rotten Tomatoes score
 - User preferences for: Auto-skip intro and outro, Auto-pause, auto-resume and auto Picture-in-Picture on tab switch
 - Long press / hold for 2x speed
 - Option to hide favorites everywhere
 - Active streams button with progress, device and transcoding details
-- Dashboard: show, hide and reorder blocks, devices in the active streams style
-- Playback statistics
-- "Watched" row on item pages
+- Dashboard: move, resize, show and hide blocks, devices in the active streams style
+- Playback statistics for 24 hours / 7 days / month
+- "Watched" row on item pages with who watched, how many times and when
 - Localization (English, German, Russian)
+
+## Screenshots
+
+<p align="center">
+  <img src="assets/previews/posters.png" alt="Poster badges">
+</p>
+<p align="center">
+  <img src="assets/previews/details.png" width="49%" alt="Item page">
+  <img src="assets/previews/streams.png" width="30%" alt="Active streams">
+</p>
+<p align="center">
+  <img src="assets/previews/dashboard.png" alt="Dashboard edit mode">
+</p>
+<p align="center">
+  <img src="assets/previews/stats.png" width="62%" alt="Playback statistics">
+  <img src="assets/previews/settings.png" width="34%" alt="User settings">
+</p>
+
+*Titles and artwork in the screenshots are made up.*
 
 ## Install
 

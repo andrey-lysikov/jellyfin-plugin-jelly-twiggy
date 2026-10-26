@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.8.0
+
+- Rotten Tomatoes score above the rating on posters
+- Video badges in the order resolution, HDR / DV, codec, and smaller
+- Fix: video track text showing next to its badges on the item page
+
 ## 0.1.7.0
 
 - Dashboard: smaller blocks fill the space under their neighbours, show or hide blocks with a switch

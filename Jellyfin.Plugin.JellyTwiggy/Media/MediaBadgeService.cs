@@ -9,7 +9,7 @@ using MediaBrowser.Model.Entities;
 namespace Jellyfin.Plugin.JellyTwiggy.Media;
 
 /// <summary>Poster badges of one item.</summary>
-public record ItemBadges(string? Resolution, string? Codec, string? Range, string? Audio, float? Rating);
+public record ItemBadges(string? Resolution, string? Codec, string? Range, string? Audio, float? Rating, int? CriticRating);
 
 /// <summary>Computes poster badges from media streams.</summary>
 public class MediaBadgeService
@@ -73,10 +73,13 @@ public class MediaBadgeService
             audio = firstAudio is null ? null : FormatAudio(firstAudio);
         }
 
-        // Seasons rarely have their own rating: show the series one.
-        var communityRating = item.CommunityRating ?? (item as Season)?.Series?.CommunityRating;
+        // Seasons rarely have their own ratings: show the series ones.
+        var series = (item as Season)?.Series;
+        var communityRating = item.CommunityRating ?? series?.CommunityRating;
         var rating = communityRating is > 0 ? (float?)MathF.Round(communityRating.Value, 1) : null;
-        return new ItemBadges(resolution, codec, range, audio, rating);
+        var criticRating = item.CriticRating ?? series?.CriticRating;
+        var critic = criticRating is > 0 ? (int?)MathF.Round(criticRating.Value) : null;
+        return new ItemBadges(resolution, codec, range, audio, rating, critic);
     }
 
     private BaseItem? FindEpisode(BaseItem parent)
