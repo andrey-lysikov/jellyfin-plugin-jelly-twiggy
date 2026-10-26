@@ -4,6 +4,7 @@
 
 - Rotten Tomatoes score above the rating on posters
 - Video badges in the order resolution, HDR / DV, codec, and smaller
+- Watched, favorite and "More" buttons as badges on cards with badges, instead of the hover buttons hidden under them; the favorite one follows "Hide favorites"
 - Fix: video track text showing next to its badges on the item page
 
 ## 0.1.7.0
