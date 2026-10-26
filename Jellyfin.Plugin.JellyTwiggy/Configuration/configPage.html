@@ -9,7 +9,7 @@
         <div data-role="content">
             <div class="content-primary">
                 <form id="JellyTwiggyConfigForm">
-                    <h2 class="sectionTitle" style="display:flex;align-items:center;gap:.5em"><img id="jtIcon" alt="" width="40" height="40">Jelly Twiggy</h2>
+                    <h2 class="sectionTitle"><img id="jtIcon" alt="Jelly Twiggy" height="56" style="display:block;height:56px;width:auto"></h2>
 
                     <div class="verticalSection">
                         <h3 class="sectionTitle" data-jt-i18n="cfgStatus">Status</h3>
@@ -45,15 +45,6 @@
                         </div>
                     </div>
 
-                    <div class="verticalSection">
-                        <h3 class="sectionTitle" data-jt-i18n="cfgHistory">Playback history</h3>
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="CompletedThresholdPercent" data-jt-i18n="cfgThreshold">Count a play as watched from (% of runtime)</label>
-                            <input type="number" class="emby-input" id="CompletedThresholdPercent" min="50" max="100" />
-                            <div class="fieldDescription" data-jt-i18n="cfgThresholdHint">Plays that reach this point, or that the player reports as finished, count as a view.</div>
-                        </div>
-                    </div>
-
                     <div>
                         <button is="emby-button" type="submit" class="raised button-submit block emby-button">
                             <span data-jt-i18n="save">Save</span>
@@ -74,14 +65,13 @@
                     page.querySelectorAll('[data-jt-i18n]').forEach(function (element) {
                         element.textContent = t(element.dataset.jtI18n, element.textContent);
                     });
-                    page.querySelector('#jtIcon').src = ApiClient.getUrl('JellyTwiggy/client/img/icon.png');
+                    page.querySelector('#jtIcon').src = ApiClient.getUrl('JellyTwiggy/client/img/wordmark.png');
 
                     Dashboard.showLoadingMsg();
                     ApiClient.getPluginConfiguration(pluginId).then(function (config) {
                         flags.forEach(function (flag) {
                             page.querySelector('#' + flag).checked = config[flag];
                         });
-                        page.querySelector('#CompletedThresholdPercent').value = config.CompletedThresholdPercent;
                         Dashboard.hideLoadingMsg();
                     });
 
@@ -100,8 +90,6 @@
                         flags.forEach(function (flag) {
                             config[flag] = page.querySelector('#' + flag).checked;
                         });
-                        const threshold = parseInt(page.querySelector('#CompletedThresholdPercent').value, 10);
-                        config.CompletedThresholdPercent = Math.min(100, Math.max(50, isNaN(threshold) ? 90 : threshold));
                         ApiClient.updatePluginConfiguration(pluginId, config).then(function (result) {
                             Dashboard.processPluginConfigurationUpdateResult(result);
                         });

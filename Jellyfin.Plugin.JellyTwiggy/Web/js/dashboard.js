@@ -17,6 +17,10 @@
     ];
     const LEGACY_SPANS = { third: 2, half: 3, twoThirds: 4, full: 6 };
     const CACHE_KEY = 'jt-dashboard-layout';
+    const ROWS_CACHE_KEY = 'jt-dashboard-rows';
+    // Masonry: blocks span rows of ROW_PX by their height, BLOCK_GAP_PX below each.
+    const ROW_PX = 4;
+    const BLOCK_GAP_PX = 16;
     const DEVICES_REFRESH_MS = 5000;
     const STATS_REFRESH_MS = 60000;
     const PERIODS = [{ days: 1, label: 'period24h' }, { days: 7, label: 'period7d' }, { days: 30, label: 'period30d' }];
@@ -26,6 +30,9 @@
     let statsTimer = null;
     let statsDays = 7;
     let edit = null; // { draft, layer, frame, drag }
+    let rowsFrame = 0;
+    const observed = new WeakSet();
+    const resizeObserver = new ResizeObserver(() => scheduleRows());
 
     const isDashboardHome = () => /^#\/dashboard\/?(\?.*)?$/.test(JT.route());
     const enabled = () => JT.config?.IsAdmin && JT.config?.EnableDashboard;
@@ -98,6 +105,60 @@
     if (cached) {
         root.classList.add('jt-dashboard');
         applyLayout(cached);
+        try {
+            const rows = localStorage.getItem(ROWS_CACHE_KEY);
+            if (rows) {
+                applyRows(rows);
+            }
+        } catch {
+            // Storage unavailable.
+        }
+    }
+
+    // Row spans live in their own stylesheet: React owns the elements, so no inline styles.
+    function updateRows() {
+        rowsFrame = 0;
+        const rules = [];
+        for (const b of BLOCKS) {
+            const element = document.querySelector(b.sel);
+            if (!element) {
+                continue;
+            }
+            if (!observed.has(element)) {
+                observed.add(element);
+                resizeObserver.observe(element);
+            }
+            const height = element.getBoundingClientRect().height;
+            if (height > 0) {
+                rules.push(`${b.sel}{grid-row-end:span ${Math.ceil((height + BLOCK_GAP_PX) / ROW_PX)}}`);
+            }
+        }
+
+        if (rules.length > 0) {
+            applyRows(rules.join('\n'));
+            try {
+                localStorage.setItem(ROWS_CACHE_KEY, rules.join('\n'));
+            } catch {
+                // Storage unavailable: rows are recomputed on every visit anyway.
+            }
+        }
+    }
+
+    // Masonry rows switch on only with spans known, otherwise blocks would overlap.
+    function applyRows(css) {
+        let style = document.getElementById('jt-dashboard-rows');
+        if (!style) {
+            style = JT.el('style', { id: 'jt-dashboard-rows' });
+            document.head.appendChild(style);
+        }
+        style.textContent = css;
+        root.classList.add('jt-masonry');
+    }
+
+    function scheduleRows() {
+        if (!rowsFrame) {
+            rowsFrame = requestAnimationFrame(updateRows);
+        }
     }
 
     function blockTitle(id) {
@@ -262,24 +323,24 @@
             return existing;
         }
 
-        const eye = JT.el('button', { type: 'button', className: 'jt-icon-button jt-edit-eye', title: JT.t('visible') }, JT.icon('visibility'));
+        const visible = JT.el('input', { type: 'checkbox', className: 'jt-switch', title: JT.t('visible'), 'aria-label': JT.t('visible') });
         const bar = JT.el('div', { className: 'jt-edit-bar' }, [
             JT.icon('drag_indicator', 'jt-drag-handle'),
             JT.el('span', { className: 'jt-edit-title' }),
             JT.el('span', { className: 'jt-edit-size' }),
-            eye
+            visible
         ]);
         const handle = JT.el('div', { className: 'jt-edit-resize', title: JT.t('blockWidth') });
         const overlay = JT.el('div', { className: 'jt-edit-block', 'data-id': id }, [bar, handle]);
 
-        eye.addEventListener('click', () => {
+        visible.addEventListener('change', () => {
             const hidden = new Set(edit.draft.Hidden);
-            hidden.has(id) ? hidden.delete(id) : hidden.add(id);
+            visible.checked ? hidden.delete(id) : hidden.add(id);
             edit.draft.Hidden = [...hidden];
             applyLayout(edit.draft);
         });
         bar.addEventListener('pointerdown', (e) => {
-            if (e.button === 0 && !e.target.closest('button')) {
+            if (e.button === 0 && !e.target.closest('button, input')) {
                 startDrag(e, bar, { type: 'move', id });
             }
         });
@@ -376,7 +437,7 @@
             overlay.classList.toggle('jt-edit-hidden', hidden.has(b.id));
             overlay.querySelector('.jt-edit-title').textContent = blockTitle(b.id);
             overlay.querySelector('.jt-edit-size').textContent = columns === 6 ? `${spanOf(edit.draft, b.id)}/6` : '';
-            overlay.querySelector('.jt-edit-eye .material-icons').textContent = hidden.has(b.id) ? 'visibility_off' : 'visibility';
+            overlay.querySelector('.jt-switch').checked = !hidden.has(b.id);
         }
     }
 
@@ -465,6 +526,8 @@
         root.classList.toggle('jt-dashboard', !!enabled());
         if (!enabled()) {
             document.getElementById('jt-dashboard-layout')?.remove();
+            document.getElementById('jt-dashboard-rows')?.remove();
+            root.classList.remove('jt-masonry');
         }
         if (!enabled() || !isDashboardHome()) {
             stopTimers();
@@ -495,6 +558,7 @@
         } else if (!document.getElementById('jt-dashboard-layout')) {
             applyLayout(savedLayout());
         }
+        scheduleRows();
         if (!devicesTimer) {
             devicesTimer = setInterval(refreshDevices, DEVICES_REFRESH_MS);
             statsTimer = setInterval(refreshStats, STATS_REFRESH_MS);

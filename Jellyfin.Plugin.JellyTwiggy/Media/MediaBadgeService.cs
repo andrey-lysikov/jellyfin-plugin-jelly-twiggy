@@ -9,7 +9,7 @@ using MediaBrowser.Model.Entities;
 namespace Jellyfin.Plugin.JellyTwiggy.Media;
 
 /// <summary>Poster badges of one item.</summary>
-public record ItemBadges(string? Quality, string? Audio, float? Rating);
+public record ItemBadges(string? Resolution, string? Codec, string? Range, string? Audio, float? Rating);
 
 /// <summary>Computes poster badges from media streams.</summary>
 public class MediaBadgeService
@@ -57,21 +57,26 @@ public class MediaBadgeService
             ? FindEpisode(item)
             : item;
 
-        string? quality = null;
-        string? audio = null;
+        string? resolution = null, codec = null, range = null, audio = null;
         if (mediaItem is not null && !mediaItem.IsFolder)
         {
             var streams = _mediaSourceManager.GetMediaStreams(mediaItem.Id);
             var video = streams.Where(s => s.Type == MediaStreamType.Video).OrderBy(s => s.Index).FirstOrDefault();
             var firstAudio = streams.Where(s => s.Type == MediaStreamType.Audio).OrderBy(s => s.Index).FirstOrDefault();
-            quality = video is null ? null : FormatQuality(video);
+            if (video is not null)
+            {
+                resolution = FormatResolution(video.Width ?? 0, video.Height ?? 0);
+                codec = FormatVideoCodec(video.Codec);
+                range = FormatRange(video.VideoRangeType);
+            }
+
             audio = firstAudio is null ? null : FormatAudio(firstAudio);
         }
 
         // Seasons rarely have their own rating: show the series one.
         var communityRating = item.CommunityRating ?? (item as Season)?.Series?.CommunityRating;
         var rating = communityRating is > 0 ? (float?)MathF.Round(communityRating.Value, 1) : null;
-        return new ItemBadges(quality, audio, rating);
+        return new ItemBadges(resolution, codec, range, audio, rating);
     }
 
     private BaseItem? FindEpisode(BaseItem parent)
@@ -84,20 +89,6 @@ public class MediaBadgeService
             IsVirtualItem = false,
             Limit = 1
         }).FirstOrDefault();
-    }
-
-    /// <summary>Formats video quality like "4K HDR (HEVC)" or "1080p (x264)".</summary>
-    internal static string FormatQuality(MediaStream stream)
-    {
-        var label = FormatResolution(stream.Width ?? 0, stream.Height ?? 0);
-        var range = FormatRange(stream.VideoRangeType);
-        if (range is not null)
-        {
-            label += " " + range;
-        }
-
-        var codec = FormatVideoCodec(stream.Codec);
-        return codec is null ? label : $"{label} ({codec})";
     }
 
     /// <summary>Formats an audio track like "DTS 5.1".</summary>

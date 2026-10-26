@@ -5,9 +5,6 @@ namespace Jellyfin.Plugin.JellyTwiggy.Configuration;
 /// <summary>Server-wide plugin configuration, edited by admins on the plugin page.</summary>
 public class PluginConfiguration : BasePluginConfiguration
 {
-    /// <summary>Gets or sets the playback percentage at which a play counts as a completed view.</summary>
-    public int CompletedThresholdPercent { get; set; } = 90;
-
     /// <summary>Gets or sets a value indicating whether quality, audio and rating badges are shown on posters.</summary>
     public bool EnablePosterBadges { get; set; } = true;
 

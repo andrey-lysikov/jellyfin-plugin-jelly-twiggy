@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Jellyfin.Database.Implementations.Entities;
+using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
 using MediaBrowser.Controller.Entities.TV;
@@ -28,6 +29,7 @@ public sealed class PlaybackTracker : IHostedService
     private readonly ISessionManager _sessionManager;
     private readonly IUserDataManager _userDataManager;
     private readonly IUserManager _userManager;
+    private readonly IServerConfigurationManager _serverConfiguration;
     private readonly PlaybackHistoryStore _store;
     private readonly ILogger<PlaybackTracker> _logger;
     private readonly ConcurrentDictionary<string, ActivePlayback> _active = new();
@@ -37,12 +39,14 @@ public sealed class PlaybackTracker : IHostedService
         ISessionManager sessionManager,
         IUserDataManager userDataManager,
         IUserManager userManager,
+        IServerConfigurationManager serverConfiguration,
         PlaybackHistoryStore store,
         ILogger<PlaybackTracker> logger)
     {
         _sessionManager = sessionManager;
         _userDataManager = userDataManager;
         _userManager = userManager;
+        _serverConfiguration = serverConfiguration;
         _store = store;
         _logger = logger;
     }
@@ -184,14 +188,15 @@ public sealed class PlaybackTracker : IHostedService
         }
     }
 
-    private static bool ReachedThreshold(long positionTicks, long? runtimeTicks)
+    // Same rule as Jellyfin's "Max resume percentage": past it, the item counts as played.
+    private bool ReachedThreshold(long positionTicks, long? runtimeTicks)
     {
         if (runtimeTicks is not > 0)
         {
             return false;
         }
 
-        var threshold = Plugin.Instance?.Configuration.CompletedThresholdPercent ?? 90;
+        var threshold = _serverConfiguration.Configuration.MaxResumePct;
         return positionTicks >= runtimeTicks.Value * threshold / 100;
     }
 

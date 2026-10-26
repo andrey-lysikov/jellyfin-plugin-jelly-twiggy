@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.7.0
+
+- Dashboard: smaller blocks fill the space under their neighbours, show or hide blocks with a switch
+- Quality badge split into resolution, codec and HDR / DV badges
+- Item page: video track shown as the same badges, audio, subtitle and version selects without the box
+- No "played" circle on watched items
+- A play counts as watched by Jellyfin's "Max resume percentage" instead of a separate plugin setting
+- Plugin settings page with the Jelly Twiggy logo
+- Profile menu entry renamed to "Advanced settings (Jelly Twiggy)"
+
 ## 0.1.6.0
 
 - Dashboard: move and resize blocks right on the page, block names match the page, no flicker on load

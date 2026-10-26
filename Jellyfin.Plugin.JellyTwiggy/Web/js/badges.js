@@ -8,9 +8,7 @@
     const queue = new Set();
     let flushTimer = null;
 
-    function qualityClass(quality) {
-        return `jt-q-${quality.split(' ')[0].toLowerCase()}`;
-    }
+    const slug = (text) => text.toLowerCase().replace(/[^a-z0-9]/g, '');
 
     function audioClass(audio) {
         if (/^DTS/.test(audio)) {
@@ -25,6 +23,24 @@
         return /^(FLAC|ALAC|PCM)\b/.test(audio) ? 'jt-a-lossless' : '';
     }
 
+    // Resolution, codec and HDR / DV badges; shared with the item page.
+    JT.videoBadges = function (badges) {
+        return [
+            badges.Resolution ? JT.el('span', { className: `jt-badge jt-q-${slug(badges.Resolution)}`, text: badges.Resolution }) : null,
+            badges.Codec ? JT.el('span', { className: `jt-badge jt-c-${slug(badges.Codec)}`, text: badges.Codec }) : null,
+            badges.Range ? JT.el('span', { className: `jt-badge jt-r-${slug(badges.Range)}`, text: badges.Range }) : null
+        ].filter(Boolean);
+    };
+
+    JT.fetchBadges = async function (itemId) {
+        const id = JT.normalizeId(itemId);
+        if (!cache.has(id)) {
+            const result = await JT.post('JellyTwiggy/Badges', { ItemIds: [id] });
+            cache.set(id, Object.values(result || {})[0] || null);
+        }
+        return cache.get(id);
+    };
+
     function render(card, badges) {
         const host = card.querySelector('.cardScalable') || card.querySelector('.cardImageContainer');
         if (!host) {
@@ -36,9 +52,10 @@
             return;
         }
 
-        if (badges.Quality || badges.Audio) {
+        const video = JT.videoBadges(badges);
+        if (video.length || badges.Audio) {
             host.appendChild(JT.el('div', { className: 'jt-badges' }, [
-                badges.Quality ? JT.el('span', { className: `jt-badge ${qualityClass(badges.Quality)}`, text: badges.Quality }) : null,
+                video.length ? JT.el('div', { className: 'jt-badge-row' }, video) : null,
                 badges.Audio ? JT.el('span', { className: `jt-badge jt-badge-audio ${audioClass(badges.Audio)}`, text: badges.Audio }) : null
             ]));
         }
