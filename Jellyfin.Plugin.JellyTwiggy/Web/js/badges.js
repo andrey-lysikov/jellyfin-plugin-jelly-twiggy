@@ -7,6 +7,8 @@
     const cache = new Map(); // normalized id -> badges | null
     const played = new Map(); // normalized id -> played by the current user
     const favorites = new Map(); // normalized id -> favorite of the current user
+    const unplayed = new Map(); // normalized id -> unwatched episodes of a series or season
+    let popId = null; // item whose watched circle just changed
     const queue = new Set();
     let flushTimer = null;
 
@@ -67,6 +69,20 @@
     const HEART = '<svg viewBox="0 0 24 24" width="1.2em" height="1.2em"><path fill="currentColor" d="m12 21.35-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54z"/></svg>';
     const MORE = '<svg viewBox="0 0 24 24" width="1.2em" height="1.2em"><path fill="currentColor" d="M12 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm0 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>';
 
+    async function loadUserData(ids) {
+        const result = await JT.get(`Items?userId=${JT.userId}&ids=${ids.join(',')}&enableUserData=true&enableImages=false&fields=`).catch(() => null);
+        for (const item of result?.Items || []) {
+            const id = JT.normalizeId(item.Id);
+            played.set(id, !!item.UserData?.Played);
+            favorites.set(id, !!item.UserData?.IsFavorite);
+            unplayed.set(id, item.UserData?.UnplayedItemCount || 0);
+        }
+    }
+
+    function rerender(id) {
+        document.querySelectorAll(`.card[data-jt-badges="${id}"]`).forEach((card) => render(card, cache.get(id)));
+    }
+
     // Played and favorite toggles share the API shape: POST sets, DELETE clears.
     async function toggle(state, endpoint, id) {
         const wasOn = !!state.get(id);
@@ -77,7 +93,13 @@
             return;
         }
         state.set(id, !wasOn);
-        document.querySelectorAll(`.card[data-jt-badges="${id}"]`).forEach((card) => render(card, cache.get(id)));
+        if (state === played) {
+            // A series' unwatched count changes with it: read the real one back.
+            popId = id;
+            await loadUserData([id]);
+        }
+        rerender(id);
+        popId = null;
     }
 
     function toggleButton(className, svg, isOn, labels, onClick) {
@@ -98,14 +120,43 @@
         return button;
     }
 
+    // jellyfin-web centres its menu on the button; open it from the button's corner like a dropdown.
+    // Its position is set right after the sheet is added, so a MutationObserver runs late enough to win.
+    function anchorMenuTo(button) {
+        const rect = button.getBoundingClientRect();
+        const observer = new MutationObserver(() => {
+            const sheet = Array.from(document.querySelectorAll('.actionSheet')).pop();
+            if (!sheet) {
+                return;
+            }
+            observer.disconnect();
+            const width = sheet.offsetWidth;
+            const height = sheet.offsetHeight;
+            const below = rect.bottom + 4 + height <= window.innerHeight - 8;
+            const right = rect.left + width <= window.innerWidth - 8;
+            const top = below ? rect.bottom + 4 : Math.max(8, rect.top - 4 - height);
+            const left = right ? rect.left : Math.max(8, rect.right - width);
+            Object.assign(sheet.style, { position: 'fixed', margin: '0', left: `${left}px`, top: `${top}px` });
+            sheet.style.transformOrigin = `${right ? 'left' : 'right'} ${below ? 'top' : 'bottom'}`;
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+        setTimeout(() => observer.disconnect(), 3000);
+    }
+
     // Replace jellyfin-web's played, favorite and "more" hover buttons, which our badges would cover.
     function cardButtons(id) {
-        const check = toggleButton('jt-card-played', CHECK, !!played.get(id), ['markPlayed', 'markUnplayed'], () => toggle(played, 'UserPlayedItems', id));
+        // Watched: green circle with a check; series with unwatched episodes: their number; else an empty ring.
+        const isPlayed = !!played.get(id);
+        const left = unplayed.get(id) || 0;
+        const check = toggleButton(`jt-card-played${!isPlayed && left ? ' jt-card-count' : ''}${popId === id ? ' jt-pop' : ''}`,
+            isPlayed ? CHECK : (left ? `<span>${left > 99 ? '99+' : left}</span>` : ''),
+            isPlayed, ['markPlayed', 'markUnplayed'], () => toggle(played, 'UserPlayedItems', id));
         const heart = toggleButton('jt-card-fav', HEART, !!favorites.get(id), ['addFavorite', 'removeFavorite'], () => toggle(favorites, 'UserFavoriteItems', id));
 
         // jellyfin-web opens its own context menu for the card from data-action="menu".
         const more = JT.el('button', { type: 'button', className: 'jt-card-button jt-card-more itemAction', 'data-action': 'menu', title: JT.t('more'), 'aria-label': JT.t('more') });
         more.innerHTML = MORE;
+        more.addEventListener('click', () => anchorMenuTo(more));
         return [check, JT.el('div', { className: 'jt-card-actions' }, [more, heart])];
     }
 
@@ -148,11 +199,7 @@
         for (let i = 0; i < ids.length; i += BATCH_SIZE) {
             const batch = ids.slice(i, i + BATCH_SIZE);
             try {
-                const userData = await JT.get(`Items?userId=${JT.userId}&ids=${batch.join(',')}&enableUserData=true&enableImages=false&fields=`).catch(() => null);
-                for (const item of userData?.Items || []) {
-                    played.set(JT.normalizeId(item.Id), !!item.UserData?.Played);
-                    favorites.set(JT.normalizeId(item.Id), !!item.UserData?.IsFavorite);
-                }
+                await loadUserData(batch);
                 const result = await JT.post('JellyTwiggy/Badges', { ItemIds: batch });
                 const byId = new Map(Object.entries(result || {}).map(([id, badges]) => [JT.normalizeId(id), badges]));
                 for (const id of batch) {
