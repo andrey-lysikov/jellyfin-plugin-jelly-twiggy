@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Resolve version
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Tag must look like vX.Y.Z.W, got $GITHUB_REF_NAME" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        run: >
+          dotnet publish Jellyfin.Plugin.JellyTwiggy/Jellyfin.Plugin.JellyTwiggy.csproj
+          -c Release -o artifacts/publish -p:Version=${{ steps.version.outputs.version }}
+
+      - name: Package
+        id: package
+        run: |
+          ZIP="jelly-twiggy_${{ steps.version.outputs.version }}.zip"
+          (cd artifacts/publish && zip "../$ZIP" Jellyfin.Plugin.JellyTwiggy.dll)
+          echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
+          echo "checksum=$(md5sum "artifacts/$ZIP" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "artifacts/${{ steps.package.outputs.zip }}" --title "$GITHUB_REF_NAME" --generate-notes
+
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main
+
+      - name: Update manifest.json
+        working-directory: main
+        run: |
+          python3 .github/scripts/update_manifest.py manifest.json \
+            --version "${{ steps.version.outputs.version }}" \
+            --url "https://github.com/${{ github.repository }}/releases/download/${GITHUB_REF_NAME}/${{ steps.package.outputs.zip }}" \
+            --checksum "${{ steps.package.outputs.checksum }}" \
+            --changelog "https://github.com/${{ github.repository }}/releases/tag/${GITHUB_REF_NAME}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manifest.json
+          git commit -m "Update manifest for ${GITHUB_REF_NAME}"
+          git push origin HEAD:main

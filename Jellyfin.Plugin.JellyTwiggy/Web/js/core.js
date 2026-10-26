@@ -1,0 +1,317 @@
+// Jelly Twiggy core: API access, page tracking, DOM helpers and module startup.
+(function (JT) {
+    'use strict';
+
+    const modules = [];
+    const domListeners = [];
+    const navigationListeners = [];
+    let domScheduled = false;
+
+    JT.config = null;
+    JT.settings = null;
+
+    // ---- API -------------------------------------------------------------------------------
+
+    function authHeader() {
+        return `MediaBrowser Token="${window.ApiClient.accessToken()}"`;
+    }
+
+    // Requests a server path (relative to the server root, e.g. "JellyTwiggy/Sessions").
+    JT.request = async function (method, path, body) {
+        const response = await fetch(window.ApiClient.getUrl(path), {
+            method,
+            headers: {
+                'Authorization': authHeader(),
+                'Content-Type': 'application/json'
+            },
+            body: body === undefined ? undefined : JSON.stringify(body)
+        });
+        if (!response.ok) {
+            throw new Error(`${method} ${path}: ${response.status}`);
+        }
+        return response.status === 204 ? null : response.json();
+    };
+
+    JT.get = (path) => JT.request('GET', path);
+    JT.post = (path, body) => JT.request('POST', path, body);
+
+    JT.imageUrl = function (path, params) {
+        return window.ApiClient.getUrl(path, params);
+    };
+
+    // Jellyfin uses dashless ids in the DOM and dashed ones in JSON dictionary keys.
+    JT.normalizeId = (id) => (id || '').replace(/-/g, '').toLowerCase();
+
+    // ---- DOM helpers -----------------------------------------------------------------------
+
+    JT.el = function (tag, attributes, children) {
+        const element = document.createElement(tag);
+        for (const [name, value] of Object.entries(attributes || {})) {
+            if (value === undefined || value === null || value === false) {
+                continue;
+            }
+            if (name === 'className') {
+                element.className = value;
+            } else if (name === 'text') {
+                element.textContent = value;
+            } else if (name.startsWith('on')) {
+                element.addEventListener(name.slice(2).toLowerCase(), value);
+            } else {
+                element.setAttribute(name, value === true ? '' : value);
+            }
+        }
+        for (const child of [].concat(children || [])) {
+            if (child !== null && child !== undefined && child !== false) {
+                element.append(child instanceof Node ? child : String(child));
+            }
+        }
+        return element;
+    };
+
+    JT.icon = (name, className) => JT.el('span', { className: `material-icons ${name} ${className || ''}`, 'aria-hidden': 'true' });
+
+    JT.toast = function (text) {
+        const toast = JT.el('div', { className: 'jt-toast', text });
+        document.body.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add('jt-toast-visible'));
+        setTimeout(() => {
+            toast.classList.remove('jt-toast-visible');
+            setTimeout(() => toast.remove(), 300);
+        }, 2500);
+    };
+
+    JT.formatDuration = function (seconds) {
+        const totalMinutes = Math.round((seconds || 0) / 60);
+        const h = Math.floor(totalMinutes / 60);
+        const m = totalMinutes % 60;
+        return h > 0 ? JT.t('hoursMinutes', { h, m }) : JT.t('minutes', { m });
+    };
+
+    JT.formatTicks = function (ticks) {
+        const total = Math.floor((ticks || 0) / 1e7);
+        const h = Math.floor(total / 3600);
+        const m = Math.floor((total % 3600) / 60);
+        const s = total % 60;
+        const pad = (n) => String(n).padStart(2, '0');
+        return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+    };
+
+    JT.formatDate = function (value) {
+        if (!value) {
+            return '';
+        }
+        // Server dates are UTC; old ones may come without a zone suffix.
+        const date = new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(value) ? value : value + 'Z');
+        return date.toLocaleString(JT.language(), { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    };
+
+    JT.formatRelative = function (value) {
+        const date = new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(value) ? value : value + 'Z');
+        const seconds = Math.round((date.getTime() - Date.now()) / 1000);
+        const format = new Intl.RelativeTimeFormat(JT.language(), { numeric: 'auto' });
+        const abs = Math.abs(seconds);
+        if (abs < 60) {
+            return format.format(seconds, 'second');
+        }
+        if (abs < 3600) {
+            return format.format(Math.round(seconds / 60), 'minute');
+        }
+        if (abs < 86400) {
+            return format.format(Math.round(seconds / 3600), 'hour');
+        }
+        return format.format(Math.round(seconds / 86400), 'day');
+    };
+
+    // Avatar <img> with an initials fallback. imageTag null means "no avatar";
+    // undefined means "unknown", so the image is tried without a tag.
+    JT.avatar = function (userId, userName, imageTag, className) {
+        const initials = JT.el('span', { className: `jt-avatar ${className || ''}`, text: (userName || '?').slice(0, 1).toUpperCase() });
+        let hue = 0;
+        for (const ch of String(userId)) {
+            hue = (hue * 31 + ch.charCodeAt(0)) % 360;
+        }
+        initials.style.backgroundColor = `hsl(${hue}, 45%, 40%)`;
+        if (imageTag === null || imageTag === '') {
+            return initials;
+        }
+
+        const params = { quality: 90, maxHeight: 96 };
+        if (imageTag) {
+            params.tag = imageTag;
+        }
+        const img = JT.el('img', {
+            className: `jt-avatar ${className || ''}`,
+            alt: userName || '',
+            loading: 'lazy',
+            src: JT.imageUrl(`Users/${userId}/Images/Primary`, params)
+        });
+        img.addEventListener('error', () => img.replaceWith(initials), { once: true });
+        return img;
+    };
+
+    // Minimal modal dialog. Returns { root, body, footer, close }.
+    JT.dialog = function (title, onClose) {
+        const body = JT.el('div', { className: 'jt-dialog-body' });
+        const footer = JT.el('div', { className: 'jt-dialog-footer' });
+        const closeButton = JT.el('button', { type: 'button', className: 'jt-icon-button', title: JT.t('close') }, JT.icon('close'));
+        const dialog = JT.el('div', { className: 'jt-dialog', role: 'dialog', 'aria-modal': 'true' }, [
+            JT.el('div', { className: 'jt-dialog-header' }, [JT.el('h2', { text: title }), closeButton]),
+            body,
+            footer
+        ]);
+        const root = JT.el('div', { className: 'jt-dialog-backdrop' }, dialog);
+
+        function close() {
+            root.remove();
+            document.removeEventListener('keydown', onKey, true);
+            onClose?.();
+        }
+
+        function onKey(e) {
+            if (e.key === 'Escape') {
+                e.stopPropagation();
+                close();
+            }
+        }
+
+        closeButton.addEventListener('click', close);
+        root.addEventListener('mousedown', (e) => {
+            if (e.target === root) {
+                close();
+            }
+        });
+        document.addEventListener('keydown', onKey, true);
+        document.body.appendChild(root);
+        return { root, body, footer, close };
+    };
+
+    JT.toggle = function (label, checked, hint) {
+        const input = JT.el('input', { type: 'checkbox', checked: !!checked });
+        const row = JT.el('label', { className: 'jt-toggle' }, [
+            input,
+            JT.el('span', { className: 'jt-toggle-track' }, JT.el('span', { className: 'jt-toggle-thumb' })),
+            JT.el('span', { className: 'jt-toggle-text' }, [
+                JT.el('span', { text: label }),
+                hint ? JT.el('span', { className: 'jt-hint', text: hint }) : null
+            ])
+        ]);
+        return { row, input };
+    };
+
+    // ---- Page tracking ---------------------------------------------------------------------
+
+    // Called (throttled to one animation frame) after DOM changes.
+    JT.onDomChange = (fn) => domListeners.push(fn);
+
+    // Called on route changes with the current hash.
+    JT.onNavigate = (fn) => navigationListeners.push(fn);
+
+    JT.route = () => window.location.hash || '';
+
+    JT.routeParam = function (name) {
+        const query = JT.route().split('?')[1] || '';
+        return new URLSearchParams(query).get(name);
+    };
+
+    // The visible instance of a legacy page (jellyfin-web keeps hidden copies of recent views).
+    JT.visiblePage = function (selector) {
+        return Array.from(document.querySelectorAll(selector)).find((page) => !page.classList.contains('hide')) || null;
+    };
+
+    function runDomListeners() {
+        domScheduled = false;
+        for (const fn of domListeners) {
+            try {
+                fn();
+            } catch (e) {
+                console.error('[JellyTwiggy]', e);
+            }
+        }
+    }
+
+    function scheduleDom() {
+        if (!domScheduled) {
+            domScheduled = true;
+            requestAnimationFrame(runDomListeners);
+        }
+    }
+
+    function runNavigation() {
+        const route = JT.route();
+        for (const fn of navigationListeners) {
+            try {
+                fn(route);
+            } catch (e) {
+                console.error('[JellyTwiggy]', e);
+            }
+        }
+        scheduleDom();
+    }
+
+    // ---- Startup ---------------------------------------------------------------------------
+
+    JT.register = (module) => modules.push(module);
+
+    JT.reloadSettings = async function () {
+        JT.settings = await JT.get('JellyTwiggy/UserSettings');
+        return JT.settings;
+    };
+
+    function waitForLogin() {
+        return new Promise((resolve) => {
+            const check = () => {
+                const client = window.ApiClient;
+                if (client && client.accessToken && client.accessToken() && client.getCurrentUserId && client.getCurrentUserId()) {
+                    resolve(client.getCurrentUserId());
+                } else {
+                    setTimeout(check, 500);
+                }
+            };
+            check();
+        });
+    }
+
+    async function loadUserState() {
+        JT.userId = await waitForLogin();
+        JT.config = await JT.get('JellyTwiggy/ClientConfig');
+        await JT.reloadSettings();
+    }
+
+    async function start() {
+        try {
+            await loadUserState();
+        } catch (e) {
+            console.error('[JellyTwiggy] failed to load configuration', e);
+            setTimeout(start, 10000);
+            return;
+        }
+
+        for (const module of modules) {
+            try {
+                module.init?.();
+            } catch (e) {
+                console.error('[JellyTwiggy]', e);
+            }
+        }
+
+        new MutationObserver(scheduleDom).observe(document.body, { childList: true, subtree: true });
+        window.addEventListener('hashchange', runNavigation);
+        document.addEventListener('viewshow', runNavigation);
+        runNavigation();
+
+        // Another user logged in: switch to their configuration and settings.
+        setInterval(async () => {
+            const current = window.ApiClient?.getCurrentUserId?.();
+            if (current && current !== JT.userId) {
+                try {
+                    await loadUserState();
+                    runNavigation();
+                } catch (e) {
+                    console.error('[JellyTwiggy] failed to load configuration', e);
+                }
+            }
+        }, 3000);
+    }
+
+    JT.start = start;
+})(window.JellyTwiggy);

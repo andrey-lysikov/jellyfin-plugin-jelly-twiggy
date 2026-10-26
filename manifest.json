@@ -1,0 +1,11 @@
+[
+  {
+    "guid": "71c422cd-3468-4d47-aad3-19d3d0c5be48",
+    "name": "Jelly Twiggy",
+    "description": "Poster badges, playback options, active streams, a customizable dashboard and watch history for the Jellyfin web client.",
+    "overview": "Extends the Jellyfin web client.",
+    "owner": "andrey-lysikov",
+    "category": "General",
+    "versions": []
+  }
+]

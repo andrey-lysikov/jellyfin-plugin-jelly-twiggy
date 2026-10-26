@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Jelly Twiggy</title>
+</head>
+<body>
+    <div id="JellyTwiggyConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox">
+        <div data-role="content">
+            <div class="content-primary">
+                <form id="JellyTwiggyConfigForm">
+                    <h2 class="sectionTitle">Jelly Twiggy</h2>
+
+                    <div class="verticalSection">
+                        <h3 class="sectionTitle">Status</h3>
+                        <p>Version: <span id="jtVersion">…</span></p>
+                        <p>File Transformation: <span id="jtFileTransformation">…</span></p>
+                    </div>
+
+                    <div class="verticalSection">
+                        <h3 class="sectionTitle">Features</h3>
+                        <div class="checkboxContainer">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="EnablePosterBadges" />
+                                <span>Poster badges (quality, audio, rating)</span>
+                            </label>
+                        </div>
+                        <div class="checkboxContainer">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="EnableActiveStreams" />
+                                <span>Active streams button</span>
+                            </label>
+                        </div>
+                        <div class="checkboxContainer">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="EnableWatchedBy" />
+                                <span>"Watched" row with user avatars on item pages</span>
+                            </label>
+                        </div>
+                        <div class="checkboxContainer">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="EnableDashboard" />
+                                <span>Dashboard customization, devices and statistics blocks</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <h3 class="sectionTitle">Playback history</h3>
+                        <div class="inputContainer">
+                            <input is="emby-input" type="number" id="CompletedThresholdPercent" min="50" max="100" label="Count a play as watched from (% of runtime)" />
+                            <div class="fieldDescription">Plays that reach this point, or that the player reports as finished, count as a view.</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                            <span>Save</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <script type="text/javascript">
+            (function () {
+                const pluginId = '71c422cd-3468-4d47-aad3-19d3d0c5be48';
+                const flags = ['EnablePosterBadges', 'EnableActiveStreams', 'EnableWatchedBy', 'EnableDashboard'];
+                const page = document.querySelector('#JellyTwiggyConfigPage');
+
+                page.addEventListener('pageshow', function () {
+                    Dashboard.showLoadingMsg();
+                    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                        flags.forEach(function (flag) {
+                            page.querySelector('#' + flag).checked = config[flag];
+                        });
+                        page.querySelector('#CompletedThresholdPercent').value = config.CompletedThresholdPercent;
+                        Dashboard.hideLoadingMsg();
+                    });
+
+                    ApiClient.getJSON(ApiClient.getUrl('JellyTwiggy/Status')).then(function (status) {
+                        page.querySelector('#jtVersion').textContent = status.Version;
+                        page.querySelector('#jtFileTransformation').textContent = status.FileTransformationRegistered
+                            ? 'registered'
+                            : 'not registered — install the File Transformation plugin and restart the server';
+                    });
+                });
+
+                page.querySelector('#JellyTwiggyConfigForm').addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    Dashboard.showLoadingMsg();
+                    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                        flags.forEach(function (flag) {
+                            config[flag] = page.querySelector('#' + flag).checked;
+                        });
+                        const threshold = parseInt(page.querySelector('#CompletedThresholdPercent').value, 10);
+                        config.CompletedThresholdPercent = Math.min(100, Math.max(50, isNaN(threshold) ? 90 : threshold));
+                        ApiClient.updatePluginConfiguration(pluginId, config).then(function (result) {
+                            Dashboard.processPluginConfigurationUpdateResult(result);
+                        });
+                    });
+                    return false;
+                });
+            })();
+        </script>
+    </div>
+</body>
+</html>

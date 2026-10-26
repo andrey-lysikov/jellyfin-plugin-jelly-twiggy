@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Jellyfin.Plugin.JellyTwiggy</RootNamespace>
+    <AssemblyName>Jellyfin.Plugin.JellyTwiggy</AssemblyName>
+    <!-- Overridden by the release workflow from the tag (vX.Y.Z.W). -->
+    <Version>0.1.0.0</Version>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- Pinned to the first 12.x release so the build loads on every 12.x host. -->
+    <JellyfinVersion>12.0.0</JellyfinVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Jellyfin.Controller" Version="$(JellyfinVersion)" />
+    <PackageReference Include="Jellyfin.Model" Version="$(JellyfinVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Configuration\configPage.html" />
+    <EmbeddedResource Include="Configuration\configPage.html" />
+    <!-- Client files served by JellyTwiggyController under /JellyTwiggy/client/... -->
+    <EmbeddedResource Include="Web\**\*" LogicalName="Web/%(RecursiveDir)%(Filename)%(Extension)" WithCulture="false" />
+  </ItemGroup>
+
+</Project>

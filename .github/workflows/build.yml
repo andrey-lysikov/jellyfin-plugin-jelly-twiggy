@@ -1,0 +1,23 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build
+        run: dotnet build Jellyfin.Plugin.JellyTwiggy/Jellyfin.Plugin.JellyTwiggy.csproj -c Release
+
+      - name: Check JavaScript syntax
+        run: find Jellyfin.Plugin.JellyTwiggy/Web -name '*.js' -print0 | xargs -0 -n1 node --check
