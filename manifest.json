@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "0.1.7.0",
+        "changelog": "- Dashboard: smaller blocks fill the space under their neighbours, show or hide blocks with a switch\n- Quality badge split into resolution, codec and HDR / DV badges\n- Item page: video track shown as the same badges, audio, subtitle and version selects without the box\n- No \"played\" circle on watched items\n- A play counts as watched by Jellyfin's \"Max resume percentage\" instead of a separate plugin setting\n- Plugin settings page with the Jelly Twiggy logo\n- Profile menu entry renamed to \"Advanced settings (Jelly Twiggy)\"",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/andrey-lysikov/jellyfin-plugin-jelly-twiggy/releases/download/v0.1.7.0/jelly-twiggy_0.1.7.0.zip",
+        "checksum": "553e50eeabc9753b91b3412fd3d7f558",
+        "timestamp": "2026-10-26T20:51:45Z"
+      },
+      {
         "version": "0.1.6.0",
         "changelog": "- Dashboard: move and resize blocks right on the page, block names match the page, no flicker on load\n- New stream card: larger poster on its own colours, user in the corner, full device and address, tech details as tags\n- Active streams: new icon, plain list without a title, opens only when something plays\n- Rating badge on seasons (from the series), centred star\n- Age ratings shown as plain \"6+\", \"18+\"\n- Plugin settings page in English, German and Russian\n- Monochrome icon in the user menu and the admin menu\n- Fix: empty \"Watched\" row, active streams button spacing, transcode reason text",
         "targetAbi": "12.0.0.0",
