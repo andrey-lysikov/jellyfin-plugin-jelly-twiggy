@@ -152,17 +152,8 @@ public class JellyTwiggyController : ControllerBase
         }
 
         var settings = _userSettings.Get(userId.Value);
-        var updated = new UserSettings
-        {
-            AutoSkipIntro = settings.AutoSkipIntro,
-            AutoSkipOutro = settings.AutoSkipOutro,
-            AutoPauseOnTabSwitch = settings.AutoPauseOnTabSwitch,
-            AutoResumeOnTabSwitch = settings.AutoResumeOnTabSwitch,
-            AutoPipOnTabSwitch = settings.AutoPipOnTabSwitch,
-            LongPressSpeedUp = settings.LongPressSpeedUp,
-            DashboardLayout = layout
-        };
-        _userSettings.Save(userId.Value, updated);
+        settings.DashboardLayout = layout;
+        _userSettings.Save(userId.Value, settings);
         return NoContent();
     }
 

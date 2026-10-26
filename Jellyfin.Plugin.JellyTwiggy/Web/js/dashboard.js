@@ -13,7 +13,10 @@
         { id: 'paths', title: 'blockPaths' },
         { id: 'stats', title: 'blockStats' }
     ];
-    const DEFAULT_WIDE = ['devices', 'stats'];
+    // Block widths: columns spanned in the 6-column (wide) and 2-column (medium) grids.
+    const SIZES = { third: [2, 1], half: [3, 1], twoThirds: [4, 2], full: [6, 2] };
+    const SIZE_LABELS = { third: '1/3', half: '1/2', twoThirds: '2/3' };
+    const DEFAULT_SIZES = { server: 'half', itemCounts: 'half', tasks: 'full', devices: 'full', activity: 'third', alerts: 'third', paths: 'third', stats: 'full' };
     const DEVICES_REFRESH_MS = 5000;
     const STATS_REFRESH_MS = 60000;
     const PERIODS = [{ days: 1, label: 'period24h' }, { days: 7, label: 'period7d' }, { days: 30, label: 'period30d' }];
@@ -28,7 +31,12 @@
     // ---- Layout ----------------------------------------------------------------------------
 
     function savedLayout() {
-        return JT.settings?.DashboardLayout || { Order: [], Hidden: [], Wide: DEFAULT_WIDE };
+        return JT.settings?.DashboardLayout || { Order: [], Hidden: [], Sizes: {} };
+    }
+
+    function sizeOf(layout, id) {
+        const size = layout.Sizes?.[id];
+        return SIZES[size] ? size : DEFAULT_SIZES[id];
     }
 
     function effectiveOrder(layout) {
@@ -44,14 +52,12 @@
 
     function applyLayout() {
         const layout = savedLayout();
-        // A layout never saved keeps the default full-width blocks.
-        const wide = layout.Order?.length ? (layout.Wide || []) : DEFAULT_WIDE;
-        const rules = effectiveOrder(layout).map((id, index) => `[data-jt-block="${id}"]{order:${index}}`);
+        const rules = effectiveOrder(layout).map((id, index) => {
+            const [wide, medium] = SIZES[sizeOf(layout, id)];
+            return `[data-jt-block="${id}"]{order:${index};--jt-span-wide:${wide};--jt-span-medium:${medium}}`;
+        });
         for (const id of layout.Hidden || []) {
             rules.push(`[data-jt-block="${id}"]{display:none!important}`);
-        }
-        for (const id of wide) {
-            rules.push(`[data-jt-block="${id}"]{grid-column:1/-1}`);
         }
 
         let style = document.getElementById('jt-dashboard-layout');
@@ -250,9 +256,8 @@
     // ---- Customize dialog ------------------------------------------------------------------
 
     function openLayoutDialog() {
-        const layout = savedLayout();
+        let layout = savedLayout();
         const hidden = new Set(layout.Hidden || []);
-        const wide = new Set(layout.Order?.length ? (layout.Wide || []) : DEFAULT_WIDE);
         const dialog = JT.dialog(JT.t('dashboardLayout'));
         dialog.body.appendChild(JT.el('p', { className: 'jt-hint', text: JT.t('dashboardLayoutHint') }));
         const list = JT.el('div', { className: 'jt-layout-list' });
@@ -262,12 +267,13 @@
         function row(id) {
             const block = BLOCKS.find((b) => b.id === id);
             const visible = JT.el('input', { type: 'checkbox', checked: !hidden.has(id), className: 'jt-layout-visible' });
-            const full = JT.el('input', { type: 'checkbox', checked: wide.has(id), className: 'jt-layout-wide' });
+            const size = JT.el('select', { className: 'jt-layout-size', 'aria-label': JT.t('blockWidth') },
+                Object.keys(SIZES).map((key) => JT.el('option', { value: key, selected: key === sizeOf(layout, id), text: SIZE_LABELS[key] || JT.t('sizeFull') })));
             const element = JT.el('div', { className: 'jt-layout-row', draggable: 'true', 'data-id': id }, [
                 JT.icon('drag_indicator', 'jt-drag-handle'),
                 JT.el('span', { className: 'jt-layout-name', text: JT.t(block.title) }),
                 JT.el('label', { className: 'jt-layout-option' }, [visible, JT.t('visible')]),
-                JT.el('label', { className: 'jt-layout-option' }, [full, JT.t('fullWidth')]),
+                size,
                 JT.el('button', { type: 'button', className: 'jt-icon-button', title: JT.t('moveUp'), onClick: () => element.previousElementSibling?.before(element) }, JT.icon('arrow_upward')),
                 JT.el('button', { type: 'button', className: 'jt-icon-button', title: JT.t('moveDown'), onClick: () => element.nextElementSibling?.after(element) }, JT.icon('arrow_downward'))
             ]);
@@ -308,8 +314,7 @@
             text: JT.t('resetLayout'),
             onClick: () => {
                 hidden.clear();
-                wide.clear();
-                DEFAULT_WIDE.forEach((id) => wide.add(id));
+                layout = { Order: [], Hidden: [], Sizes: {} };
                 fill(BLOCKS.map((b) => b.id));
             }
         });
@@ -320,7 +325,7 @@
             const updated = {
                 Order: rows.map((r) => r.dataset.id),
                 Hidden: rows.filter((r) => !r.querySelector('.jt-layout-visible').checked).map((r) => r.dataset.id),
-                Wide: rows.filter((r) => r.querySelector('.jt-layout-wide').checked).map((r) => r.dataset.id)
+                Sizes: Object.fromEntries(rows.map((r) => [r.dataset.id, r.querySelector('.jt-layout-size').value]))
             };
             save.disabled = true;
             try {

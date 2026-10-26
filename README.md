@@ -1,3 +1,5 @@
+<img src="assets/icon.png" width="128" alt="icon">
+
 # Jelly Twiggy
 
 Jelly Twiggy extends the Jellyfin web client with poster badges, playback options, active streams, a customizable dashboard and watch history.
@@ -8,18 +10,15 @@ Jelly Twiggy extends the Jellyfin web client with poster badges, playback option
 
 ## Features
 
-- Poster badges: quality (`4K HDR (HEVC)`, `1080p (x264)`, `4K DV (AV1)`), first audio track (`DTS 5.1`) and rating
-- Auto-skip intro and outro (segments from Intro Skipper)
-- Auto-pause, auto-resume and auto Picture-in-Picture on tab switch
+- Poster badges: quality, first audio track, and rating
+- User preferences for: Auto-skip intro and outro, Auto-pause, auto-resume and auto Picture-in-Picture on tab switch
 - Long press / hold for 2x speed
+- Option to hide favorites everywhere
 - Active streams button with progress, device and transcoding details
 - Dashboard: show, hide and reorder blocks, devices in the active streams style
-- Playback statistics for 24 hours / 7 days / month: users, most played, recent plays, direct play vs. transcode
-- "Watched" row on item pages: user avatars with *"Watched N times, last on &lt;date&gt;"* or *"12 of 20 episodes"*
-- Per-user settings stored on the server, all off by default
+- Playback statistics
+- "Watched" row on item pages
 - Localization (English, German, Russian)
-
-*Works in the web client and apps that wrap it (Jellyfin Media Player, Android). Native clients are not affected.*
 
 ## Install
 
@@ -27,11 +26,11 @@ Add the repository in **Dashboard → Plugins → Repositories**:
 
     https://raw.githubusercontent.com/andrey-lysikov/jellyfin-plugin-jelly-twiggy/main/manifest.json
 
-Install **Jelly Twiggy** from the catalog and restart the server. User options are in **Settings → Jelly Twiggy**, admin options in **Dashboard → Plugins → Jelly Twiggy**.
+Install **Jelly Twiggy** from the catalog and restart the server.
 
 ## Tech
 
-C# / .NET 10 for Jellyfin 12.x, requires [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation). Data is kept in `<jellyfin data>/jellytwiggy/`. Releases are built by GitHub Actions from `vX.Y.Z.W` tags.
+C# / .NET 10 for Jellyfin 12.x, requires [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation).
 
 Based on: [Jellyfin-Enhanced](https://github.com/n00bcodr/Jellyfin-Enhanced), [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation), [Intro Skipper](https://github.com/intro-skipper/intro-skipper)
 

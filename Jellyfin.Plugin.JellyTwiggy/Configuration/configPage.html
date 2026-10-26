@@ -9,7 +9,7 @@
         <div data-role="content">
             <div class="content-primary">
                 <form id="JellyTwiggyConfigForm">
-                    <h2 class="sectionTitle">Jelly Twiggy</h2>
+                    <h2 class="sectionTitle" style="display:flex;align-items:center;gap:.5em"><img id="jtIcon" alt="" width="40" height="40">Jelly Twiggy</h2>
 
                     <div class="verticalSection">
                         <h3 class="sectionTitle">Status</h3>
@@ -68,6 +68,7 @@
                 const page = document.querySelector('#JellyTwiggyConfigPage');
 
                 page.addEventListener('pageshow', function () {
+                    page.querySelector('#jtIcon').src = ApiClient.getUrl('JellyTwiggy/client/img/icon.png');
                     Dashboard.showLoadingMsg();
                     ApiClient.getPluginConfiguration(pluginId).then(function (config) {
                         flags.forEach(function (flag) {

@@ -9,14 +9,20 @@
     let flushTimer = null;
 
     function qualityClass(quality) {
-        const resolution = quality.split(' ')[0].toLowerCase();
-        const classes = [`jt-q-${resolution.replace(/[^a-z0-9]/g, '')}`];
-        if (/\bDV\b/.test(quality)) {
-            classes.push('jt-q-dv');
-        } else if (/\bHDR|HLG\b/.test(quality)) {
-            classes.push('jt-q-hdr');
+        return `jt-q-${quality.split(' ')[0].toLowerCase()}`;
+    }
+
+    function audioClass(audio) {
+        if (/^DTS/.test(audio)) {
+            return 'jt-a-dts';
         }
-        return classes.join(' ');
+        if (/TrueHD|Atmos/.test(audio)) {
+            return 'jt-a-atmos';
+        }
+        if (/^(EAC3|AC3)\b/.test(audio)) {
+            return audio.startsWith('E') ? 'jt-a-eac3' : 'jt-a-ac3';
+        }
+        return /^(FLAC|ALAC|PCM)\b/.test(audio) ? 'jt-a-lossless' : '';
     }
 
     function render(card, badges) {
@@ -32,8 +38,8 @@
 
         if (badges.Quality || badges.Audio) {
             host.appendChild(JT.el('div', { className: 'jt-badges' }, [
-                badges.Quality ? JT.el('span', { className: `jt-badge jt-badge-quality ${qualityClass(badges.Quality)}`, text: badges.Quality }) : null,
-                badges.Audio ? JT.el('span', { className: 'jt-badge jt-badge-audio', text: badges.Audio }) : null
+                badges.Quality ? JT.el('span', { className: `jt-badge ${qualityClass(badges.Quality)}`, text: badges.Quality }) : null,
+                badges.Audio ? JT.el('span', { className: `jt-badge jt-badge-audio ${audioClass(badges.Audio)}`, text: badges.Audio }) : null
             ]));
         }
 

@@ -26,6 +26,9 @@ public class UserSettings
     /// <summary>Gets or sets a value indicating whether a long press on the video plays at 2x speed.</summary>
     public bool LongPressSpeedUp { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether favorite buttons, tabs and filters are hidden.</summary>
+    public bool HideFavorites { get; set; }
+
     /// <summary>Gets or sets the admin dashboard layout.</summary>
     public DashboardLayout DashboardLayout { get; set; } = new();
 }
@@ -39,8 +42,8 @@ public class DashboardLayout
     /// <summary>Gets or sets the ids of hidden blocks.</summary>
     public List<string> Hidden { get; set; } = [];
 
-    /// <summary>Gets or sets the ids of blocks stretched to the full row width.</summary>
-    public List<string> Wide { get; set; } = [];
+    /// <summary>Gets or sets block widths by id: third, half, twoThirds or full.</summary>
+    public Dictionary<string, string> Sizes { get; set; } = [];
 }
 
 /// <summary>Stores <see cref="UserSettings"/> as one JSON file per user.</summary>

@@ -121,7 +121,7 @@
                 e.stopPropagation();
                 togglePanel(button);
             }
-        }, [JT.icon('live_tv'), JT.el('span', { className: 'jt-streams-count', hidden: true })]);
+        }, JT.icon('live_tv'));
         return button;
     }
 
@@ -143,7 +143,7 @@
 
         // Dashboard and experimental layouts (MUI toolbar): before the user menu.
         document.querySelectorAll('.MuiToolbar-root').forEach((toolbar) => {
-            const userMenu = toolbar.querySelector('button[aria-haspopup="true"][aria-controls]');
+            const userMenu = toolbar.querySelector('button[aria-controls="app-user-menu"]');
             const holder = userMenu?.parentElement;
             if (holder && holder.parentElement === toolbar && !toolbar.querySelector('.jt-streams-button')) {
                 const button = createButton();
@@ -156,9 +156,9 @@
 
     function updateCount() {
         const playing = sessions.filter((s) => s.NowPlaying).length;
-        document.querySelectorAll('.jt-streams-count').forEach((el) => {
-            el.textContent = String(playing);
-            el.hidden = playing === 0;
+        document.querySelectorAll('.jt-streams-button').forEach((el) => {
+            el.classList.toggle('jt-streams-active', playing > 0);
+            el.title = playing > 0 ? `${JT.t('activeStreams')}: ${playing}` : JT.t('activeStreams');
         });
     }
 

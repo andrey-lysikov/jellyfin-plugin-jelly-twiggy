@@ -4,8 +4,8 @@
 
     const SECTIONS = [
         { title: 'settingsSkipSection', hint: 'autoSkipHint', keys: ['AutoSkipIntro', 'AutoSkipOutro'] },
-        { title: 'settingsTabSection', hint: 'autoPipHint', keys: ['AutoPauseOnTabSwitch', 'AutoResumeOnTabSwitch', 'AutoPipOnTabSwitch'] },
-        { title: 'settingsGestureSection', keys: ['LongPressSpeedUp'] }
+        { title: 'settingsPlayerSection', hint: 'autoPipHint', keys: ['AutoPauseOnTabSwitch', 'AutoResumeOnTabSwitch', 'AutoPipOnTabSwitch', 'LongPressSpeedUp'] },
+        { title: 'settingsInterfaceSection', keys: ['HideFavorites'] }
     ];
 
     const labelKey = (key) => key.charAt(0).toLowerCase() + key.slice(1);
@@ -70,11 +70,8 @@
                 openDialog();
             }
         }, JT.el('div', { className: 'listItem' }, [
-            JT.icon('tune', 'listItemIcon listItemIcon-transparent'),
-            JT.el('div', { className: 'listItemBody' }, [
-                JT.el('div', { className: 'listItemBodyText', text: JT.t('settingsTitle') }),
-                JT.el('div', { className: 'listItemBodyText secondary', text: JT.t('settingsSubtitle') })
-            ])
+            JT.el('img', { className: 'listItemIcon listItemIcon-transparent jt-app-icon', src: JT.asset('img/icon.png'), alt: '' }),
+            JT.el('div', { className: 'listItemBody' }, JT.el('div', { className: 'listItemBodyText', text: JT.t('menuEntry') }))
         ]));
         anchor.insertAdjacentElement('afterend', link);
     }

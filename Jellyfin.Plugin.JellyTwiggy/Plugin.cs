@@ -39,6 +39,9 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
             new PluginPageInfo
             {
                 Name = Name,
+                DisplayName = Name,
+                EnableInMainMenu = true,
+                MenuIcon = "trip_origin",
                 EmbeddedResourcePath = $"{GetType().Namespace}.Configuration.configPage.html"
             }
         ];

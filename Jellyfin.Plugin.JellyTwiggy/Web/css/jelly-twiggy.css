@@ -13,66 +13,87 @@
 }
 
 /* ---- Poster badges ---------------------------------------------------------------------- */
+/* Look follows Jellyfin-Enhanced quality tags: bright fill, light rim, drop shadow, small caps. */
 
 .jt-badges {
     position: absolute;
-    top: 0.4em;
-    left: 0.4em;
+    top: 6px;
+    left: 6px;
     z-index: 2;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.25em;
-    max-width: calc(100% - 3em);
+    gap: 4px;
+    max-width: calc(100% - 12px);
     pointer-events: none;
 }
 
-.jt-badge {
-    padding: 0.15em 0.45em;
-    border-radius: 4px;
-    font-size: 0.68em;
-    font-weight: 600;
-    line-height: 1.4;
-    letter-spacing: 0.02em;
+.jt-badge,
+.jt-rating {
+    padding: 2px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 5px;
+    font-size: clamp(0.65rem, 2vw, 0.85rem);
+    font-weight: bold;
+    font-variant-caps: small-caps;
+    line-height: 1.2;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
     color: #fff;
-    background: rgba(0, 0, 0, 0.72);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
+    background: rgba(70, 70, 80, 0.9);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    user-select: none;
 }
 
-.jt-badge-quality { background: rgba(70, 70, 80, 0.9); }
-.jt-badge-quality.jt-q-8k,
-.jt-badge-quality.jt-q-4k { background: rgba(123, 31, 162, 0.92); }
-.jt-badge-quality.jt-q-1080p { background: rgba(21, 101, 192, 0.92); }
-.jt-badge-quality.jt-q-720p { background: rgba(46, 125, 50, 0.92); }
-.jt-badge-quality.jt-q-hdr { box-shadow: inset 0 -2px 0 #ffb300, 0 1px 3px rgba(0, 0, 0, 0.4); }
-.jt-badge-quality.jt-q-dv { box-shadow: inset 0 -2px 0 #e040fb, 0 1px 3px rgba(0, 0, 0, 0.4); }
+.jt-badge {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.jt-q-8k { background: rgba(220, 20, 60, 0.95); }
+.jt-q-4k { background: rgba(189, 5, 232, 0.95); }
+.jt-q-1440p { background: rgba(255, 20, 147, 0.9); }
+.jt-q-1080p { background: rgba(0, 191, 255, 0.9); }
+.jt-q-720p { background: rgba(255, 165, 0, 0.9); color: #000; }
+.jt-q-576p,
+.jt-q-480p { background: rgba(255, 193, 7, 0.85); color: #000; }
+.jt-q-sd { background: rgba(128, 128, 128, 0.8); }
+
+.jt-a-dts { background: rgba(255, 140, 0, 0.85); }
+.jt-a-atmos { background: rgba(0, 100, 255, 0.9); }
+.jt-a-eac3 { background: rgba(0, 150, 136, 0.9); }
+.jt-a-ac3 { background: rgba(0, 121, 107, 0.9); }
+.jt-a-lossless { background: rgba(103, 58, 183, 0.9); }
 
 .jt-rating {
     position: absolute;
-    right: 0.4em;
-    bottom: 0.6em;
+    right: 6px;
+    bottom: 8px;
     z-index: 2;
     display: flex;
     align-items: center;
-    gap: 0.15em;
-    padding: 0.1em 0.45em 0.1em 0.3em;
-    border-radius: 4px;
-    font-size: 0.75em;
-    font-weight: 700;
-    color: #fff;
-    background: rgba(0, 0, 0, 0.72);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    gap: 3px;
+    padding-left: 6px;
+    background: rgba(0, 0, 0, 0.75);
     pointer-events: none;
 }
 
 .jt-rating .jt-rating-star {
     font-size: 1.15em;
     color: #ffc107;
+}
+
+@media (min-width: 1440px) {
+    .jt-badge,
+    .jt-rating { padding: 3px 12px; font-size: 0.9rem; border-radius: 6px; }
+    .jt-rating { padding-left: 8px; }
+    .jt-badges { gap: 6px; }
+}
+
+@media (max-width: 768px) {
+    .jt-badge,
+    .jt-rating { padding: 0 6px; font-size: 0.65rem; border-radius: 3px; }
+    .jt-badges { gap: 2px; }
 }
 
 /* ---- Buttons, toggles, dialogs ---------------------------------------------------------- */
@@ -310,21 +331,7 @@
 
 .jt-streams-button-mui:hover { background: rgba(255, 255, 255, 0.08); }
 
-.jt-streams-count {
-    position: absolute;
-    top: 0.1em;
-    right: 0.1em;
-    min-width: 1.3em;
-    height: 1.3em;
-    padding: 0 0.25em;
-    border-radius: 1em;
-    font-size: 0.65em;
-    font-weight: 700;
-    line-height: 1.3em;
-    text-align: center;
-    color: #fff;
-    background: #e53935;
-}
+.jt-streams-active .material-icons { color: #ffd60a; }
 
 .jt-streams-panel {
     position: fixed;
@@ -459,6 +466,15 @@ a.jt-session:hover { background: rgba(255, 255, 255, 0.1); }
 
 /* ---- Watched by ------------------------------------------------------------------------- */
 
+.jt-watched-row {
+    align-items: center;
+}
+
+.jt-watched-row .label {
+    flex-basis: auto;
+    min-width: 6.25em;
+}
+
 .jt-watched-row .jt-watchers {
     display: flex;
     flex-wrap: wrap;
@@ -505,16 +521,27 @@ a.jt-session:hover { background: rgba(255, 255, 255, 0.1); }
 .jt-dash-toolbar {
     display: flex;
     justify-content: flex-end;
-    margin-bottom: 1em;
+    margin: 8px 0 0;
 }
 
 .jt-dash-grid.jt-dash-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 30em), 1fr));
+    grid-template-columns: 1fr;
+    grid-auto-flow: row dense;
     align-items: start;
-    gap: 24px;
+    gap: 8px 24px;
     width: 100%;
     margin: 0;
+}
+
+@media (min-width: 800px) {
+    .jt-dash-grid.jt-dash-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .jt-dash-grid [data-jt-block] { grid-column: span var(--jt-span-medium, 1); }
+}
+
+@media (min-width: 1300px) {
+    .jt-dash-grid.jt-dash-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .jt-dash-grid [data-jt-block] { grid-column: span var(--jt-span-wide, 2); }
 }
 
 /* Flatten MUI grid items and stacks so every widget is a grid cell. */
@@ -722,6 +749,16 @@ a.jt-stat-link:hover .jt-stat-row-text > :first-child { text-decoration: underli
 .jt-drag-handle { color: var(--jt-muted); cursor: grab; }
 .jt-layout-name { flex: 1 1 8em; font-weight: 600; }
 
+.jt-layout-size {
+    padding: 0.25em 0.4em;
+    border: 1px solid var(--jt-border);
+    border-radius: 6px;
+    font: inherit;
+    font-size: 0.85em;
+    color: var(--jt-text);
+    background: var(--jt-surface);
+}
+
 .jt-layout-option {
     display: inline-flex;
     align-items: center;
@@ -729,3 +766,50 @@ a.jt-stat-link:hover .jt-stat-row-text > :first-child { text-decoration: underli
     font-size: 0.85em;
     cursor: pointer;
 }
+
+/* ---- Hide favorites --------------------------------------------------------------------- */
+
+.jt-hide-favorites button[is="emby-ratingbutton"],
+.jt-hide-favorites .btnUserRating,
+.jt-hide-favorites button:has(> svg[data-testid="FavoriteIcon"]),
+.jt-hide-favorites label:has(> .chkFavorite),
+.jt-hide-favorites [data-settingname="IsFavorite"],
+.jt-hide-favorites a[href$="/home?tab=1"],
+.jt-hide-favorites [data-jt-favorites-tab] {
+    display: none !important;
+}
+
+/* ---- App icon --------------------------------------------------------------------------- */
+
+.jt-app-icon {
+    width: 1.8em;
+    height: 1.8em;
+    padding: 0;
+    border-radius: 22%;
+    object-fit: contain;
+}
+
+/* Admin drawer: the mono ring replaces the material fallback icon. */
+a[href$="configurationpage?name=Jelly%20Twiggy"] .MuiIcon-root {
+    width: 24px;
+    height: 24px;
+    font-size: 0 !important;
+    background-color: currentColor;
+    -webkit-mask: url("../img/icon-mono.svg") center / contain no-repeat;
+    mask: url("../img/icon-mono.svg") center / contain no-repeat;
+}
+
+/* ---- Player volume ---------------------------------------------------------------------- */
+
+/* The bottom bar shows volume itself; jellyfin-web hides that block below 43em, so keep its popup there. */
+@media (min-width: 43em) {
+    body:has(#videoOsdPage:not(.hide)) .volumeOsd { display: none !important; }
+}
+
+.videoOsdBottom.jt-volume-peek {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: hidden;
+}
+
+.videoOsdBottom.jt-volume-peek .volumeButtons { visibility: visible; }

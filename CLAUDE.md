@@ -41,6 +41,8 @@
 - Comments: 2 lines max, everywhere. Short, to the point, in English.
 - C# docs: one-line `/// <summary>…</summary>` or `/// <inheritdoc />`; no `<param>` / `<returns>`.
 - README: short, in the style of [System-Spinner](https://github.com/andrey-lysikov/System-Spinner).
+- Changelog: every user-visible change goes to `Changelog.md` under `## <next version>` as a short
+  bullet. Release notes and the manifest changelog are taken from that section.
 
 ## Структура
 
@@ -57,7 +59,7 @@
   - `Storage/` — пользовательские настройки и раскладка панели (JSON на пользователя);
   - `Configuration/` — конфиг плагина и страница настроек админа;
   - `Web/` — клиент: `js/jelly-twiggy.js` (загрузчик) грузит по порядку `i18n`, `core`, `badges`,
-    `player`, `settings`, `streams`, `watchers`, `dashboard`; стили — `css/jelly-twiggy.css`.
+    `player`, `settings`, `streams`, `watchers`, `dashboard`, `favorites`; стили — `css/jelly-twiggy.css`.
     Глобальный объект `window.JellyTwiggy` (`JT`), модули регистрируются через `JT.register`.
 - Данные плагина: `<jellyfin data>/jellytwiggy/` (не в папке плагина — переживают обновления).
 - API Jellyfin отдаёт JSON в PascalCase — клиент читает поля в PascalCase.

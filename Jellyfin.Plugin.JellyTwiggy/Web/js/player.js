@@ -1,4 +1,4 @@
-// Video player enhancements: auto-skip intro/outro, tab switch behavior, hold for 2x speed.
+// Video player enhancements: auto-skip intro/outro, tab switch behavior, hold for 2x speed, volume peek.
 (function (JT) {
     'use strict';
 
@@ -233,6 +233,41 @@
         }
     }
 
+    // ---- Volume peek -----------------------------------------------------------------------
+
+    const VOLUME_PEEK_MS = 1500;
+    let peekTimer = null;
+
+    const osdBar = () => document.querySelector('#videoOsdPage:not(.hide) .videoOsdBottom');
+    const isOsdHidden = (bar) => bar.classList.contains('hide') || bar.classList.contains('videoOsdBottom-hidden');
+
+    function endPeek(bar) {
+        clearTimeout(peekTimer);
+        bar.classList.remove('jt-volume-peek');
+    }
+
+    // With the controls hidden, a volume change shows just the bar's own volume block for a moment.
+    function onVolumeChange() {
+        const bar = osdBar();
+        if (!bar || (!bar.classList.contains('jt-volume-peek') && !isOsdHidden(bar))) {
+            return;
+        }
+
+        if (!bar.dataset.jtPeekObserved) {
+            bar.dataset.jtPeekObserved = 'true';
+            // The player opened its controls: show them whole again.
+            new MutationObserver(() => {
+                if (bar.classList.contains('jt-volume-peek') && !isOsdHidden(bar)) {
+                    endPeek(bar);
+                }
+            }).observe(bar, { attributes: true, attributeFilter: ['class'] });
+        }
+
+        bar.classList.add('jt-volume-peek');
+        clearTimeout(peekTimer);
+        peekTimer = setTimeout(() => endPeek(bar), VOLUME_PEEK_MS);
+    }
+
     // ---- Wiring ----------------------------------------------------------------------------
 
     function attach() {
@@ -245,6 +280,7 @@
         currentItemId = null;
         video.addEventListener('loadedmetadata', loadSegments);
         video.addEventListener('timeupdate', onTimeUpdate);
+        video.addEventListener('volumechange', onVolumeChange);
         video.addEventListener('playing', () => setupMediaSessionPip(video));
         if (video.readyState >= 1) {
             loadSegments();

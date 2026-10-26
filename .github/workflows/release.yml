@@ -11,9 +11,9 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
 
@@ -40,12 +40,41 @@ jobs:
           echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
           echo "checksum=$(md5sum "artifacts/$ZIP" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
-      - name: Create GitHub release
+      - name: Release notes
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" "artifacts/${{ steps.package.outputs.zip }}" --title "$GITHUB_REF_NAME" --generate-notes
+          VERSION: ${{ steps.version.outputs.version }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          # The "## <version>" section of Changelog.md, without leading and trailing blank lines.
+          awk -v v="## $VERSION" '
+            $0 == v { found = 1; next }
+            /^## / { found = 0 }
+            found { print }
+          ' Changelog.md | awk '
+            /^[[:space:]]*$/ { blank = blank $0 "\n"; next }
+            { if (started) printf "%s", blank; blank = ""; started = 1; print }
+          ' > changes.md
 
-      - uses: actions/checkout@v4
+          if [ ! -s changes.md ]; then
+            echo "No \"## $VERSION\" section in Changelog.md" >&2
+            exit 1
+          fi
+
+          cp changes.md notes.md
+          previous=$(gh release view --json tagName -q .tagName 2>/dev/null || true)
+          if [ -n "$previous" ]; then
+            printf '\n**Full list of changes**: %s/compare/%s...%s\n' "$REPO_URL" "$previous" "$GITHUB_REF_NAME" >> notes.md
+          fi
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "$GITHUB_REF_NAME" "artifacts/${{ steps.package.outputs.zip }}"
+          --title "Version ${{ steps.version.outputs.version }}" --notes-file notes.md
+
+      - uses: actions/checkout@v7
         with:
           ref: main
           path: main
@@ -57,7 +86,7 @@ jobs:
             --version "${{ steps.version.outputs.version }}" \
             --url "https://github.com/${{ github.repository }}/releases/download/${GITHUB_REF_NAME}/${{ steps.package.outputs.zip }}" \
             --checksum "${{ steps.package.outputs.checksum }}" \
-            --changelog "https://github.com/${{ github.repository }}/releases/tag/${GITHUB_REF_NAME}"
+            --changelog "$(cat ../changes.md)"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add manifest.json
