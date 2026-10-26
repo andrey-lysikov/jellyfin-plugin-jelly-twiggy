@@ -1,10 +1,12 @@
-// Poster badges: quality and first audio track top left, rating bottom right.
+// Poster badges: quality and audio top left, ratings bottom right, played / favorite toggles and menu as badges.
 (function (JT) {
     'use strict';
 
     const TYPES = new Set(['Movie', 'Episode', 'Series', 'Season', 'Video', 'MusicVideo', 'Trailer', 'Audio', 'MusicAlbum']);
     const BATCH_SIZE = 100;
     const cache = new Map(); // normalized id -> badges | null
+    const played = new Map(); // normalized id -> played by the current user
+    const favorites = new Map(); // normalized id -> favorite of the current user
     const queue = new Set();
     let flushTimer = null;
 
@@ -61,13 +63,60 @@
         return items.length ? JT.el('div', { className: 'jt-ratings' }, items) : null;
     }
 
+    const CHECK = '<svg viewBox="0 0 24 24" width="1.2em" height="1.2em"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>';
+    const HEART = '<svg viewBox="0 0 24 24" width="1.2em" height="1.2em"><path fill="currentColor" d="m12 21.35-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54z"/></svg>';
+    const MORE = '<svg viewBox="0 0 24 24" width="1.2em" height="1.2em"><path fill="currentColor" d="M12 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm0 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>';
+
+    // Played and favorite toggles share the API shape: POST sets, DELETE clears.
+    async function toggle(state, endpoint, id) {
+        const wasOn = !!state.get(id);
+        try {
+            await JT.request(wasOn ? 'DELETE' : 'POST', `${endpoint}/${id}`);
+        } catch (e) {
+            console.error('[JellyTwiggy]', endpoint, e);
+            return;
+        }
+        state.set(id, !wasOn);
+        document.querySelectorAll(`.card[data-jt-badges="${id}"]`).forEach((card) => render(card, cache.get(id)));
+    }
+
+    function toggleButton(className, svg, isOn, labels, onClick) {
+        const label = JT.t(isOn ? labels[1] : labels[0]);
+        const button = JT.el('button', {
+            type: 'button',
+            className: `jt-card-button ${className}${isOn ? ' jt-card-on' : ''}`,
+            title: label,
+            'aria-label': label,
+            'aria-pressed': String(isOn)
+        });
+        button.innerHTML = svg;
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onClick();
+        });
+        return button;
+    }
+
+    // Replace jellyfin-web's played, favorite and "more" hover buttons, which our badges would cover.
+    function cardButtons(id) {
+        const check = toggleButton('jt-card-played', CHECK, !!played.get(id), ['markPlayed', 'markUnplayed'], () => toggle(played, 'UserPlayedItems', id));
+        const heart = toggleButton('jt-card-fav', HEART, !!favorites.get(id), ['addFavorite', 'removeFavorite'], () => toggle(favorites, 'UserFavoriteItems', id));
+
+        // jellyfin-web opens its own context menu for the card from data-action="menu".
+        const more = JT.el('button', { type: 'button', className: 'jt-card-button jt-card-more itemAction', 'data-action': 'menu', title: JT.t('more'), 'aria-label': JT.t('more') });
+        more.innerHTML = MORE;
+        return [check, JT.el('div', { className: 'jt-card-actions' }, [more, heart])];
+    }
+
     function render(card, badges) {
         const host = card.querySelector('.cardScalable') || card.querySelector('.cardImageContainer');
         if (!host) {
             return;
         }
 
-        host.querySelectorAll('.jt-badges, .jt-ratings').forEach((el) => el.remove());
+        host.querySelectorAll('.jt-badges, .jt-ratings, .jt-card-played, .jt-card-actions').forEach((el) => el.remove());
+        card.classList.remove('jt-has-badges');
         if (!badges) {
             return;
         }
@@ -84,6 +133,11 @@
         if (ratings) {
             host.appendChild(ratings);
         }
+
+        if (video.length || badges.Audio || ratings) {
+            card.classList.add('jt-has-badges');
+            host.append(...cardButtons(card.dataset.jtBadges));
+        }
     }
 
     async function flush() {
@@ -94,6 +148,11 @@
         for (let i = 0; i < ids.length; i += BATCH_SIZE) {
             const batch = ids.slice(i, i + BATCH_SIZE);
             try {
+                const userData = await JT.get(`Items?userId=${JT.userId}&ids=${batch.join(',')}&enableUserData=true&enableImages=false&fields=`).catch(() => null);
+                for (const item of userData?.Items || []) {
+                    played.set(JT.normalizeId(item.Id), !!item.UserData?.Played);
+                    favorites.set(JT.normalizeId(item.Id), !!item.UserData?.IsFavorite);
+                }
                 const result = await JT.post('JellyTwiggy/Badges', { ItemIds: batch });
                 const byId = new Map(Object.entries(result || {}).map(([id, badges]) => [JT.normalizeId(id), badges]));
                 for (const id of batch) {
