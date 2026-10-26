@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.9.0
+
+- Watched circle in the top-right corner of cards: empty ring, number of unwatched episodes, or green with a check; replaces the native indicators
+- The "More" menu opens from its button like a dropdown instead of centred on it
+- Fix: video track text showing between its badges on the item page
+
 ## 0.1.8.0
 
 - Rotten Tomatoes score above the rating on posters

@@ -987,13 +987,8 @@ a[href$="configurationpage?name=Jelly%20Twiggy"] .MuiIcon-root {
 
 /* Video track as badges over its select. */
 .selectVideoContainer.jt-has-video-badges { position: relative; }
-/* Beats jellyfin-web's ".emby-select[disabled] { color: inherit !important }"; Safari also needs text-fill-color. */
-.selectVideoContainer.jt-has-video-badges .detailTrackSelect.emby-select,
-.selectVideoContainer.jt-has-video-badges .detailTrackSelect.emby-select[disabled] {
-    color: transparent !important;
-    -webkit-text-fill-color: transparent !important;
-    text-shadow: none !important;
-}
+/* The select stays in place and clickable, but fully transparent: its text never shows through. */
+.selectVideoContainer.jt-has-video-badges .detailTrackSelect { opacity: 0 !important; }
 
 .jt-video-badges {
     position: absolute;
@@ -1021,6 +1016,7 @@ a[href$="configurationpage?name=Jelly%20Twiggy"] .MuiIcon-root {
 /* ---- Card buttons: played toggle and menu --------------------------------------------- */
 
 /* On cards with our badges the native hover buttons would sit under them. */
+.card.jt-has-badges .countIndicator,
 .card.jt-has-badges button[is="emby-playstatebutton"],
 .card.jt-has-badges .cardOverlayButton-br button[is="emby-ratingbutton"],
 .card.jt-has-badges .cardOverlayButton-br button:has(> svg[data-testid="FavoriteIcon"]),
@@ -1046,14 +1042,33 @@ a[href$="configurationpage?name=Jelly%20Twiggy"] .MuiIcon-root {
     transition: opacity 0.15s;
 }
 
-.jt-card-played {
+/* Watched circle: empty ring (hover), unwatched count, or green with a check. */
+.jt-card-button.jt-card-played {
     position: absolute;
     z-index: 5;
     top: 6px;
     right: 6px;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 2px solid rgba(255, 255, 255, 0.85);
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+    background: rgba(0, 0, 0, 0.35);
 }
 
-.cardScalable:has(.countIndicator) .jt-card-played { right: 36px; }
+.jt-card-played svg { width: 20px; height: 20px; }
+.jt-card-played.jt-card-count { background: rgba(0, 0, 0, 0.6); opacity: 1; }
+.jt-card-played.jt-pop { animation: jt-pop 0.3s ease-out; }
+
+@keyframes jt-pop {
+    50% { transform: scale(1.25); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .jt-card-played.jt-pop { animation: none; }
+}
 
 .jt-card-actions {
     position: absolute;
@@ -1065,7 +1080,8 @@ a[href$="configurationpage?name=Jelly%20Twiggy"] .MuiIcon-root {
 }
 
 .jt-card-played.jt-card-on {
-    background: rgba(76, 175, 80, 0.95);
+    border-color: transparent;
+    background: var(--jt-ok);
     opacity: 1;
 }
 
@@ -1075,7 +1091,8 @@ a[href$="configurationpage?name=Jelly%20Twiggy"] .MuiIcon-root {
 .card:hover .jt-card-button,
 .jt-card-button:focus-visible { opacity: 1; }
 .jt-card-button:hover { background: rgba(0, 0, 0, 0.9); }
-.jt-card-played.jt-card-on:hover { background: rgba(56, 142, 60, 1); }
+.jt-card-played.jt-card-on:hover { background: #388e3c; }
+.jt-card-played:not(.jt-card-on):hover { background: rgba(0, 0, 0, 0.7); }
 
 @media (hover: none) {
     .jt-card-button { opacity: 1; }
