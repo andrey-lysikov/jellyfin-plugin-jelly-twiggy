@@ -34,77 +34,92 @@
         return [nowPlaying.Name, nowPlaying.Year ? String(nowPlaying.Year) : ''];
     }
 
-    function transcodeDetails(transcode) {
+    function techChips(transcode) {
         if (!transcode) {
             return null;
         }
 
-        const parts = [];
-        parts.push(transcode.IsVideoDirect ? 'video: direct' : `video: ${(transcode.VideoCodec || '?').toUpperCase()}${transcode.Height ? ` ${transcode.Height}p` : ''}`);
-        parts.push(transcode.IsAudioDirect ? 'audio: direct' : `audio: ${(transcode.AudioCodec || '?').toUpperCase()}`);
+        const direct = JT.t('techDirect');
+        const parts = [
+            `${JT.t('techVideo')}: ${transcode.IsVideoDirect ? direct : `${(transcode.VideoCodec || '?').toUpperCase()}${transcode.Height ? ` ${transcode.Height}p` : ''}`}`,
+            `${JT.t('techAudio')}: ${transcode.IsAudioDirect ? direct : (transcode.AudioCodec || '?').toUpperCase()}`
+        ];
         if (transcode.Bitrate) {
             parts.push(`${(transcode.Bitrate / 1e6).toFixed(1)} Mbps`);
         }
         if (transcode.Framerate) {
             parts.push(`${Math.round(transcode.Framerate)} fps`);
         }
-        if (transcode.HardwareAcceleration && transcode.HardwareAcceleration !== 'none') {
-            parts.push(`${JT.t('hardware')}: ${transcode.HardwareAcceleration}`);
+        if (transcode.HardwareAcceleration && transcode.HardwareAcceleration.toLowerCase() !== 'none') {
+            parts.push(`${JT.t('hardware')}: ${transcode.HardwareAcceleration.toUpperCase()}`);
         }
 
-        return JT.el('div', { className: 'jt-session-transcode' }, [
-            JT.el('div', { text: parts.join(' · ') }),
-            transcode.Reasons?.length ? JT.el('div', { className: 'jt-session-reasons', text: transcode.Reasons.join(', ') }) : null
-        ]);
+        return JT.el('div', { className: 'jt-session-chips' }, parts.map((text) => JT.el('span', { text })));
     }
 
-    JT.sessionCard = function (session) {
-        const nowPlaying = session.NowPlaying;
-        const user = JT.el('div', { className: 'jt-session-user' }, [
+    function userChip(session) {
+        return JT.el('div', { className: 'jt-session-user' }, [
             JT.avatar(session.UserId, session.UserName, session.UserImageTag, 'jt-avatar-small'),
             JT.el('span', { text: session.UserName || '' })
         ]);
-        const device = JT.el('div', {
+    }
+
+    function deviceLine(session) {
+        return JT.el('div', {
             className: 'jt-session-device',
             text: [session.DeviceName, session.Client, session.RemoteEndPoint].filter(Boolean).join(' · ')
         });
+    }
 
+    // Poster left on a blurred copy of itself, user in the top-right corner, progress and tech at the bottom.
+    JT.sessionCard = function (session) {
+        const nowPlaying = session.NowPlaying;
         if (!nowPlaying) {
             return JT.el('div', { className: 'jt-session jt-session-idle' }, [
                 JT.el('div', { className: 'jt-session-poster jt-session-poster-empty' }, JT.icon('devices')),
-                JT.el('div', { className: 'jt-session-info' }, [
-                    user,
-                    device,
-                    JT.el('div', { className: 'jt-session-status', text: `${JT.t('idle')} · ${JT.t('lastSeen', { time: JT.formatRelative(session.LastActivityDate) })}` })
-                ])
+                JT.el('div', { className: 'jt-session-info' }, JT.el('div', { className: 'jt-session-top' }, [
+                    JT.el('div', { className: 'jt-session-titles' }, [
+                        deviceLine(session),
+                        JT.el('div', { className: 'jt-session-status', text: `${JT.t('idle')} · ${JT.t('lastSeen', { time: JT.formatRelative(session.LastActivityDate) })}` })
+                    ]),
+                    userChip(session)
+                ]))
             ]);
         }
 
         const [title, subtitle] = titleLines(nowPlaying);
         const progress = nowPlaying.RunTimeTicks ? Math.min(100, (nowPlaying.PositionTicks || 0) * 100 / nowPlaying.RunTimeTicks) : 0;
-        const poster = JT.el('img', {
-            className: 'jt-session-poster',
-            alt: '',
-            loading: 'lazy',
-            src: JT.imageUrl(`Items/${nowPlaying.ImageItemId}/Images/Primary`, { maxHeight: 180, quality: 90 })
-        });
-        poster.addEventListener('error', () => poster.replaceWith(JT.el('div', { className: 'jt-session-poster jt-session-poster-empty' }, JT.icon('movie'))), { once: true });
+        const imageUrl = JT.imageUrl(`Items/${nowPlaying.ImageItemId}/Images/Primary`, { maxHeight: 270, quality: 90 });
+        const poster = JT.el('img', { className: 'jt-session-poster', alt: '', loading: 'lazy', src: imageUrl });
+        const backdrop = JT.el('div', { className: 'jt-session-bg' });
+        backdrop.style.backgroundImage = `url("${imageUrl}")`;
+        poster.addEventListener('error', () => {
+            backdrop.remove();
+            poster.replaceWith(JT.el('div', { className: 'jt-session-poster jt-session-poster-empty' }, JT.icon('movie')));
+        }, { once: true });
 
         const methodClass = nowPlaying.PlayMethod === 'Transcode' ? 'jt-chip-warn' : 'jt-chip-ok';
         return JT.el('a', { className: 'jt-session', href: `#/details?id=${nowPlaying.ItemId}` }, [
+            backdrop,
             poster,
             JT.el('div', { className: 'jt-session-info' }, [
-                JT.el('div', { className: 'jt-session-title', text: title || '' }),
-                subtitle ? JT.el('div', { className: 'jt-session-subtitle', text: subtitle }) : null,
-                user,
-                device,
-                JT.el('div', { className: 'jt-session-progress' }, JT.el('div', { className: 'jt-session-progress-bar', style: `width:${progress}%` })),
-                JT.el('div', { className: 'jt-session-status' }, [
-                    JT.icon(nowPlaying.IsPaused ? 'pause' : 'play_arrow'),
-                    JT.el('span', { text: `${JT.formatTicks(nowPlaying.PositionTicks)} / ${JT.formatTicks(nowPlaying.RunTimeTicks)}` }),
-                    nowPlaying.PlayMethod ? JT.el('span', { className: `jt-chip ${methodClass}`, text: playMethodLabel(nowPlaying.PlayMethod) }) : null
+                JT.el('div', { className: 'jt-session-top' }, [
+                    JT.el('div', { className: 'jt-session-titles' }, [
+                        JT.el('div', { className: 'jt-session-title', text: title || '' }),
+                        subtitle ? JT.el('div', { className: 'jt-session-subtitle', text: subtitle }) : null,
+                        deviceLine(session)
+                    ]),
+                    userChip(session)
                 ]),
-                transcodeDetails(nowPlaying.Transcode)
+                JT.el('div', { className: 'jt-session-bottom' }, [
+                    JT.el('div', { className: 'jt-session-progress' }, JT.el('div', { className: 'jt-session-progress-bar', style: `width:${progress}%` })),
+                    JT.el('div', { className: 'jt-session-status' }, [
+                        JT.icon(nowPlaying.IsPaused ? 'pause' : 'play_arrow'),
+                        JT.el('span', { text: `${JT.formatTicks(nowPlaying.PositionTicks)} / ${JT.formatTicks(nowPlaying.RunTimeTicks)}` }),
+                        nowPlaying.PlayMethod ? JT.el('span', { className: `jt-chip ${methodClass}`, text: playMethodLabel(nowPlaying.PlayMethod) }) : null
+                    ]),
+                    techChips(nowPlaying.Transcode)
+                ])
             ])
         ]);
     };
@@ -121,7 +136,7 @@
                 e.stopPropagation();
                 togglePanel(button);
             }
-        }, JT.icon('live_tv'));
+        }, JT.el('span', { className: 'jt-streams-icon', 'aria-hidden': 'true' }));
         return button;
     }
 
@@ -180,10 +195,12 @@
             return;
         }
 
-        const list = panel.querySelector('.jt-streams-list');
-        list.replaceChildren(...(sessions.length
-            ? sessions.map(JT.sessionCard)
-            : [JT.el('div', { className: 'jt-empty', text: JT.t('noActiveStreams') })]));
+        // Nothing left to show: the panel closes, as it never opens empty.
+        if (sessions.length === 0) {
+            closePanel();
+            return;
+        }
+        panel.replaceChildren(...sessions.map(JT.sessionCard));
     }
 
     function closePanel() {
@@ -199,16 +216,18 @@
         }
     }
 
-    function togglePanel(button) {
+    async function togglePanel(button) {
         if (panel) {
             closePanel();
             return;
         }
 
-        panel = JT.el('div', { className: 'jt-streams-panel' }, [
-            JT.el('div', { className: 'jt-streams-header', text: JT.t('activeStreams') }),
-            JT.el('div', { className: 'jt-streams-list' }, JT.el('div', { className: 'jt-empty', text: JT.t('loading') }))
-        ]);
+        await refresh();
+        if (sessions.length === 0 || panel) {
+            return;
+        }
+
+        panel = JT.el('div', { className: 'jt-streams-panel' });
         const rect = button.getBoundingClientRect();
         panel.style.top = `${rect.bottom + 6}px`;
         panel.style.right = `${Math.max(8, window.innerWidth - rect.right)}px`;
@@ -219,7 +238,7 @@
         });
         document.body.appendChild(panel);
         document.addEventListener('click', onOutsideClick, true);
-        refresh();
+        renderPanel();
         panelTimer = setInterval(refresh, PANEL_REFRESH_MS);
     }
 

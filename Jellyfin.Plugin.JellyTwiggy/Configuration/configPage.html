@@ -12,50 +12,51 @@
                     <h2 class="sectionTitle" style="display:flex;align-items:center;gap:.5em"><img id="jtIcon" alt="" width="40" height="40">Jelly Twiggy</h2>
 
                     <div class="verticalSection">
-                        <h3 class="sectionTitle">Status</h3>
-                        <p>Version: <span id="jtVersion">…</span></p>
+                        <h3 class="sectionTitle" data-jt-i18n="cfgStatus">Status</h3>
+                        <p><span data-jt-i18n="cfgVersion">Version</span>: <span id="jtVersion">…</span></p>
                         <p>File Transformation: <span id="jtFileTransformation">…</span></p>
                     </div>
 
                     <div class="verticalSection">
-                        <h3 class="sectionTitle">Features</h3>
+                        <h3 class="sectionTitle" data-jt-i18n="cfgFeatures">Features</h3>
                         <div class="checkboxContainer">
                             <label>
                                 <input is="emby-checkbox" type="checkbox" id="EnablePosterBadges" />
-                                <span>Poster badges (quality, audio, rating)</span>
+                                <span data-jt-i18n="cfgPosterBadges">Poster badges (quality, audio, rating)</span>
                             </label>
                         </div>
                         <div class="checkboxContainer">
                             <label>
                                 <input is="emby-checkbox" type="checkbox" id="EnableActiveStreams" />
-                                <span>Active streams button</span>
+                                <span data-jt-i18n="cfgActiveStreams">Active streams button</span>
                             </label>
                         </div>
                         <div class="checkboxContainer">
                             <label>
                                 <input is="emby-checkbox" type="checkbox" id="EnableWatchedBy" />
-                                <span>"Watched" row with user avatars on item pages</span>
+                                <span data-jt-i18n="cfgWatchedBy">"Watched" row with user avatars on item pages</span>
                             </label>
                         </div>
                         <div class="checkboxContainer">
                             <label>
                                 <input is="emby-checkbox" type="checkbox" id="EnableDashboard" />
-                                <span>Dashboard customization, devices and statistics blocks</span>
+                                <span data-jt-i18n="cfgDashboard">Dashboard customization, devices and statistics blocks</span>
                             </label>
                         </div>
                     </div>
 
                     <div class="verticalSection">
-                        <h3 class="sectionTitle">Playback history</h3>
+                        <h3 class="sectionTitle" data-jt-i18n="cfgHistory">Playback history</h3>
                         <div class="inputContainer">
-                            <input is="emby-input" type="number" id="CompletedThresholdPercent" min="50" max="100" label="Count a play as watched from (% of runtime)" />
-                            <div class="fieldDescription">Plays that reach this point, or that the player reports as finished, count as a view.</div>
+                            <label class="inputLabel inputLabelUnfocused" for="CompletedThresholdPercent" data-jt-i18n="cfgThreshold">Count a play as watched from (% of runtime)</label>
+                            <input type="number" class="emby-input" id="CompletedThresholdPercent" min="50" max="100" />
+                            <div class="fieldDescription" data-jt-i18n="cfgThresholdHint">Plays that reach this point, or that the player reports as finished, count as a view.</div>
                         </div>
                     </div>
 
                     <div>
                         <button is="emby-button" type="submit" class="raised button-submit block emby-button">
-                            <span>Save</span>
+                            <span data-jt-i18n="save">Save</span>
                         </button>
                     </div>
                 </form>
@@ -66,9 +67,15 @@
                 const pluginId = '71c422cd-3468-4d47-aad3-19d3d0c5be48';
                 const flags = ['EnablePosterBadges', 'EnableActiveStreams', 'EnableWatchedBy', 'EnableDashboard'];
                 const page = document.querySelector('#JellyTwiggyConfigPage');
+                // The client script provides translations; without it the English text stays.
+                const t = (key, fallback) => (window.JellyTwiggy && window.JellyTwiggy.t ? window.JellyTwiggy.t(key) : fallback);
 
                 page.addEventListener('pageshow', function () {
+                    page.querySelectorAll('[data-jt-i18n]').forEach(function (element) {
+                        element.textContent = t(element.dataset.jtI18n, element.textContent);
+                    });
                     page.querySelector('#jtIcon').src = ApiClient.getUrl('JellyTwiggy/client/img/icon.png');
+
                     Dashboard.showLoadingMsg();
                     ApiClient.getPluginConfiguration(pluginId).then(function (config) {
                         flags.forEach(function (flag) {
@@ -81,8 +88,8 @@
                     ApiClient.getJSON(ApiClient.getUrl('JellyTwiggy/Status')).then(function (status) {
                         page.querySelector('#jtVersion').textContent = status.Version;
                         page.querySelector('#jtFileTransformation').textContent = status.FileTransformationRegistered
-                            ? 'registered'
-                            : 'not registered — install the File Transformation plugin and restart the server';
+                            ? t('cfgRegistered', 'registered')
+                            : t('cfgNotRegistered', 'not registered — install the File Transformation plugin and restart the server');
                     });
                 });
 

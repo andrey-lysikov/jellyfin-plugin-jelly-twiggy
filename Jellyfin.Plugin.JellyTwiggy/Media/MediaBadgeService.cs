@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Entities;
 
@@ -67,7 +68,9 @@ public class MediaBadgeService
             audio = firstAudio is null ? null : FormatAudio(firstAudio);
         }
 
-        var rating = item.CommunityRating is > 0 ? (float?)MathF.Round(item.CommunityRating.Value, 1) : null;
+        // Seasons rarely have their own rating: show the series one.
+        var communityRating = item.CommunityRating ?? (item as Season)?.Series?.CommunityRating;
+        var rating = communityRating is > 0 ? (float?)MathF.Round(communityRating.Value, 1) : null;
         return new ItemBadges(quality, audio, rating);
     }
 

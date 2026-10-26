@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <path id="ring" fill-rule="evenodd" d="M35 22 A15 15 0 0 1 65 22 C65 28 71.2 29.2 77.6 36.9 A36 36 0 1 1 22.4 36.9 C28.8 29.2 35 28 35 22 Z M50 39 A22 22 0 1 0 50 83 A22 22 0 1 0 50 39 Z M50 14.5 a3.5 3.5 0 1 0 0 7 a3.5 3.5 0 1 0 0 -7 Z"/>
+    <clipPath id="clip"><use href="#ring"/></clipPath>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2b2f5c"/>
+      <stop offset="1" stop-color="#0f1226"/>
+    </linearGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#fff58a"/>
+      <stop offset=".55" stop-color="#ffe62e"/>
+      <stop offset="1" stop-color="#f2c400"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="96" height="96" rx="22" fill="url(#tile)"/>
+  <g transform="translate(14 12) scale(.72)">
+    <use href="#ring" fill="url(#gloss)"/>
+    <path clip-path="url(#clip)" d="M22.7 69.9 A29 29 0 0 1 35.5 34.9" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="3.5" stroke-linecap="round"/>
+  </g>
+</svg>

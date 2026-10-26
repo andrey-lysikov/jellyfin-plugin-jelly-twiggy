@@ -70,7 +70,7 @@
                 openDialog();
             }
         }, JT.el('div', { className: 'listItem' }, [
-            JT.el('img', { className: 'listItemIcon listItemIcon-transparent jt-app-icon', src: JT.asset('img/icon.png'), alt: '' }),
+            JT.el('span', { className: 'listItemIcon listItemIcon-transparent jt-mono-icon', 'aria-hidden': 'true' }),
             JT.el('div', { className: 'listItemBody' }, JT.el('div', { className: 'listItemBodyText', text: JT.t('menuEntry') }))
         ]));
         anchor.insertAdjacentElement('afterend', link);

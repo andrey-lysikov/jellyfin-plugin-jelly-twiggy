@@ -1,4 +1,4 @@
-<img src="assets/icon.png" width="128" alt="icon">
+<img src="assets/logo.png" width="128" alt="icon">
 
 # Jelly Twiggy
 

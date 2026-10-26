@@ -1,64 +1,89 @@
-// Admin dashboard: reorderable / hideable blocks, devices and playback statistics.
-// React owns the widgets, so they are only tagged (data-jt-block) and laid out by generated CSS.
+// Admin dashboard: movable, resizable and hideable blocks, devices and playback statistics.
+// React owns the widgets, so they are never moved: generated CSS places them by :has() selectors.
 (function (JT) {
     'use strict';
 
+    const GRID = '#dashboardPage .content-primary > .MuiGrid-container';
+    const WIDGET = `:is(${GRID} > .MuiGrid-item, ${GRID} > .MuiGrid-item > .MuiStack-root) > div:not(.MuiStack-root)`;
     const BLOCKS = [
-        { id: 'server', title: 'blockServer' },
-        { id: 'itemCounts', title: 'blockItemCounts' },
-        { id: 'tasks', title: 'blockTasks' },
-        { id: 'devices', title: 'blockDevices' },
-        { id: 'activity', title: 'blockActivity' },
-        { id: 'alerts', title: 'blockAlerts' },
-        { id: 'paths', title: 'blockPaths' },
-        { id: 'stats', title: 'blockStats' }
+        { id: 'server', title: 'blockServer', span: 3, sel: `${WIDGET}:has(> a[href$="/dashboard/settings"]):has(button)` },
+        { id: 'itemCounts', title: 'blockItemCounts', span: 3, sel: `${WIDGET}:not(:has(> a[href]))` },
+        { id: 'tasks', title: 'blockTasks', span: 6, sel: `${WIDGET}:has(> a[href$="/dashboard/tasks"])` },
+        { id: 'devices', title: 'blockDevices', span: 6, sel: `${GRID} > [data-jt-block="devices"]` },
+        { id: 'activity', title: 'blockActivity', span: 2, sel: `${WIDGET}:has(> a[href*="useractivity=true"])` },
+        { id: 'alerts', title: 'blockAlerts', span: 2, sel: `${WIDGET}:has(> a[href*="useractivity=false"])` },
+        { id: 'paths', title: 'blockPaths', span: 2, sel: `${WIDGET}:has(> a[href$="/dashboard/settings"]):not(:has(button))` },
+        { id: 'stats', title: 'blockStats', span: 6, sel: `${GRID} > [data-jt-block="stats"]` }
     ];
-    // Block widths: columns spanned in the 6-column (wide) and 2-column (medium) grids.
-    const SIZES = { third: [2, 1], half: [3, 1], twoThirds: [4, 2], full: [6, 2] };
-    const SIZE_LABELS = { third: '1/3', half: '1/2', twoThirds: '2/3' };
-    const DEFAULT_SIZES = { server: 'half', itemCounts: 'half', tasks: 'full', devices: 'full', activity: 'third', alerts: 'third', paths: 'third', stats: 'full' };
+    const LEGACY_SPANS = { third: 2, half: 3, twoThirds: 4, full: 6 };
+    const CACHE_KEY = 'jt-dashboard-layout';
     const DEVICES_REFRESH_MS = 5000;
     const STATS_REFRESH_MS = 60000;
     const PERIODS = [{ days: 1, label: 'period24h' }, { days: 7, label: 'period7d' }, { days: 30, label: 'period30d' }];
+    const root = document.documentElement;
 
     let devicesTimer = null;
     let statsTimer = null;
     let statsDays = 7;
+    let edit = null; // { draft, layer, frame, drag }
 
     const isDashboardHome = () => /^#\/dashboard\/?(\?.*)?$/.test(JT.route());
     const enabled = () => JT.config?.IsAdmin && JT.config?.EnableDashboard;
+    const block = (id) => BLOCKS.find((b) => b.id === id);
 
     // ---- Layout ----------------------------------------------------------------------------
+
+    function readCache() {
+        try {
+            return JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+        } catch {
+            return null;
+        }
+    }
+
+    function writeCache(layout) {
+        try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify(layout));
+        } catch {
+            // Storage unavailable: the layout still applies once settings load.
+        }
+    }
 
     function savedLayout() {
         return JT.settings?.DashboardLayout || { Order: [], Hidden: [], Sizes: {} };
     }
 
-    function sizeOf(layout, id) {
-        const size = layout.Sizes?.[id];
-        return SIZES[size] ? size : DEFAULT_SIZES[id];
+    function copyLayout(layout) {
+        return { Order: [...(layout.Order || [])], Hidden: [...(layout.Hidden || [])], Sizes: { ...(layout.Sizes || {}) } };
+    }
+
+    // Width in columns of the 6-column grid.
+    function spanOf(layout, id) {
+        const value = layout.Sizes?.[id];
+        const span = LEGACY_SPANS[value] ?? parseInt(value, 10);
+        return span >= 1 && span <= 6 ? span : block(id).span;
     }
 
     function effectiveOrder(layout) {
-        const known = new Set(BLOCKS.map((b) => b.id));
-        const order = (layout.Order || []).filter((id) => known.has(id));
-        for (const block of BLOCKS) {
-            if (!order.includes(block.id)) {
-                order.push(block.id);
+        const order = (layout.Order || []).filter((id) => block(id));
+        for (const b of BLOCKS) {
+            if (!order.includes(b.id)) {
+                order.push(b.id);
             }
         }
         return order;
     }
 
-    function applyLayout() {
-        const layout = savedLayout();
+    function applyLayout(layout) {
+        const hidden = new Set(layout.Hidden || []);
         const rules = effectiveOrder(layout).map((id, index) => {
-            const [wide, medium] = SIZES[sizeOf(layout, id)];
-            return `[data-jt-block="${id}"]{order:${index};--jt-span-wide:${wide};--jt-span-medium:${medium}}`;
+            const span = spanOf(layout, id);
+            const sel = block(id).sel;
+            const rule = `${sel}{order:${index};--jt-span-wide:${span};--jt-span-medium:${span >= 4 ? 2 : 1}}`;
+            return hidden.has(id)
+                ? `${rule}\nhtml:not(.jt-dash-editing) ${sel}{display:none!important}\nhtml.jt-dash-editing ${sel}{opacity:.4}`
+                : rule;
         });
-        for (const id of layout.Hidden || []) {
-            rules.push(`[data-jt-block="${id}"]{display:none!important}`);
-        }
 
         let style = document.getElementById('jt-dashboard-layout');
         if (!style) {
@@ -68,45 +93,17 @@
         style.textContent = rules.join('\n');
     }
 
-    function identify(widget) {
-        const link = widget.querySelector(':scope > a[href]');
-        if (!link) {
-            return widget.querySelector('[class*="MuiGrid"]') ? 'itemCounts' : null;
-        }
-
-        const href = link.getAttribute('href') || '';
-        if (href.includes('useractivity=false')) {
-            return 'alerts';
-        }
-        if (href.includes('/dashboard/activity')) {
-            return 'activity';
-        }
-        if (href.includes('/dashboard/tasks')) {
-            return 'tasks';
-        }
-        if (href.includes('/dashboard/devices')) {
-            return 'native-devices';
-        }
-        if (href.includes('/dashboard/settings')) {
-            // Both the server and the paths widgets link to settings; only the server one has buttons.
-            return widget.querySelector('button') ? 'server' : 'paths';
-        }
-        return null;
+    // Applied at script load from the last known layout, so the page doesn't jump on reload.
+    const cached = readCache();
+    if (cached) {
+        root.classList.add('jt-dashboard');
+        applyLayout(cached);
     }
 
-    function tagWidgets(container) {
-        for (const item of container.children) {
-            if (item.classList.contains('jt-dash-block')) {
-                continue;
-            }
-            const stack = item.querySelector(':scope > .MuiStack-root');
-            for (const widget of (stack || item).children) {
-                const id = identify(widget);
-                if (id && widget.dataset.jtBlock !== id) {
-                    widget.dataset.jtBlock = id;
-                }
-            }
-        }
+    function blockTitle(id) {
+        const element = document.querySelector(block(id).sel);
+        const text = element?.querySelector(':scope > a, .jt-dash-block-header h3')?.textContent.trim();
+        return text || JT.t(block(id).title);
     }
 
     // ---- Blocks ----------------------------------------------------------------------------
@@ -253,93 +250,207 @@
         }
     }
 
-    // ---- Customize dialog ------------------------------------------------------------------
+    // ---- Edit mode -------------------------------------------------------------------------
 
-    function openLayoutDialog() {
-        let layout = savedLayout();
-        const hidden = new Set(layout.Hidden || []);
-        const dialog = JT.dialog(JT.t('dashboardLayout'));
-        dialog.body.appendChild(JT.el('p', { className: 'jt-hint', text: JT.t('dashboardLayoutHint') }));
-        const list = JT.el('div', { className: 'jt-layout-list' });
-        dialog.body.appendChild(list);
-        let dragged = null;
+    function gridColumns(container) {
+        return getComputedStyle(container).gridTemplateColumns.split(' ').filter(Boolean).length;
+    }
 
-        function row(id) {
-            const block = BLOCKS.find((b) => b.id === id);
-            const visible = JT.el('input', { type: 'checkbox', checked: !hidden.has(id), className: 'jt-layout-visible' });
-            const size = JT.el('select', { className: 'jt-layout-size', 'aria-label': JT.t('blockWidth') },
-                Object.keys(SIZES).map((key) => JT.el('option', { value: key, selected: key === sizeOf(layout, id), text: SIZE_LABELS[key] || JT.t('sizeFull') })));
-            const element = JT.el('div', { className: 'jt-layout-row', draggable: 'true', 'data-id': id }, [
-                JT.icon('drag_indicator', 'jt-drag-handle'),
-                JT.el('span', { className: 'jt-layout-name', text: JT.t(block.title) }),
-                JT.el('label', { className: 'jt-layout-option' }, [visible, JT.t('visible')]),
-                size,
-                JT.el('button', { type: 'button', className: 'jt-icon-button', title: JT.t('moveUp'), onClick: () => element.previousElementSibling?.before(element) }, JT.icon('arrow_upward')),
-                JT.el('button', { type: 'button', className: 'jt-icon-button', title: JT.t('moveDown'), onClick: () => element.nextElementSibling?.after(element) }, JT.icon('arrow_downward'))
-            ]);
-            element.addEventListener('dragstart', (e) => {
-                dragged = element;
-                element.classList.add('jt-dragging');
-                e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/plain', id);
-            });
-            element.addEventListener('dragend', () => {
-                element.classList.remove('jt-dragging');
-                dragged = null;
-            });
-            element.addEventListener('dragover', (e) => {
-                if (!dragged || dragged === element) {
-                    return;
-                }
-                e.preventDefault();
-                const rect = element.getBoundingClientRect();
-                if (e.clientY < rect.top + rect.height / 2) {
-                    element.before(dragged);
-                } else {
-                    element.after(dragged);
-                }
-            });
-            return element;
+    function overlayFor(id) {
+        const existing = edit.layer.querySelector(`[data-id="${id}"]`);
+        if (existing) {
+            return existing;
         }
 
-        function fill(order) {
-            list.replaceChildren(...order.map(row));
-        }
+        const eye = JT.el('button', { type: 'button', className: 'jt-icon-button jt-edit-eye', title: JT.t('visible') }, JT.icon('visibility'));
+        const bar = JT.el('div', { className: 'jt-edit-bar' }, [
+            JT.icon('drag_indicator', 'jt-drag-handle'),
+            JT.el('span', { className: 'jt-edit-title' }),
+            JT.el('span', { className: 'jt-edit-size' }),
+            eye
+        ]);
+        const handle = JT.el('div', { className: 'jt-edit-resize', title: JT.t('blockWidth') });
+        const overlay = JT.el('div', { className: 'jt-edit-block', 'data-id': id }, [bar, handle]);
 
-        fill(effectiveOrder(layout));
-
-        const reset = JT.el('button', {
-            type: 'button',
-            className: 'jt-button jt-button-left',
-            text: JT.t('resetLayout'),
-            onClick: () => {
-                hidden.clear();
-                layout = { Order: [], Hidden: [], Sizes: {} };
-                fill(BLOCKS.map((b) => b.id));
+        eye.addEventListener('click', () => {
+            const hidden = new Set(edit.draft.Hidden);
+            hidden.has(id) ? hidden.delete(id) : hidden.add(id);
+            edit.draft.Hidden = [...hidden];
+            applyLayout(edit.draft);
+        });
+        bar.addEventListener('pointerdown', (e) => {
+            if (e.button === 0 && !e.target.closest('button')) {
+                startDrag(e, bar, { type: 'move', id });
             }
         });
-        const cancel = JT.el('button', { type: 'button', className: 'jt-button', text: JT.t('cancel'), onClick: () => dialog.close() });
+        handle.addEventListener('pointerdown', (e) => {
+            const container = document.querySelector(GRID);
+            const columns = container ? gridColumns(container) : 1;
+            if (e.button === 0 && columns > 1) {
+                const gap = parseFloat(getComputedStyle(container).columnGap) || 0;
+                startDrag(e, handle, {
+                    type: 'resize',
+                    id,
+                    startX: e.clientX,
+                    columns,
+                    columnWidth: (container.clientWidth + gap) / columns,
+                    startSpan: columns === 6 ? spanOf(edit.draft, id) : (spanOf(edit.draft, id) >= 4 ? 2 : 1)
+                });
+            }
+        });
+        edit.layer.appendChild(overlay);
+        return overlay;
+    }
+
+    function startDrag(e, element, drag) {
+        e.preventDefault();
+        element.setPointerCapture(e.pointerId);
+        edit.drag = drag;
+        edit.layer.querySelector(`[data-id="${drag.id}"]`)?.classList.add('jt-edit-active');
+        const move = (event) => onDrag(event);
+        const end = () => {
+            element.removeEventListener('pointermove', move);
+            edit?.layer.querySelector('.jt-edit-active')?.classList.remove('jt-edit-active');
+            if (edit) {
+                edit.drag = null;
+            }
+        };
+        element.addEventListener('pointermove', move);
+        element.addEventListener('pointerup', end, { once: true });
+        element.addEventListener('pointercancel', end, { once: true });
+    }
+
+    function onDrag(e) {
+        const drag = edit?.drag;
+        if (!drag) {
+            return;
+        }
+
+        if (drag.type === 'resize') {
+            const span = Math.min(drag.columns, Math.max(1, Math.round(drag.startSpan + (e.clientX - drag.startX) / drag.columnWidth)));
+            const wide = drag.columns === 6 ? span : (span === 2 ? 6 : 3);
+            if (spanOf(edit.draft, drag.id) !== wide) {
+                edit.draft.Sizes = { ...edit.draft.Sizes, [drag.id]: String(wide) };
+                applyLayout(edit.draft);
+            }
+            return;
+        }
+
+        // Move: drop before or after the block under the pointer.
+        for (const b of BLOCKS) {
+            const element = b.id !== drag.id && document.querySelector(b.sel);
+            const rect = element?.getBoundingClientRect();
+            if (!rect || e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
+                continue;
+            }
+            const after = e.clientX > rect.left + rect.width / 2;
+            const order = effectiveOrder(edit.draft).filter((id) => id !== drag.id);
+            order.splice(order.indexOf(b.id) + (after ? 1 : 0), 0, drag.id);
+            if (order.join() !== effectiveOrder(edit.draft).join()) {
+                edit.draft.Order = order;
+                applyLayout(edit.draft);
+            }
+            return;
+        }
+    }
+
+    function positionOverlays() {
+        const container = document.querySelector(GRID);
+        if (!container) {
+            stopEdit(false);
+            return;
+        }
+
+        const hidden = new Set(edit.draft.Hidden);
+        const columns = gridColumns(container);
+        for (const b of BLOCKS) {
+            const element = document.querySelector(b.sel);
+            const rect = element?.getBoundingClientRect();
+            if (!rect || rect.width === 0) {
+                edit.layer.querySelector(`[data-id="${b.id}"]`)?.remove();
+                continue;
+            }
+
+            const overlay = overlayFor(b.id);
+            Object.assign(overlay.style, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px` });
+            overlay.classList.toggle('jt-edit-hidden', hidden.has(b.id));
+            overlay.querySelector('.jt-edit-title').textContent = blockTitle(b.id);
+            overlay.querySelector('.jt-edit-size').textContent = columns === 6 ? `${spanOf(edit.draft, b.id)}/6` : '';
+            overlay.querySelector('.jt-edit-eye .material-icons').textContent = hidden.has(b.id) ? 'visibility_off' : 'visibility';
+        }
+    }
+
+    function frame() {
+        if (edit) {
+            positionOverlays();
+            edit.frame = requestAnimationFrame(frame);
+        }
+    }
+
+    function startEdit() {
+        edit = { draft: copyLayout(savedLayout()), layer: JT.el('div', { className: 'jt-edit-layer' }), frame: 0, drag: null };
+        document.body.appendChild(edit.layer);
+        root.classList.add('jt-dash-editing');
+        renderToolbar();
+        frame();
+    }
+
+    function stopEdit(keep) {
+        if (!edit) {
+            return;
+        }
+        cancelAnimationFrame(edit.frame);
+        edit.layer.remove();
+        edit = null;
+        root.classList.remove('jt-dash-editing');
+        if (!keep) {
+            applyLayout(savedLayout());
+        }
+        renderToolbar();
+    }
+
+    async function saveEdit(button) {
+        const layout = { ...edit.draft, Order: effectiveOrder(edit.draft) };
+        button.disabled = true;
+        try {
+            await JT.post('JellyTwiggy/DashboardLayout', layout);
+            JT.settings = { ...JT.settings, DashboardLayout: layout };
+            writeCache(layout);
+            applyLayout(layout);
+            stopEdit(true);
+        } catch (e) {
+            console.error('[JellyTwiggy] dashboard layout', e);
+            JT.toast(JT.t('saveFailed'));
+            button.disabled = false;
+        }
+    }
+
+    function renderToolbar() {
+        const toolbar = document.querySelector('.jt-dash-toolbar');
+        if (!toolbar) {
+            return;
+        }
+
+        if (!edit) {
+            toolbar.replaceChildren(JT.el('button', { type: 'button', className: 'jt-button', onClick: startEdit }, [JT.icon('dashboard_customize'), JT.t('customizeDashboard')]));
+            return;
+        }
+
         const save = JT.el('button', { type: 'button', className: 'jt-button jt-button-primary', text: JT.t('save') });
-        save.addEventListener('click', async () => {
-            const rows = Array.from(list.children);
-            const updated = {
-                Order: rows.map((r) => r.dataset.id),
-                Hidden: rows.filter((r) => !r.querySelector('.jt-layout-visible').checked).map((r) => r.dataset.id),
-                Sizes: Object.fromEntries(rows.map((r) => [r.dataset.id, r.querySelector('.jt-layout-size').value]))
-            };
-            save.disabled = true;
-            try {
-                await JT.post('JellyTwiggy/DashboardLayout', updated);
-                JT.settings = { ...JT.settings, DashboardLayout: updated };
-                applyLayout();
-                dialog.close();
-            } catch (e) {
-                console.error('[JellyTwiggy] dashboard layout', e);
-                JT.toast(JT.t('saveFailed'));
-                save.disabled = false;
-            }
-        });
-        dialog.footer.append(reset, cancel, save);
+        save.addEventListener('click', () => saveEdit(save));
+        toolbar.replaceChildren(
+            JT.el('span', { className: 'jt-hint jt-edit-hint', text: JT.t('dashboardLayoutHint') }),
+            JT.el('button', {
+                type: 'button',
+                className: 'jt-button',
+                text: JT.t('resetLayout'),
+                onClick: () => {
+                    edit.draft = { Order: [], Hidden: [], Sizes: {} };
+                    applyLayout(edit.draft);
+                }
+            }),
+            JT.el('button', { type: 'button', className: 'jt-button', text: JT.t('cancel'), onClick: () => stopEdit(false) }),
+            save);
     }
 
     // ---- Wiring ----------------------------------------------------------------------------
@@ -351,19 +462,19 @@
     }
 
     function update() {
+        root.classList.toggle('jt-dashboard', !!enabled());
+        if (!enabled()) {
+            document.getElementById('jt-dashboard-layout')?.remove();
+        }
         if (!enabled() || !isDashboardHome()) {
             stopTimers();
             return;
         }
 
-        const page = JT.visiblePage('#dashboardPage') || document.getElementById('dashboardPage');
-        const container = page?.querySelector('.content-primary > .MuiGrid-container');
+        const container = document.querySelector(GRID);
         if (!container) {
             return;
         }
-
-        container.classList.add('jt-dash-grid');
-        tagWidgets(container);
 
         if (!container.querySelector(':scope > [data-jt-block="devices"]')) {
             container.appendChild(createDevicesBlock());
@@ -374,12 +485,15 @@
             refreshStats();
         }
         if (!container.parentElement.querySelector(':scope > .jt-dash-toolbar')) {
-            container.insertAdjacentElement('beforebegin', JT.el('div', { className: 'jt-dash-toolbar' },
-                JT.el('button', { type: 'button', className: 'jt-button', onClick: openLayoutDialog }, [JT.icon('dashboard_customize'), JT.t('customizeDashboard')])));
+            container.insertAdjacentElement('beforebegin', JT.el('div', { className: 'jt-dash-toolbar' }));
+            renderToolbar();
         }
 
-        if (!document.getElementById('jt-dashboard-layout')) {
-            applyLayout();
+        if (!edit && JSON.stringify(savedLayout()) !== JSON.stringify(readCache())) {
+            writeCache(savedLayout());
+            applyLayout(savedLayout());
+        } else if (!document.getElementById('jt-dashboard-layout')) {
+            applyLayout(savedLayout());
         }
         if (!devicesTimer) {
             devicesTimer = setInterval(refreshDevices, DEVICES_REFRESH_MS);
@@ -390,9 +504,7 @@
     JT.register({
         init() {
             JT.onDomChange(update);
-            JT.onNavigate(() => {
-                document.getElementById('jt-dashboard-layout')?.remove();
-            });
+            JT.onNavigate(() => stopEdit(false));
         }
     });
 })(window.JellyTwiggy);
