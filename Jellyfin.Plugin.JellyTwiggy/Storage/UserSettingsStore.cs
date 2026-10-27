@@ -29,6 +29,18 @@ public class UserSettings
     /// <summary>Gets or sets a value indicating whether favorite buttons, tabs and filters are hidden.</summary>
     public bool HideFavorites { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether the Google Cast button is hidden.</summary>
+    public bool HideCast { get; set; }
+
+    /// <summary>Gets or sets the corner radius of posters and cards: none, default or large.</summary>
+    public string CardRadius { get; set; } = "default";
+
+    /// <summary>Gets or sets the corner radius of buttons, fields, dialogs and menus: none, default or large.</summary>
+    public string UiRadius { get; set; } = "default";
+
+    /// <summary>Gets or sets a value indicating whether jellyfin-web's browser-only settings are kept on the server.</summary>
+    public bool SyncJellyfinSettings { get; set; }
+
     /// <summary>Gets or sets the admin dashboard layout.</summary>
     public DashboardLayout DashboardLayout { get; set; } = new();
 }
@@ -95,4 +107,35 @@ public class UserSettingsStore
     }
 
     private string GetPath(Guid userId) => Path.Combine(_directory, userId.ToString("N") + ".json");
+
+    /// <summary>Gets the user's synced jellyfin-web settings (localStorage key to value).</summary>
+    public Dictionary<string, string> GetJellyfinSettings(Guid userId)
+    {
+        var path = GetJellyfinSettingsPath(userId);
+        if (!File.Exists(path))
+        {
+            return [];
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(path), JsonFiles.Options) ?? [];
+        }
+        catch (Exception ex) when (ex is JsonException or IOException)
+        {
+            _logger.LogError(ex, "Jelly Twiggy: failed to read synced Jellyfin settings of user {UserId}", userId);
+            return [];
+        }
+    }
+
+    /// <summary>Saves the user's synced jellyfin-web settings.</summary>
+    public void SaveJellyfinSettings(Guid userId, Dictionary<string, string> values)
+    {
+        lock (_writeLock)
+        {
+            JsonFiles.WriteAtomic(GetJellyfinSettingsPath(userId), values);
+        }
+    }
+
+    private string GetJellyfinSettingsPath(Guid userId) => Path.Combine(_directory, userId.ToString("N") + ".jellyfin.json");
 }

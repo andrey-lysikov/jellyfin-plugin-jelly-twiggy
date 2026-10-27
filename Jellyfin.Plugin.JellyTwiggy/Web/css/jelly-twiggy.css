@@ -356,16 +356,41 @@
 .jt-streams-button-mui:hover { background: rgba(255, 255, 255, 0.08); }
 
 .jt-streams-icon {
+    position: relative;
     display: inline-block;
     width: 24px;
     height: 24px;
     vertical-align: middle;
+}
+
+.jt-streams-icon::before,
+.jt-streams-icon::after {
+    content: "";
+    position: absolute;
+    inset: 0;
     background-color: currentColor;
-    -webkit-mask: url("../img/streams.svg") center / contain no-repeat;
-    mask: url("../img/streams.svg") center / contain no-repeat;
+}
+
+.jt-streams-icon::before {
+    -webkit-mask: url("../img/streams-ring.svg") center / contain no-repeat;
+    mask: url("../img/streams-ring.svg") center / contain no-repeat;
+}
+
+.jt-streams-icon::after {
+    -webkit-mask: url("../img/streams-play.svg") center / contain no-repeat;
+    mask: url("../img/streams-play.svg") center / contain no-repeat;
 }
 
 .jt-streams-active .jt-streams-icon { color: #ffd60a; }
+html.jt-anim .jt-streams-active .jt-streams-icon::before { animation: jt-spin 2.4s linear infinite; }
+
+@keyframes jt-spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html.jt-anim .jt-streams-active .jt-streams-icon::before { animation: none; }
+}
 
 .jt-streams-panel {
     position: fixed;
@@ -966,7 +991,7 @@ a[href$="configurationpage?name=Jelly%20Twiggy"] .MuiIcon-root {
 
 /* The bottom bar shows volume itself; jellyfin-web hides that block below 43em, so keep its popup there. */
 @media (min-width: 43em) {
-    body:has(#videoOsdPage:not(.hide)) .volumeOsd { display: none !important; }
+    html.jt-tweak-player body:has(#videoOsdPage:not(.hide)) .volumeOsd { display: none !important; }
 }
 
 .videoOsdBottom.jt-volume-peek {
@@ -979,7 +1004,7 @@ a[href$="configurationpage?name=Jelly%20Twiggy"] .MuiIcon-root {
 
 /* ---- Item info -------------------------------------------------------------------------- */
 
-.mediaInfoOfficialRating {
+html.jt-tweak-item .mediaInfoOfficialRating {
     border: 0 !important;
     padding-left: 0 !important;
     padding-right: 0 !important;
@@ -1003,7 +1028,9 @@ a[href$="configurationpage?name=Jelly%20Twiggy"] .MuiIcon-root {
 .jt-video-badges .jt-badge { font-size: 0.75rem; padding: 1px 7px; }
 
 /* Track selects on item pages: plain text with the dropdown arrow, no box. */
-.trackSelections .selectContainer .detailTrackSelect {
+html.jt-tweak-item .trackSelections .selectContainer { width: fit-content; position: relative; }
+
+html.jt-tweak-item .trackSelections .selectContainer .detailTrackSelect {
     border: 0 !important;
     background-color: transparent !important;
     box-shadow: none !important;
@@ -1011,7 +1038,7 @@ a[href$="configurationpage?name=Jelly%20Twiggy"] .MuiIcon-root {
 }
 
 /* Watched items: no "played" circle on cards (unplayed episode counts stay). */
-.playedIndicator { display: none !important; }
+html.jt-style-cards .playedIndicator { display: none !important; }
 
 /* ---- Card buttons: played toggle and menu --------------------------------------------- */
 
@@ -1060,7 +1087,7 @@ a[href$="configurationpage?name=Jelly%20Twiggy"] .MuiIcon-root {
 
 .jt-card-played svg { width: 20px; height: 20px; }
 .jt-card-played.jt-card-count { background: rgba(0, 0, 0, 0.6); opacity: 1; }
-.jt-card-played.jt-pop { animation: jt-pop 0.3s ease-out; }
+html.jt-anim .jt-card-played.jt-pop { animation: jt-pop 0.3s ease-out; }
 
 @keyframes jt-pop {
     50% { transform: scale(1.25); }
@@ -1096,4 +1123,41 @@ a[href$="configurationpage?name=Jelly%20Twiggy"] .MuiIcon-root {
 
 @media (hover: none) {
     .jt-card-button { opacity: 1; }
+}
+
+/* ---- Admin options: plain cards without styling ------------------------------------- */
+
+html:not(.jt-style-cards) :is(.jt-badge, .jt-rating) { border-color: transparent; box-shadow: none; }
+html:not(.jt-style-cards) .jt-session-bg { display: none; }
+
+/* ---- User options: Google Cast, corner radius ---------------------------------------- */
+
+html.jt-hide-cast .headerCastButton,
+html.jt-hide-cast .MuiToolbar-root button:has(svg[data-testid="CastIcon"], svg[data-testid="CastConnectedIcon"]) {
+    display: none !important;
+}
+
+html.jt-card-radius-none :is(.cardScalable, .cardImageContainer, .cardContent, .cardOverlayContainer, .cardImage, .listItemImage) { border-radius: 0 !important; }
+html.jt-card-radius-large :is(.cardScalable, .cardImageContainer, .cardContent, .cardOverlayContainer, .cardImage, .listItemImage) { border-radius: 14px !important; }
+html.jt-card-radius-large .cardScalable { overflow: hidden; }
+
+html.jt-ui-radius-none :is(.emby-button, .button-flat, .raised, .emby-input, .emby-select, .emby-textarea, .dialog, .actionSheet, .MuiButton-root, .MuiOutlinedInput-root, .MuiPaper-root, .jt-button, .jt-dialog, .jt-streams-panel, .jt-select) { border-radius: 0 !important; }
+html.jt-ui-radius-large :is(.emby-button, .button-flat, .raised, .emby-input, .emby-select, .emby-textarea, .dialog, .actionSheet, .MuiButton-root, .MuiOutlinedInput-root, .MuiPaper-root, .jt-button, .jt-dialog, .jt-streams-panel, .jt-select) { border-radius: 14px !important; }
+
+/* Settings dialog choice rows. */
+.jt-choice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1em;
+    padding: 0.55em 0;
+}
+
+.jt-select {
+    padding: 0.35em 0.6em;
+    border: 1px solid var(--jt-border);
+    border-radius: 6px;
+    font: inherit;
+    color: var(--jt-text);
+    background: var(--jt-surface);
 }

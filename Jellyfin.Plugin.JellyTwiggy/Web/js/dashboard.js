@@ -3,6 +3,39 @@
 (function (JT) {
     'use strict';
 
+    JT.addStrings({
+        en: {
+            periodAll: 'All time',
+            statsRecent: 'Recent plays',
+            watchTimeHint: 'Actual playing time without pauses; plays shorter than 30 seconds are not counted.',
+            cpu: 'CPU',
+            ram: 'RAM',
+            disks: 'Disks',
+            diskRead: 'read {value}',
+            diskWrite: 'write {value}'
+        },
+        ru: {
+            periodAll: 'За всё время',
+            statsRecent: 'Последние воспроизведения',
+            watchTimeHint: 'Фактическое время воспроизведения без пауз; включения короче 30 секунд не учитываются.',
+            cpu: 'ЦП',
+            ram: 'ОЗУ',
+            disks: 'Диски',
+            diskRead: 'чтение {value}',
+            diskWrite: 'запись {value}'
+        },
+        de: {
+            periodAll: 'Gesamt',
+            statsRecent: 'Letzte Wiedergaben',
+            watchTimeHint: 'Tatsächliche Wiedergabezeit ohne Pausen; Wiedergaben unter 30 Sekunden zählen nicht.',
+            cpu: 'CPU',
+            ram: 'RAM',
+            disks: 'Festplatten',
+            diskRead: 'Lesen {value}',
+            diskWrite: 'Schreiben {value}'
+        }
+    });
+
     const GRID = '#dashboardPage .content-primary > .MuiGrid-container';
     const WIDGET = `:is(${GRID} > .MuiGrid-item, ${GRID} > .MuiGrid-item > .MuiStack-root) > div:not(.MuiStack-root)`;
     const BLOCKS = [
@@ -13,7 +46,8 @@
         { id: 'activity', title: 'blockActivity', span: 2, sel: `${WIDGET}:has(> a[href*="useractivity=true"])` },
         { id: 'alerts', title: 'blockAlerts', span: 2, sel: `${WIDGET}:has(> a[href*="useractivity=false"])` },
         { id: 'paths', title: 'blockPaths', span: 2, sel: `${WIDGET}:has(> a[href$="/dashboard/settings"]):not(:has(button))` },
-        { id: 'stats', title: 'blockStats', span: 6, sel: `${GRID} > [data-jt-block="stats"]` }
+        { id: 'stats', title: 'blockStats', span: 6, sel: `${GRID} > [data-jt-block="stats"]` },
+        { id: 'recent', title: 'statsRecent', span: 6, sel: `${GRID} > [data-jt-block="recent"]` }
     ];
     const LEGACY_SPANS = { third: 2, half: 3, twoThirds: 4, full: 6 };
     const CACHE_KEY = 'jt-dashboard-layout';
@@ -23,12 +57,21 @@
     const BLOCK_GAP_PX = 16;
     const DEVICES_REFRESH_MS = 5000;
     const STATS_REFRESH_MS = 60000;
-    const PERIODS = [{ days: 1, label: 'period24h' }, { days: 7, label: 'period7d' }, { days: 30, label: 'period30d' }];
+    const METRICS_REFRESH_MS = 3000;
+    const RESOLUTION_CARDS = [['MovieIcon', 'Movie'], ['TvIcon', 'Episode'], ['MusicVideoIcon', 'MusicVideo']];
+    const RESOLUTION_KEYS = ['4K', '1080p', '720p', 'SD'];
+    const PERIODS = [{ days: 1, label: 'period24h' }, { days: 7, label: 'period7d' }, { days: 30, label: 'period30d' }, { days: 0, label: 'periodAll' }];
+    const RECENT_DAYS = 0; // the latest plays whenever they happened
     const root = document.documentElement;
 
     let devicesTimer = null;
     let statsTimer = null;
+    let metricsTimer = null;
+    let metrics = null;
+    let resolutions = null;
+    let resolutionsLoading = false;
     let statsDays = 7;
+    let lastStats = null;
     let edit = null; // { draft, layer, frame, drag }
     let rowsFrame = 0;
     const observed = new WeakSet();
@@ -198,21 +241,35 @@
         }
     }
 
+    function tabGroup(items, isActive, onSelect) {
+        const group = JT.el('div', { className: 'jt-tabs' });
+        const paint = () => group.querySelectorAll('.jt-tab').forEach((tab, i) => tab.classList.toggle('jt-tab-active', isActive(items[i])));
+        for (const item of items) {
+            group.appendChild(JT.el('button', {
+                type: 'button',
+                className: 'jt-tab',
+                text: JT.t(item.label),
+                onClick: () => {
+                    onSelect(item);
+                    paint();
+                }
+            }));
+        }
+        paint();
+        return group;
+    }
+
     function createStatsBlock() {
-        const tabs = JT.el('div', { className: 'jt-tabs' }, PERIODS.map((period) => JT.el('button', {
-            type: 'button',
-            className: `jt-tab${period.days === statsDays ? ' jt-tab-active' : ''}`,
-            'data-days': String(period.days),
-            text: JT.t(period.label),
-            onClick: () => {
-                statsDays = period.days;
-                tabs.querySelectorAll('.jt-tab').forEach((tab) => tab.classList.toggle('jt-tab-active', tab.dataset.days === String(statsDays)));
-                refreshStats();
-            }
-        })));
+        const periods = tabGroup(PERIODS, (p) => p.days === statsDays, (p) => {
+            statsDays = p.days;
+            refreshStats();
+        });
 
         return JT.el('div', { className: 'jt-dash-block', 'data-jt-block': 'stats' }, [
-            JT.el('div', { className: 'jt-dash-block-title-row' }, [blockHeader(JT.t('blockStats')), tabs]),
+            JT.el('div', { className: 'jt-dash-block-title-row' }, [
+                blockHeader(JT.t('blockStats')),
+                JT.el('div', { className: 'jt-stats-controls' }, periods)
+            ]),
             JT.el('div', { className: 'jt-stats' }, JT.el('div', { className: 'jt-empty', text: JT.t('loading') }))
         ]);
     }
@@ -225,14 +282,10 @@
         return { DirectPlay: JT.t('directPlay'), DirectStream: JT.t('directStream'), Transcode: JT.t('transcode') }[method] || method;
     }
 
-    function renderStats(stats) {
-        if (!stats.TotalPlays) {
-            return [JT.el('div', { className: 'jt-empty', text: JT.t('noStats') })];
-        }
-
+    function renderOverview(stats) {
         const tiles = JT.el('div', { className: 'jt-stat-tiles' }, [
             JT.el('div', { className: 'jt-stat-tile' }, [JT.el('div', { className: 'jt-stat-value', text: String(stats.TotalPlays) }), JT.el('div', { className: 'jt-stat-label', text: JT.t('totalPlays') })]),
-            JT.el('div', { className: 'jt-stat-tile' }, [JT.el('div', { className: 'jt-stat-value', text: JT.formatDuration(stats.TotalSeconds) }), JT.el('div', { className: 'jt-stat-label', text: JT.t('totalTime') })])
+            JT.el('div', { className: 'jt-stat-tile', title: JT.t('watchTimeHint') }, [JT.el('div', { className: 'jt-stat-value', text: JT.formatDuration(stats.TotalSeconds) }), JT.el('div', { className: 'jt-stat-label', text: JT.t('totalTime') })])
         ]);
 
         const maxUserSeconds = Math.max(...stats.Users.map((u) => u.Seconds), 0);
@@ -246,17 +299,6 @@
                         JT.el('span', { className: 'jt-muted', text: `${JT.t('plays', { count: user.Plays })} · ${JT.formatDuration(user.Seconds)}` })
                     ]),
                     bar(user.Seconds, maxUserSeconds)
-                ])
-            ]))
-        ]);
-
-        const titles = JT.el('div', { className: 'jt-stat-section' }, [
-            JT.el('h4', { text: JT.t('topTitles') }),
-            ...stats.Titles.map((title, index) => JT.el('a', { className: 'jt-stat-row jt-stat-link', href: `#/details?id=${JT.normalizeId(title.ItemId)}` }, [
-                JT.el('span', { className: 'jt-stat-rank', text: String(index + 1) }),
-                JT.el('div', { className: 'jt-stat-row-text' }, [
-                    JT.el('span', { text: title.Name }),
-                    JT.el('span', { className: 'jt-muted', text: `${JT.t('plays', { count: title.Plays })} · ${JT.t('viewers', { count: title.Users })} · ${JT.formatDuration(title.Seconds)}` })
                 ])
             ]))
         ]);
@@ -276,22 +318,65 @@
             ])))
         ]);
 
-        const recent = JT.el('div', { className: 'jt-stat-section jt-stat-recent' }, [
-            JT.el('h4', { text: JT.t('recentPlays') }),
-            ...stats.Recent.map((play) => JT.el('div', { className: 'jt-stat-row' }, [
-                JT.avatar(play.UserId, play.UserName, undefined, 'jt-avatar-small'),
+        const titles = JT.el('div', { className: 'jt-stat-section' }, [
+            JT.el('h4', { text: JT.t('topTitles') }),
+            ...stats.Titles.slice(0, 10).map((title, index) => JT.el('a', { className: 'jt-stat-row jt-stat-link', href: `#/details?id=${JT.normalizeId(title.ItemId)}` }, [
+                JT.el('span', { className: 'jt-stat-rank', text: String(index + 1) }),
                 JT.el('div', { className: 'jt-stat-row-text' }, [
-                    JT.el('span', { text: play.SeriesName ? `${play.SeriesName} — ${play.ItemName}` : play.ItemName }),
-                    JT.el('span', {
-                        className: 'jt-muted',
-                        text: [play.UserName, JT.formatRelative(play.EndedUtc), JT.formatDuration(play.Seconds), play.Device, play.PlayMethod ? methodLabel(play.PlayMethod) : null].filter(Boolean).join(' · ')
-                    })
-                ]),
-                play.Completed ? JT.icon('check_circle', 'jt-completed') : null
+                    JT.el('span', { text: title.Name }),
+                    JT.el('span', { className: 'jt-muted', text: `${JT.t('plays', { count: title.Plays })} · ${JT.t('viewers', { count: title.Users })} · ${JT.formatDuration(title.Seconds)}` })
+                ])
             ]))
         ]);
 
-        return [tiles, JT.el('div', { className: 'jt-stat-columns' }, [users, titles, playMethods]), recent];
+        return [tiles, JT.el('div', { className: 'jt-stat-overview' }, [users, JT.el('div', { className: 'jt-stat-side' }, [playMethods, titles])])];
+    }
+
+    function createRecentBlock() {
+        return JT.el('div', { className: 'jt-dash-block', 'data-jt-block': 'recent' }, [
+            blockHeader(JT.t('statsRecent')),
+            JT.el('div', { className: 'jt-recent' }, JT.el('div', { className: 'jt-empty', text: JT.t('loading') }))
+        ]);
+    }
+
+    async function refreshRecent() {
+        const content = document.querySelector('[data-jt-block="recent"] .jt-recent');
+        if (!content) {
+            return;
+        }
+        try {
+            const stats = await JT.get(`JellyTwiggy/Statistics?days=${RECENT_DAYS}`);
+            content.replaceChildren(...(stats.Recent.length ? renderRecent(stats) : [JT.el('div', { className: 'jt-empty', text: JT.t('noStats') })]));
+        } catch (e) {
+            console.error('[JellyTwiggy] recent plays', e);
+            content.replaceChildren(JT.el('div', { className: 'jt-empty', text: JT.t('loadFailed') }));
+        }
+    }
+
+    function renderRecent(stats) {
+        return [JT.el('div', { className: 'jt-stat-section jt-stat-recent' }, stats.Recent.map((play) => JT.el('div', { className: 'jt-stat-row' }, [
+            JT.avatar(play.UserId, play.UserName, undefined, 'jt-avatar-small'),
+            JT.el('div', { className: 'jt-stat-row-text' }, [
+                JT.el('span', { text: play.SeriesName ? `${play.SeriesName} — ${play.ItemName}` : play.ItemName }),
+                JT.el('span', {
+                    className: 'jt-muted',
+                    text: [play.UserName, JT.formatRelative(play.EndedUtc), JT.formatDuration(play.Seconds), play.Device, play.PlayMethod ? methodLabel(play.PlayMethod) : null].filter(Boolean).join(' · ')
+                })
+            ]),
+            play.Completed ? JT.icon('check_circle', 'jt-completed') : null
+        ])))];
+    }
+
+    function renderStatsContent() {
+        const content = document.querySelector('[data-jt-block="stats"] .jt-stats');
+        if (!content || !lastStats) {
+            return;
+        }
+        if (!lastStats.TotalPlays) {
+            content.replaceChildren(JT.el('div', { className: 'jt-empty', text: JT.t('noStats') }));
+            return;
+        }
+        content.replaceChildren(...renderOverview(lastStats));
     }
 
     async function refreshStats() {
@@ -303,11 +388,119 @@
         try {
             const stats = await JT.get(`JellyTwiggy/Statistics?days=${days}`);
             if (days === statsDays) {
-                content.replaceChildren(...renderStats(stats));
+                lastStats = stats;
+                renderStatsContent();
             }
         } catch (e) {
             console.error('[JellyTwiggy] statistics', e);
             content.replaceChildren(JT.el('div', { className: 'jt-empty', text: JT.t('loadFailed') }));
+        }
+    }
+
+    // ---- Library resolutions and system load -----------------------------------------------
+
+    // Badges go into React-owned MetricCards; added only when missing, so re-renders just re-add them.
+    function decorateCounts() {
+        const widget = resolutions && document.querySelector(block('itemCounts').sel);
+        if (!widget) {
+            return;
+        }
+        for (const [icon, kind] of RESOLUTION_CARDS) {
+            const card = widget.querySelector(`svg[data-testid="${icon}"]`)?.closest('.MuiCard-root');
+            const counts = resolutions[kind];
+            if (!card || !counts || card.querySelector(':scope > .jt-res-row')) {
+                continue;
+            }
+            const badges = RESOLUTION_KEYS.filter((key) => counts[key] > 0).map((key) => JT.el('span', {
+                className: `jt-badge jt-q-${key.toLowerCase()}`,
+                text: `${key} ${counts[key].toLocaleString(JT.language())}`
+            }));
+            if (badges.length) {
+                card.classList.add('jt-res-card');
+                card.appendChild(JT.el('div', { className: 'jt-res-row' }, badges));
+            }
+        }
+    }
+
+    async function loadResolutions() {
+        if (resolutions || resolutionsLoading) {
+            decorateCounts();
+            return;
+        }
+        resolutionsLoading = true;
+        try {
+            resolutions = await JT.get('JellyTwiggy/LibraryResolutions');
+            decorateCounts();
+        } catch (e) {
+            console.error('[JellyTwiggy] library resolutions', e);
+        } finally {
+            resolutionsLoading = false;
+        }
+    }
+
+    function donut(label, percent) {
+        const r = 26;
+        const c = 2 * Math.PI * r;
+        const level = percent >= 85 ? 'high' : percent >= 60 ? 'mid' : 'low';
+        const element = JT.el('div', { className: `jt-donut jt-donut-${level}`, title: `${label}: ${percent}%` });
+        element.innerHTML = `<svg viewBox="0 0 64 64" width="64" height="64"><circle cx="32" cy="32" r="${r}" class="jt-donut-track"/>`
+            + `<circle cx="32" cy="32" r="${r}" class="jt-donut-value" stroke-dasharray="${c * percent / 100} ${c}" transform="rotate(-90 32 32)"/></svg>`;
+        element.append(JT.el('div', { className: 'jt-donut-text' }, [
+            JT.el('span', { className: 'jt-donut-percent', text: `${Math.round(percent)}%` }),
+            JT.el('span', { className: 'jt-donut-label', text: label })
+        ]));
+        return element;
+    }
+
+    function speed(bytesPerSecond) {
+        return `${(bytesPerSecond / 1048576).toFixed(1)} MB/s`;
+    }
+
+    function fillMetrics(panel) {
+        const parts = [];
+        if (metrics.CpuPercent != null) {
+            parts.push(donut(JT.t('cpu'), metrics.CpuPercent));
+        }
+        if (metrics.MemoryPercent != null) {
+            parts.push(donut(JT.t('ram'), metrics.MemoryPercent));
+        }
+        const disks = metrics.DiskReadBytesPerSecond != null
+            ? JT.el('div', { className: 'jt-disks' }, [
+                JT.el('span', { className: 'jt-disks-label', text: JT.t('disks') }),
+                JT.el('span', { text: JT.t('diskRead', { value: speed(metrics.DiskReadBytesPerSecond) }) }),
+                JT.el('span', { text: JT.t('diskWrite', { value: speed(metrics.DiskWriteBytesPerSecond || 0) }) })
+            ])
+            : null;
+        panel.replaceChildren(JT.el('div', { className: 'jt-donuts' }, parts), disks || '');
+    }
+
+    // Lives in the server widget's info row (name/versions), right side; hidden where the server has no data.
+    function metricsPanel(create) {
+        const row = document.querySelector(block('server').sel)?.querySelector('.MuiPaper-root > .MuiStack-root');
+        let panel = row?.querySelector(':scope > .jt-sysmetrics') || null;
+        const available = metrics && (metrics.CpuPercent != null || metrics.MemoryPercent != null);
+        if (!available) {
+            panel?.remove();
+            return null;
+        }
+        if (!panel && row && create) {
+            panel = JT.el('div', { className: 'jt-sysmetrics' });
+            fillMetrics(panel);
+            row.appendChild(panel);
+        }
+        return panel;
+    }
+
+    async function refreshMetrics() {
+        try {
+            metrics = await JT.get('JellyTwiggy/SystemMetrics');
+        } catch (e) {
+            console.error('[JellyTwiggy] system metrics', e);
+            return;
+        }
+        const panel = metricsPanel(true);
+        if (panel) {
+            fillMetrics(panel);
         }
     }
 
@@ -519,7 +712,8 @@
     function stopTimers() {
         clearInterval(devicesTimer);
         clearInterval(statsTimer);
-        devicesTimer = statsTimer = null;
+        clearInterval(metricsTimer);
+        devicesTimer = statsTimer = metricsTimer = null;
     }
 
     function update() {
@@ -547,6 +741,10 @@
             container.appendChild(createStatsBlock());
             refreshStats();
         }
+        if (!container.querySelector(':scope > [data-jt-block="recent"]')) {
+            container.appendChild(createRecentBlock());
+            refreshRecent();
+        }
         if (!container.parentElement.querySelector(':scope > .jt-dash-toolbar')) {
             container.insertAdjacentElement('beforebegin', JT.el('div', { className: 'jt-dash-toolbar' }));
             renderToolbar();
@@ -558,10 +756,17 @@
         } else if (!document.getElementById('jt-dashboard-layout')) {
             applyLayout(savedLayout());
         }
+        loadResolutions();
+        metricsPanel(true);
         scheduleRows();
         if (!devicesTimer) {
             devicesTimer = setInterval(refreshDevices, DEVICES_REFRESH_MS);
-            statsTimer = setInterval(refreshStats, STATS_REFRESH_MS);
+            statsTimer = setInterval(() => {
+                refreshStats();
+                refreshRecent();
+            }, STATS_REFRESH_MS);
+            metricsTimer = setInterval(refreshMetrics, METRICS_REFRESH_MS);
+            refreshMetrics();
         }
     }
 

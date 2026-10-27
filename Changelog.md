@@ -1,9 +1,21 @@
 # Changelog
 
-## 0.1.9.0
+## 0.2.0.0
 
 - Watched circle in the top-right corner of cards: empty ring, number of unwatched episodes, or green with a check; replaces the native indicators
 - The "More" menu opens from its button like a dropdown instead of centred on it
+- Playback statistics: All time period, users on the left, playback method and top 10 most played on the right
+- Recent plays as a separate dashboard block
+- Library counts: 4K / 1080p / 720p / SD badges in the Movies, Episodes and Music videos cards
+- Server block: CPU and RAM load charts and disk read/write speed (Linux servers)
+- User option to sync all settings of the current user: Jellyfin settings normally kept only in the browser are stored on the server and restored after clearing the cache or on another device; when turned on with settings already saved, it asks which side to keep
+- Library alphabet picker shows the letters that actually start titles in the current view in any language (Cyrillic, Turkish, Chinese…), following its sort and filters
+- Audio badge shows the default audio track, the one the player picks
+- Active streams icon: the open ring spins while something plays
+- User options: hide the Google Cast button, corner radius of posters and cards, and of buttons, fields and dialogs (square, as now, large)
+- Admin options under "Page tweaks": item page, player, animations and card styling can each be turned off
+- Item page: the dropdown arrow of audio, subtitle and video selects sits right after the text
+- Series and season badges come from the first scanned episode, so audio formats like DTS no longer go missing
 - Fix: video track text showing between its badges on the item page
 
 ## 0.1.8.0

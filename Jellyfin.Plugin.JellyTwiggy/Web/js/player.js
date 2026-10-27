@@ -248,6 +248,9 @@
 
     // With the controls hidden, a volume change shows just the bar's own volume block for a moment.
     function onVolumeChange() {
+        if (!JT.config?.TweakPlayer) {
+            return;
+        }
         const bar = osdBar();
         if (!bar || (!bar.classList.contains('jt-volume-peek') && !isOsdHidden(bar))) {
             return;

@@ -271,10 +271,28 @@
         });
     }
 
+    // Admin options and user settings switch CSS through classes on <html>.
+    JT.applyClasses = function () {
+        const root = document.documentElement;
+        const config = JT.config || {};
+        const settings = JT.settings || {};
+        root.classList.toggle('jt-tweak-item', !!config.TweakItemPage);
+        root.classList.toggle('jt-tweak-player', !!config.TweakPlayer);
+        root.classList.toggle('jt-anim', !!config.EnableAnimations);
+        root.classList.toggle('jt-style-cards', !!config.StyleCards);
+        root.classList.toggle('jt-hide-cast', !!settings.HideCast);
+        for (const [prefix, value] of [['jt-card-radius-', settings.CardRadius], ['jt-ui-radius-', settings.UiRadius]]) {
+            for (const option of ['none', 'large']) {
+                root.classList.toggle(prefix + option, value === option);
+            }
+        }
+    };
+
     async function loadUserState() {
         JT.userId = await waitForLogin();
         JT.config = await JT.get('JellyTwiggy/ClientConfig');
         await JT.reloadSettings();
+        JT.applyClasses();
     }
 
     async function start() {

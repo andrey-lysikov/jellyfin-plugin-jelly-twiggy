@@ -22,6 +22,8 @@ public class JellyTwiggyController : ControllerBase
     private const string UserIdClaim = "Jellyfin-UserId";
     private const string AdministratorRole = "Administrator";
     private const int MaxBadgeItems = 300;
+    private const int MaxSyncedSettings = 500;
+    private const int MaxSyncedChars = 1_000_000;
 
     private static readonly FileExtensionContentTypeProvider ContentTypes = new();
 
@@ -60,7 +62,7 @@ public class JellyTwiggyController : ControllerBase
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult GetClientFile([FromRoute] string path, [FromQuery] string? v)
+    public ActionResult GetJellyTwiggyClientFile([FromRoute] string path, [FromQuery] string? v)
     {
         if (!ClientFiles.Value.TryGetValue(path, out var resource)
             || typeof(Plugin).Assembly.GetManifestResourceStream(resource) is not { } stream)
@@ -83,7 +85,7 @@ public class JellyTwiggyController : ControllerBase
     [HttpGet("Status")]
     [Authorize(Policy = Policies.RequiresElevation)]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<PluginStatusDto> GetStatus()
+    public ActionResult<PluginStatusDto> GetJellyTwiggyStatus()
     {
         return new PluginStatusDto(Plugin.ClientVersion, FileTransformationRegistrar.IsRegistered);
     }
@@ -92,7 +94,7 @@ public class JellyTwiggyController : ControllerBase
     [HttpGet("ClientConfig")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<ClientConfigDto> GetClientConfig()
+    public ActionResult<ClientConfigDto> GetJellyTwiggyClientConfig()
     {
         var config = Plugin.Instance?.Configuration ?? new Configuration.PluginConfiguration();
         return new ClientConfigDto(
@@ -101,7 +103,11 @@ public class JellyTwiggyController : ControllerBase
             config.EnablePosterBadges,
             config.EnableActiveStreams,
             config.EnableWatchedBy,
-            config.EnableDashboard);
+            config.EnableDashboard,
+            config.TweakItemPage,
+            config.TweakPlayer,
+            config.EnableAnimations,
+            config.StyleCards);
     }
 
     /// <summary>Gets the current user's settings.</summary>
@@ -109,7 +115,7 @@ public class JellyTwiggyController : ControllerBase
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public ActionResult<UserSettings> GetUserSettings()
+    public ActionResult<UserSettings> GetJellyTwiggyUserSettings()
     {
         var userId = GetUserId();
         if (userId is null)
@@ -125,7 +131,7 @@ public class JellyTwiggyController : ControllerBase
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public ActionResult SaveUserSettings([FromBody, Required] UserSettings settings)
+    public ActionResult SaveJellyTwiggyUserSettings([FromBody, Required] UserSettings settings)
     {
         var userId = GetUserId();
         if (userId is null)
@@ -138,12 +144,52 @@ public class JellyTwiggyController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Gets the current user's synced jellyfin-web settings.</summary>
+    [HttpGet("JellyfinSettings")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public ActionResult<Dictionary<string, string>> GetJellyTwiggyJellyfinSettings()
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        return _userSettings.GetJellyfinSettings(userId.Value);
+    }
+
+    /// <summary>Replaces the current user's synced jellyfin-web settings.</summary>
+    [HttpPost("JellyfinSettings")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public ActionResult SaveJellyTwiggyJellyfinSettings([FromBody, Required] Dictionary<string, string> values)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        // Generous for custom CSS, but bounded: this is a settings file, not storage.
+        if (values.Count > MaxSyncedSettings || values.Sum(v => v.Key.Length + (v.Value?.Length ?? 0)) > MaxSyncedChars)
+        {
+            return BadRequest();
+        }
+
+        _userSettings.SaveJellyfinSettings(userId.Value, values);
+        return NoContent();
+    }
+
     /// <summary>Saves the current admin's dashboard layout.</summary>
     [HttpPost("DashboardLayout")]
     [Authorize(Policy = Policies.RequiresElevation)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public ActionResult SaveDashboardLayout([FromBody, Required] DashboardLayout layout)
+    public ActionResult SaveJellyTwiggyDashboardLayout([FromBody, Required] DashboardLayout layout)
     {
         var userId = GetUserId();
         if (userId is null)
@@ -161,7 +207,7 @@ public class JellyTwiggyController : ControllerBase
     [HttpPost("Badges")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<Dictionary<Guid, ItemBadges>> GetBadges([FromBody, Required] BadgesRequest request)
+    public ActionResult<Dictionary<Guid, ItemBadges>> GetJellyTwiggyBadges([FromBody, Required] BadgesRequest request)
     {
         var result = new Dictionary<Guid, ItemBadges>();
         foreach (var id in request.ItemIds.Distinct().Take(MaxBadgeItems))
@@ -180,7 +226,7 @@ public class JellyTwiggyController : ControllerBase
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public ActionResult<List<WatcherDto>> GetWatchers([FromRoute, Required] Guid itemId)
+    public ActionResult<List<WatcherDto>> GetJellyTwiggyWatchers([FromRoute, Required] Guid itemId)
     {
         var watchers = _watchers.GetWatchers(itemId);
         if (watchers is null)
@@ -195,7 +241,7 @@ public class JellyTwiggyController : ControllerBase
     [HttpGet("Sessions")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<List<SessionDto>> GetSessions([FromQuery] bool includeIdle = false)
+    public ActionResult<List<SessionDto>> GetJellyTwiggySessions([FromQuery] bool includeIdle = false)
     {
         var isAdmin = IsAdmin;
         return _sessions.GetSessions(!(includeIdle && isAdmin), TimeSpan.FromHours(1), isAdmin);
@@ -205,7 +251,7 @@ public class JellyTwiggyController : ControllerBase
     [HttpGet("Statistics")]
     [Authorize(Policy = Policies.RequiresElevation)]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<StatisticsDto> GetStatistics([FromQuery, Range(1, 3650)] int days = 7)
+    public ActionResult<StatisticsDto> GetJellyTwiggyStatistics([FromQuery, Range(0, 36500)] int days = 7)
     {
         return _statistics.GetStatistics(days);
     }
@@ -227,7 +273,11 @@ public record ClientConfigDto(
     bool EnablePosterBadges,
     bool EnableActiveStreams,
     bool EnableWatchedBy,
-    bool EnableDashboard);
+    bool EnableDashboard,
+    bool TweakItemPage,
+    bool TweakPlayer,
+    bool EnableAnimations,
+    bool StyleCards);
 
 /// <summary>Badges request.</summary>
 public class BadgesRequest

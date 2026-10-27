@@ -63,10 +63,10 @@ public class StatisticsService
         _userManager = userManager;
     }
 
-    /// <summary>Gets statistics for the last <paramref name="days"/> days.</summary>
+    /// <summary>Gets statistics for the last <paramref name="days"/> days; 0 or less means all time.</summary>
     public StatisticsDto GetStatistics(int days)
     {
-        var since = DateTime.UtcNow.AddDays(-days);
+        var since = days > 0 ? DateTime.UtcNow.AddDays(-days) : DateTime.MinValue;
         // Manual marks are views without watching: they don't count as plays or time.
         var plays = _store.Find(r => !r.Manual && r.EndedUtc >= since);
 

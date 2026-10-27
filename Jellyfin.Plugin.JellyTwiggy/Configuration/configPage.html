@@ -45,6 +45,34 @@
                         </div>
                     </div>
 
+                    <div class="verticalSection">
+                        <h3 class="sectionTitle" data-jt-i18n="cfgTweaks">Page tweaks</h3>
+                        <div class="checkboxContainer">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="TweakItemPage" />
+                                <span data-jt-i18n="cfgTweakItemPage">Item page: borderless track selects, "6+" age ratings, video track as badges</span>
+                            </label>
+                        </div>
+                        <div class="checkboxContainer">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="TweakPlayer" />
+                                <span data-jt-i18n="cfgTweakPlayer">Player: volume shown only in the bottom bar</span>
+                            </label>
+                        </div>
+                        <div class="checkboxContainer">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="EnableAnimations" />
+                                <span data-jt-i18n="cfgAnimations">Animations: spinning streams ring, watched circle pop</span>
+                            </label>
+                        </div>
+                        <div class="checkboxContainer">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="StyleCards" />
+                                <span data-jt-i18n="cfgStyleCards">Cards: badge depth, stream backdrops, watched circle and card buttons</span>
+                            </label>
+                        </div>
+                    </div>
+
                     <div>
                         <button is="emby-button" type="submit" class="raised button-submit block emby-button">
                             <span data-jt-i18n="save">Save</span>
@@ -56,7 +84,7 @@
         <script type="text/javascript">
             (function () {
                 const pluginId = '71c422cd-3468-4d47-aad3-19d3d0c5be48';
-                const flags = ['EnablePosterBadges', 'EnableActiveStreams', 'EnableWatchedBy', 'EnableDashboard'];
+                const flags = ['EnablePosterBadges', 'EnableActiveStreams', 'EnableWatchedBy', 'EnableDashboard', 'TweakItemPage', 'TweakPlayer', 'EnableAnimations', 'StyleCards'];
                 const page = document.querySelector('#JellyTwiggyConfigPage');
                 // The client script provides translations; without it the English text stays.
                 const t = (key, fallback) => (window.JellyTwiggy && window.JellyTwiggy.t ? window.JellyTwiggy.t(key) : fallback);
