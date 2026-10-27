@@ -25,21 +25,24 @@ Jelly Twiggy extends the Jellyfin web client with poster badges, playback option
 ## Screenshots
 
 <p align="center">
-  <img src="assets/previews/posters.png" alt="Poster badges">
+  <img src="assets/previews/posters.jpg" alt="Poster badges">
 </p>
 <p align="center">
-  <img src="assets/previews/details.png" width="49%" alt="Item page">
-  <img src="assets/previews/streams.png" width="30%" alt="Active streams">
+  <img src="assets/previews/details.jpg" width="56%" alt="Item page">
+  <img src="assets/previews/streams.png" width="34%" alt="Active streams">
 </p>
 <p align="center">
   <img src="assets/previews/dashboard.png" alt="Dashboard edit mode">
 </p>
 <p align="center">
-  <img src="assets/previews/stats.png" width="62%" alt="Playback statistics">
+  <img src="assets/previews/stats.png" width="58%" alt="Playback statistics">
   <img src="assets/previews/settings.png" width="34%" alt="User settings">
 </p>
+<p align="center">
+  <img src="assets/previews/alphabet.jpg" width="60%" alt="Alphabet picker">
+</p>
 
-*Titles and artwork in the screenshots are made up.*
+*Screenshots use posters of the Blender open movies Big Buck Bunny, Sintel, Tears of Steel, Spring and Cosmos Laundromat (© Blender Foundation, CC BY) and Boris Bilinsky's Metropolis poster (public domain); users and statistics are made up.*
 
 ## Install
 
