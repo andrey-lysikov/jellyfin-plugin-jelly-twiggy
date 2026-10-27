@@ -11,13 +11,13 @@
     const scriptUrl = new URL(script.src, window.location.href);
     const version = scriptUrl.searchParams.get('v') || '';
     const base = scriptUrl.href.replace(/js\/jelly-twiggy\.js.*$/, '');
-    const modules = ['i18n', 'core', 'badges', 'player', 'settings', 'streams', 'watchers', 'dashboard', 'favorites', 'mediainfo', 'alphabet', 'sync'];
+    const modules = ['i18n', 'core', 'badges', 'player', 'settings', 'streams', 'watchers', 'dashboard', 'favorites', 'mediainfo', 'sync'];
 
     const versioned = (path) => `${base}${path}?v=${encodeURIComponent(version)}`;
 
     window.JellyTwiggy = { version, asset: versioned };
 
-    for (const sheet of ['jelly-twiggy', 'dashboard', 'alphabet']) {
+    for (const sheet of ['jelly-twiggy', 'dashboard']) {
         document.head.appendChild(Object.assign(document.createElement('link'), {
             rel: 'stylesheet',
             href: versioned(`css/${sheet}.css`)

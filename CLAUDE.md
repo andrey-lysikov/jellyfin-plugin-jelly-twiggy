@@ -54,9 +54,6 @@
     `Web/**` как embedded resources, анонимно), `Status`, `ClientConfig`, `UserSettings`,
     `DashboardLayout`, `Badges`, `Items/{id}/Watchers`, `Sessions`, `Statistics`; плюс
     `JellyTwiggyDashboardController` (`LibraryResolutions`, `SystemMetrics`).
-    Алфавитный указатель (`Web/js/alphabet.js`) считает буквы в браузере: запрос списка страницы
-    подсматривается в fetch/XHR, буквы грузятся тем же путём (за прокси тоже). В современном (React) интерфейсе
-    рисуем свои кнопки рядом со скрытыми MUI и вызываем `onChange` компонента через React fiber.
     Имена методов — с префиксом `JellyTwiggy`: Jellyfin делает из них operationId в swagger;
   - `History/` — журнал воспроизведений (`PlaybackTracker` слушает события сессий и
     `UserDataSaved`, `PlaybackHistoryStore` — JSONL в памяти), «Просмотрено», статистика;
@@ -64,8 +61,8 @@
   - `Storage/` — пользовательские настройки и раскладка панели (JSON на пользователя);
   - `Configuration/` — конфиг плагина и страница настроек админа;
   - `Web/` — клиент: `js/jelly-twiggy.js` (загрузчик) грузит по порядку `i18n`, `core`, `badges`,
-    `player`, `settings`, `streams`, `watchers`, `dashboard`, `favorites`, `mediainfo`, `alphabet`, `sync`;
-    стили — `css/jelly-twiggy.css` + `css/dashboard.css` + `css/alphabet.css`; строки модулей — `JT.addStrings`.
+    `player`, `settings`, `streams`, `watchers`, `dashboard`, `favorites`, `mediainfo`, `sync`;
+    стили — `css/jelly-twiggy.css` + `css/dashboard.css`; строки модулей — `JT.addStrings`.
     Глобальный объект `window.JellyTwiggy` (`JT`), модули регистрируются через `JT.register`.
 - Данные плагина: `<jellyfin data>/jellytwiggy/` (не в папке плагина — переживают обновления).
 - API Jellyfin отдаёт JSON в PascalCase — клиент читает поля в PascalCase.
@@ -126,7 +123,7 @@
   `https://raw.githubusercontent.com/andrey-lysikov/jellyfin-plugin-jelly-twiggy/manifest/manifest.json`.
 - **Сборка — только через GitHub Actions** (релиз по тегу). На локальной машине **не собираем и
   не устанавливаем** dotnet или другие тулчейны; проверка сборки — через CI.
-- **Версионирование:** 4 компонента везде (сборка, `manifest.json`, тег) — текущая **0.2.2.0**,
+- **Версионирование:** 4 компонента везде (сборка, `manifest.json`, тег) — текущая **0.2.3.0**,
   тег релиза `vX.Y.Z.W`.
 - **Лицензия:** GPL-3.0. Код JE (тоже GPL-3.0) заимствовать можно — с указанием источника
   в комментарии у заимствованного фрагмента и в разделе Credits README.
