@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "0.2.3.0",
+        "changelog": "- Library alphabet picker is back to the standard one: Jellyfin filters letters by sort name, so the plugin no longer changes it\n- Item page: audio and subtitle selects are standard again (frame and arrow as in Jellyfin); the video track stays as badges with the arrow right after them",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/andrey-lysikov/jellyfin-plugin-jelly-twiggy/releases/download/v0.2.3.0/jelly-twiggy_0.2.3.0.zip",
+        "checksum": "284ca6231faaa5823ef27b4f8ef20f00",
+        "timestamp": "2026-10-27T19:51:51Z"
+      },
+      {
         "version": "0.2.2.0",
         "changelog": "- Active streams: the icon ring spins smoothly around its centre; the triangle stays still\n- Stream cards keep device, client and IP address on one line; long names are shortened instead\n- Fix: dropdown arrows of audio and subtitle selects no longer overlap the text\n- Dashboard: resolution badges show the count first and the type in brackets, e.g. 619 [4K]\n- Fix: statistics period tabs did not switch the data after returning to the dashboard\n- Fix: library alphabet picker shows the letters of your titles in the default (modern) layout too\n- Fix: users hidden from the login screen are shown again in the \"Watched\" row\n- Smaller watched circle on cards",
         "targetAbi": "12.0.0.0",
