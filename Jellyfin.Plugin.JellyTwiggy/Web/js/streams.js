@@ -21,22 +21,25 @@
         }
     }
 
+    // { title, note (small, after the title), subtitle }: "Series · S04E01", "Film (2004)", "Track — Artist".
+    // Episode names are left out: libraries often name them after the series and number anyway.
     function titleLines(nowPlaying) {
         if (nowPlaying.SeriesName) {
             const number = nowPlaying.SeasonNumber != null && nowPlaying.EpisodeNumber != null
-                ? `S${String(nowPlaying.SeasonNumber).padStart(2, '0')}E${String(nowPlaying.EpisodeNumber).padStart(2, '0')} · `
+                ? ` · S${String(nowPlaying.SeasonNumber).padStart(2, '0')}E${String(nowPlaying.EpisodeNumber).padStart(2, '0')}`
                 : '';
-            return [nowPlaying.SeriesName, number + (nowPlaying.Name || '')];
+            return { title: nowPlaying.SeriesName + number };
         }
         if (nowPlaying.Album || nowPlaying.Artists) {
-            return [nowPlaying.Name, [nowPlaying.Artists, nowPlaying.Album].filter(Boolean).join(' · ')];
+            return { title: [nowPlaying.Name, nowPlaying.Artists].filter(Boolean).join(' — '), subtitle: nowPlaying.Album || '' };
         }
-        return [nowPlaying.Name, nowPlaying.Year ? String(nowPlaying.Year) : ''];
+        return { title: nowPlaying.Name, note: nowPlaying.Year ? `(${nowPlaying.Year})` : '' };
     }
 
+    // Always present (empty without transcoding info), so in-place updates can swap it.
     function techChips(transcode) {
         if (!transcode) {
-            return null;
+            return JT.el('div', { className: 'jt-session-chips' });
         }
 
         const direct = JT.t('techDirect');
@@ -95,7 +98,7 @@
             ]);
         }
 
-        const [title, subtitle] = titleLines(nowPlaying);
+        const { title, note, subtitle } = titleLines(nowPlaying);
         const progress = nowPlaying.RunTimeTicks ? Math.min(100, (nowPlaying.PositionTicks || 0) * 100 / nowPlaying.RunTimeTicks) : 0;
         const imageUrl = JT.imageUrl(`Items/${nowPlaying.ImageItemId}/Images/Primary`, { maxHeight: 270, quality: 90 });
         const poster = JT.el('img', { className: 'jt-session-poster', alt: '', loading: 'lazy', src: imageUrl });
@@ -107,42 +110,47 @@
         }, { once: true });
 
         const methodClass = nowPlaying.PlayMethod === 'Transcode' ? 'jt-chip-warn' : 'jt-chip-ok';
+        // Top: poster | title, badges, device, progress. Bottom, full width: transcoding chips.
         return JT.el('a', { className: 'jt-session', href: `#/details?id=${nowPlaying.ItemId}`, 'data-jt-key': key, 'data-jt-item': nowPlaying.ItemId }, [
             backdrop,
             poster,
             JT.el('div', { className: 'jt-session-info' }, [
                 JT.el('div', { className: 'jt-session-top' }, [
                     JT.el('div', { className: 'jt-session-titles' }, [
-                        JT.el('div', { className: 'jt-session-title', text: title || '' }),
-                        subtitle ? JT.el('div', { className: 'jt-session-subtitle', text: subtitle }) : null,
-                        deviceLine(session)
+                        JT.el('div', { className: 'jt-session-title' }, [
+                            title || '',
+                            note ? JT.el('span', { className: 'jt-session-note', text: note }) : null
+                        ]),
+                        subtitle ? JT.el('div', { className: 'jt-session-subtitle', text: subtitle }) : null
                     ]),
                     userChip(session)
                 ]),
+                JT.el('div', { className: 'jt-session-badges' }),
+                deviceLine(session),
                 JT.el('div', { className: 'jt-session-bottom' }, [
                     JT.el('div', { className: 'jt-session-progress' }, JT.el('div', { className: 'jt-session-progress-bar', style: `width:${progress}%` })),
                     JT.el('div', { className: 'jt-session-status' }, [
                         JT.icon(nowPlaying.IsPaused ? 'pause' : 'play_arrow'),
                         JT.el('span', { text: `${JT.formatTicks(nowPlaying.PositionTicks)} / ${JT.formatTicks(nowPlaying.RunTimeTicks)}` }),
                         nowPlaying.PlayMethod ? JT.el('span', { className: `jt-chip ${methodClass}`, text: playMethodLabel(nowPlaying.PlayMethod) }) : null
-                    ]),
-                    techChips(nowPlaying.Transcode)
+                    ])
                 ])
-            ])
+            ]),
+            techChips(nowPlaying.Transcode)
         ]);
     };
 
     // Quality and audio of what is playing, the same badges as on posters.
     async function addBadges(card) {
-        const titles = card.querySelector('.jt-session-titles');
-        if (!titles || !card.dataset.jtItem || !JT.fetchBadges) {
+        const slot = card.querySelector('.jt-session-badges');
+        if (!slot || !card.dataset.jtItem || !JT.fetchBadges) {
             return;
         }
         try {
             const badges = await JT.fetchBadges(card.dataset.jtItem);
             const row = badges ? [...JT.videoBadges(badges), badges.Audio ? JT.el('span', { className: 'jt-badge', text: badges.Audio }) : null].filter(Boolean) : [];
-            if (row.length && !titles.querySelector('.jt-session-badges')) {
-                titles.appendChild(JT.el('div', { className: 'jt-session-badges' }, row));
+            if (row.length && !slot.hasChildNodes()) {
+                slot.replaceChildren(...row);
             }
         } catch (e) {
             console.error('[JellyTwiggy] session badges', e);
@@ -164,7 +172,7 @@
                 addBadges(fresh);
                 return fresh;
             }
-            for (const selector of ['.jt-session-bottom', '.jt-session-device', '.jt-session-status']) {
+            for (const selector of ['.jt-session-bottom', '.jt-session-device', '.jt-session-status', '.jt-session-chips']) {
                 const current = old.querySelector(selector);
                 const next = fresh.querySelector(selector);
                 if (current && next && current.outerHTML !== next.outerHTML) {
