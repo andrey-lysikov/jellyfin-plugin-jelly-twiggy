@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "0.2.4.0",
+        "changelog": "- Dashboard: even larger CPU and RAM charts and disk speeds\n- Stream cards: device and client are no longer cut with an ellipsis; the IP address never breaks in the middle\n- Fix: dark corners behind posters with a large or no corner radius\n- Item page: a small gap before the text of audio and subtitle selects; no arrow next to the video badges",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/andrey-lysikov/jellyfin-plugin-jelly-twiggy/releases/download/v0.2.4.0/jelly-twiggy_0.2.4.0.zip",
+        "checksum": "278a2bb02cab3dd3554968fea76246fb",
+        "timestamp": "2026-10-27T20:19:01Z"
+      },
+      {
         "version": "0.2.3.0",
         "changelog": "- Library alphabet picker is back to the standard one: Jellyfin filters letters by sort name, so the plugin no longer changes it\n- Item page: audio and subtitle selects are standard again (frame and arrow as in Jellyfin); the video track stays as badges with the arrow right after them",
         "targetAbi": "12.0.0.0",
