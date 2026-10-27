@@ -218,6 +218,11 @@
 
     // ---- Blocks ----------------------------------------------------------------------------
 
+    // Old dashboard pages may linger hidden in the DOM: only the visible copy of a block is updated.
+    function ownBlock(id) {
+        return Array.from(document.querySelectorAll(`[data-jt-block="${id}"]`)).find((el) => el.getClientRects().length > 0) || null;
+    }
+
     function blockHeader(title, href) {
         return JT.el('a', { className: 'jt-dash-block-header', href: href || null }, [
             JT.el('h3', { text: title }),
@@ -233,7 +238,7 @@
     }
 
     async function refreshDevices() {
-        const list = document.querySelector('[data-jt-block="devices"] .jt-devices-list');
+        const list = ownBlock('devices')?.querySelector('.jt-devices-list');
         if (!list) {
             return;
         }
@@ -344,7 +349,7 @@
     }
 
     async function refreshRecent() {
-        const content = document.querySelector('[data-jt-block="recent"] .jt-recent');
+        const content = ownBlock('recent')?.querySelector('.jt-recent');
         if (!content) {
             return;
         }
@@ -403,7 +408,7 @@
     }
 
     function renderStatsContent() {
-        const content = document.querySelector('[data-jt-block="stats"] .jt-stats');
+        const content = ownBlock('stats')?.querySelector('.jt-stats');
         if (!content || !lastStats) {
             return;
         }
@@ -415,7 +420,7 @@
     }
 
     async function refreshStats() {
-        const content = document.querySelector('[data-jt-block="stats"] .jt-stats');
+        const content = ownBlock('stats')?.querySelector('.jt-stats');
         if (!content) {
             return;
         }
@@ -448,7 +453,7 @@
             }
             const badges = RESOLUTION_KEYS.filter((key) => counts[key] > 0).map((key) => JT.el('span', {
                 className: `jt-badge jt-q-${key.toLowerCase()}`,
-                text: `${key} ${counts[key].toLocaleString(JT.language())}`
+                text: `${counts[key].toLocaleString(JT.language())} [${key}]`
             }));
             if (badges.length) {
                 card.classList.add('jt-res-card');

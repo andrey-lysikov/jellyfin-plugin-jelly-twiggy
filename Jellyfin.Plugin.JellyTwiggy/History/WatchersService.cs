@@ -74,9 +74,8 @@ public class WatchersService
         };
 
         var watchers = new List<WatcherDto>();
-        // Disabled and hidden accounts are not shown to other users.
-        var users = _userManager.GetUsers()
-            .Where(u => !u.HasPermission(PermissionKind.IsDisabled) && !u.HasPermission(PermissionKind.IsHidden));
+        // Disabled accounts are not shown; IsHidden only hides a user from the login screen.
+        var users = _userManager.GetUsers().Where(u => !u.HasPermission(PermissionKind.IsDisabled));
         foreach (var user in users)
         {
             var watcher = childKind is null
