@@ -2,8 +2,11 @@
 
 ## 0.2.3.0
 
+- Dashboard: even larger CPU and RAM charts and disk speeds
+- Stream cards: device and client are no longer cut with an ellipsis; the IP address never breaks in the middle
+- Fix: dark corners behind posters with a large or no corner radius
 - Library alphabet picker is back to the standard one: Jellyfin filters letters by sort name, so the plugin no longer changes it
-- Item page: audio and subtitle selects are standard again (frame and arrow as in Jellyfin); the video track stays as badges with the arrow right after them
+- Item page: audio and subtitle selects are standard again (frame and arrow as in Jellyfin, with a small gap before the text); the video track is shown as badges without an arrow
 
 ## 0.2.2.0
 

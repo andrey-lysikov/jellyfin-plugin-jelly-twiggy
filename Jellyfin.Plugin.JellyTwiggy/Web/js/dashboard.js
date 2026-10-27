@@ -483,7 +483,7 @@
 
     function donut(label) {
         const element = JT.el('div', { className: 'jt-donut' });
-        element.innerHTML = `<svg viewBox="0 0 96 96" width="96" height="96"><circle cx="48" cy="48" r="${DONUT_R}" class="jt-donut-track"/>`
+        element.innerHTML = `<svg viewBox="0 0 96 96" width="100%" height="100%"><circle cx="48" cy="48" r="${DONUT_R}" class="jt-donut-track"/>`
             + `<circle cx="48" cy="48" r="${DONUT_R}" class="jt-donut-value" stroke-dasharray="0 ${DONUT_C}" transform="rotate(-90 48 48)"/></svg>`;
         element.append(JT.el('div', { className: 'jt-donut-text' }, [
             JT.el('span', { className: 'jt-donut-percent' }),

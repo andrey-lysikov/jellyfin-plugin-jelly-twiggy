@@ -64,7 +64,7 @@
         ]);
     }
 
-    // One line: device and client shrink with an ellipsis, the address stays whole.
+    // Device and client, then the address as one unbreakable piece.
     function deviceLine(session) {
         const name = [session.DeviceName, session.Client].filter(Boolean).join(' · ');
         return JT.el('div', { className: 'jt-session-device' }, [

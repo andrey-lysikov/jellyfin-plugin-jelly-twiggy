@@ -59,8 +59,8 @@
 
 .jt-donut {
     position: relative;
-    width: 96px;
-    height: 96px;
+    width: 128px;
+    height: 128px;
 }
 
 .jt-donut svg { display: block; }
@@ -93,13 +93,13 @@
 }
 
 .jt-donut-percent {
-    font-size: 19px;
+    font-size: 26px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
 }
 
 .jt-donut-label {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--jt-muted, rgba(255, 255, 255, 0.6));
 }
 
@@ -108,8 +108,8 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-    min-width: 9em;
-    font-size: 0.9em;
+    min-width: 10em;
+    font-size: 1em;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
 }
