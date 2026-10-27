@@ -5,7 +5,10 @@
     const modules = [];
     const domListeners = [];
     const navigationListeners = [];
+    const userListeners = [];
+    const changedRoots = new Set();
     let domScheduled = false;
+    let fullPass = false;
 
     JT.config = null;
     JT.settings = null;
@@ -200,8 +203,12 @@
 
     // ---- Page tracking ---------------------------------------------------------------------
 
-    // Called (throttled to one animation frame) after DOM changes.
+    // Called (throttled to one animation frame) after DOM changes with the changed subtrees,
+    // or with null for a full pass (navigation, user switch).
     JT.onDomChange = (fn) => domListeners.push(fn);
+
+    // Called after another user logged in, once their configuration and settings are loaded.
+    JT.onUserChange = (fn) => userListeners.push(fn);
 
     // Called on route changes with the current hash.
     JT.onNavigate = (fn) => navigationListeners.push(fn);
@@ -220,19 +227,47 @@
 
     function runDomListeners() {
         domScheduled = false;
+        const roots = fullPass ? null : Array.from(changedRoots);
+        fullPass = false;
+        changedRoots.clear();
         for (const fn of domListeners) {
             try {
-                fn();
+                fn(roots);
             } catch (e) {
                 console.error('[JellyTwiggy]', e);
             }
         }
     }
 
-    function scheduleDom() {
+    function scheduleDom(full) {
+        fullPass = fullPass || full === true;
         if (!domScheduled) {
             domScheduled = true;
             requestAnimationFrame(runDomListeners);
+        }
+    }
+
+    // Our own badges, buttons and panels: adding or removing them must not wake the listeners again.
+    const isOwnNode = (node) => node.nodeType === Node.ELEMENT_NODE
+        && (node.id?.startsWith('jt-') || Array.from(node.classList).some((name) => name.startsWith('jt-')));
+
+    function onMutations(records) {
+        for (const record of records) {
+            if (record.type === 'attributes') {
+                changedRoots.add(record.target);
+                continue;
+            }
+            const added = Array.from(record.addedNodes).filter((node) => !isOwnNode(node));
+            const removedForeign = Array.from(record.removedNodes).some((node) => !isOwnNode(node));
+            for (const node of added) {
+                changedRoots.add(node.nodeType === Node.ELEMENT_NODE ? node : record.target);
+            }
+            if (removedForeign) {
+                changedRoots.add(record.target);
+            }
+        }
+        if (changedRoots.size > 0) {
+            scheduleDom();
         }
     }
 
@@ -245,7 +280,7 @@
                 console.error('[JellyTwiggy]', e);
             }
         }
-        scheduleDom();
+        scheduleDom(true);
     }
 
     // ---- Startup ---------------------------------------------------------------------------
@@ -288,11 +323,25 @@
         }
     };
 
+    // The new user's id, config and settings are published together, so no module ever sees a mix.
     async function loadUserState() {
-        JT.userId = await waitForLogin();
-        JT.config = await JT.get('JellyTwiggy/ClientConfig');
-        await JT.reloadSettings();
+        const userId = await waitForLogin();
+        const config = await JT.get('JellyTwiggy/ClientConfig');
+        const settings = await JT.get('JellyTwiggy/UserSettings');
+        const switched = !!JT.userId && JT.userId !== userId;
+        JT.userId = userId;
+        JT.config = config;
+        JT.settings = settings;
         JT.applyClasses();
+        if (switched) {
+            for (const fn of userListeners) {
+                try {
+                    fn(userId);
+                } catch (e) {
+                    console.error('[JellyTwiggy]', e);
+                }
+            }
+        }
     }
 
     async function start() {
@@ -312,7 +361,8 @@
             }
         }
 
-        new MutationObserver(scheduleDom).observe(document.body, { childList: true, subtree: true });
+        // data-id changes catch cards that virtual lists reuse for another item.
+        new MutationObserver(onMutations).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-id'] });
         window.addEventListener('hashchange', runNavigation);
         document.addEventListener('viewshow', runNavigation);
         runNavigation();

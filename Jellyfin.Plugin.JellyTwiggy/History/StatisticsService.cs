@@ -5,9 +5,6 @@ namespace Jellyfin.Plugin.JellyTwiggy.History;
 /// <summary>Playback statistics for a period.</summary>
 public class StatisticsDto
 {
-    /// <summary>Gets or sets the period length in days.</summary>
-    public int Days { get; set; }
-
     /// <summary>Gets or sets the total number of plays.</summary>
     public int TotalPlays { get; set; }
 
@@ -31,7 +28,7 @@ public class StatisticsDto
 public record UserStatDto(Guid UserId, string UserName, int Plays, double Seconds);
 
 /// <summary>Per-title statistics.</summary>
-public record TitleStatDto(Guid ItemId, string Name, string ItemType, int Plays, double Seconds, int Users);
+public record TitleStatDto(Guid ItemId, string Name, int Plays, double Seconds, int Users);
 
 /// <summary>One play in the recent feed.</summary>
 public record RecentPlayDto(
@@ -76,7 +73,6 @@ public class StatisticsService
 
         return new StatisticsDto
         {
-            Days = days,
             TotalPlays = plays.Count,
             TotalSeconds = plays.Sum(r => r.PlayedSeconds),
             Users = plays
@@ -89,7 +85,6 @@ public class StatisticsService
                 .Select(g => new TitleStatDto(
                     g.Key,
                     g.Last().SeriesName ?? g.Last().ItemName,
-                    g.Last().ItemType,
                     g.Count(),
                     g.Sum(r => r.PlayedSeconds),
                     g.Select(r => r.UserId).Distinct().Count()))

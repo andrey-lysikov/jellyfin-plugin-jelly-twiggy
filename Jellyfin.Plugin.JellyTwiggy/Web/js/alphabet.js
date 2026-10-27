@@ -11,6 +11,8 @@
     const SKIPPED = new Set(['StartIndex', 'Limit', 'NameStartsWith', 'NameLessThan', 'NameStartsWithOrGreater', 'Fields',
         'EnableImages', 'EnableImageTypes', 'ImageTypeLimit', 'EnableUserData', 'EnableTotalRecordCount']);
     const COMPACT_FROM = 28;
+    const RETRY_MS = 30000;
+    const failures = new Map(); // query -> time after which a failed load may be retried
 
     const listings = new Map(); // route -> latest library listing { key, params }
     let lastListing = null;
@@ -33,8 +35,8 @@
         params.set('SortBy', 'SortName');
         params.set('SortOrder', descending ? 'Descending' : 'Ascending');
         const key = `${source}?${params}`;
-        lastListing = { key, source, params };
-        listings.set(JT.route(), lastListing);
+        lastListing = { key, source, params, route: JT.route() };
+        listings.set(lastListing.route, lastListing);
     }
 
     // Library pages keep their query private, so it is read from the ApiClient call that loads the list.
@@ -110,22 +112,29 @@
         picker.classList.toggle('jt-alpha-compact', letters.length >= COMPACT_FROM);
     }
 
+    // The picker is position: fixed, so offsetParent is always null; hidden pages and tabs are told by class.
+    const isShown = (picker) => !picker.closest('.hide, .pageTabContent:not(.is-active)');
+
     async function update() {
         patchApiClient();
-        const picker = Array.from(document.querySelectorAll(PICKER)).find((element) => element.offsetParent !== null);
-        const listing = listings.get(JT.route()) || lastListing;
-        if (!picker || !listing || picker.dataset.jtLetters === listing.key) {
+        const picker = Array.from(document.querySelectorAll(PICKER)).find(isShown);
+        // The latest listing belongs to the active tab; another page's listing never applies here.
+        const route = JT.route();
+        const listing = lastListing?.route === route ? lastListing : listings.get(route);
+        if (!picker || !listing || picker.dataset.jtLetters === listing.key || (failures.get(listing.key) || 0) > Date.now()) {
             return;
         }
 
         picker.dataset.jtLetters = listing.key;
         try {
             const letters = await loadLetters(listing);
+            failures.delete(listing.key);
             if (picker.dataset.jtLetters === listing.key) {
                 render(picker, letters);
             }
         } catch (e) {
             console.error('[JellyTwiggy] alphabet letters', e);
+            failures.set(listing.key, Date.now() + RETRY_MS);
             delete picker.dataset.jtLetters;
         }
     }

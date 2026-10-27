@@ -14,7 +14,7 @@ using Microsoft.Extensions.Logging;
 namespace Jellyfin.Plugin.JellyTwiggy.History;
 
 /// <summary>Turns server playback events into <see cref="PlaybackRecord"/>s.</summary>
-public sealed class PlaybackTracker : IHostedService
+public sealed class PlaybackTracker : IHostedService, IDisposable
 {
     // Progress reports arrive about every 10 seconds; a longer gap (lost reports, a sleeping client)
     // is not counted as watch time beyond this.
@@ -23,8 +23,21 @@ public sealed class PlaybackTracker : IHostedService
     // Short accidental plays are not worth a history entry.
     private const double MinRecordedSeconds = 30;
 
-    // A client that marks an item played right after finishing it must not count a second view.
-    private static readonly TimeSpan ManualMarkDedupWindow = TimeSpan.FromMinutes(10);
+    // A view needs at least this share of the time it takes to reach the "played" point, so seeking to the end doesn't count.
+    private const double MinWatchedShare = 0.5;
+
+    private const int MaxTextLength = 200;
+
+    // A second "completed" for the same user and item within this window is the same view (e.g. a client marking it played).
+    private static readonly TimeSpan CompletedDedupWindow = TimeSpan.FromMinutes(10);
+
+    // Playback with no report for this long is treated as stopped (closed tab, lost connection).
+    private static readonly TimeSpan StaleAfter = TimeSpan.FromMinutes(5);
+
+    // A progress report racing a stop must not start a new entry.
+    private static readonly TimeSpan StoppedMemory = TimeSpan.FromSeconds(30);
+
+    private static readonly TimeSpan SweepInterval = TimeSpan.FromMinutes(1);
 
     private readonly ISessionManager _sessionManager;
     private readonly IUserDataManager _userDataManager;
@@ -33,6 +46,9 @@ public sealed class PlaybackTracker : IHostedService
     private readonly PlaybackHistoryStore _store;
     private readonly ILogger<PlaybackTracker> _logger;
     private readonly ConcurrentDictionary<string, ActivePlayback> _active = new();
+    private readonly ConcurrentDictionary<string, DateTime> _recentlyStopped = new();
+    private readonly Lock _recordLock = new();
+    private Timer? _sweepTimer;
 
     /// <summary>Initializes a new instance of the <see cref="PlaybackTracker"/> class.</summary>
     public PlaybackTracker(
@@ -57,7 +73,9 @@ public sealed class PlaybackTracker : IHostedService
         _sessionManager.PlaybackStart += OnPlaybackStart;
         _sessionManager.PlaybackProgress += OnPlaybackProgress;
         _sessionManager.PlaybackStopped += OnPlaybackStopped;
+        _sessionManager.SessionEnded += OnSessionEnded;
         _userDataManager.UserDataSaved += OnUserDataSaved;
+        _sweepTimer = new Timer(_ => Sweep(), null, SweepInterval, SweepInterval);
         return Task.CompletedTask;
     }
 
@@ -67,13 +85,32 @@ public sealed class PlaybackTracker : IHostedService
         _sessionManager.PlaybackStart -= OnPlaybackStart;
         _sessionManager.PlaybackProgress -= OnPlaybackProgress;
         _sessionManager.PlaybackStopped -= OnPlaybackStopped;
+        _sessionManager.SessionEnded -= OnSessionEnded;
         _userDataManager.UserDataSaved -= OnUserDataSaved;
+        _sweepTimer?.Change(Timeout.Infinite, Timeout.Infinite);
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc />
+    public void Dispose() => _sweepTimer?.Dispose();
+
     private static string GetKey(PlaybackProgressEventArgs e) => $"{e.Session?.Id}|{e.Item?.Id}";
 
+    private static string? Truncate(string? text) => text is null || text.Length <= MaxTextLength ? text : text[..MaxTextLength];
+
     private void OnPlaybackStart(object? sender, PlaybackProgressEventArgs e)
+    {
+        try
+        {
+            Begin(e);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Jelly Twiggy: failed to track playback start");
+        }
+    }
+
+    private void Begin(PlaybackProgressEventArgs e)
     {
         if (e.Item is null || e.Users.Count == 0)
         {
@@ -81,8 +118,14 @@ public sealed class PlaybackTracker : IHostedService
         }
 
         var now = DateTime.UtcNow;
-        _active[GetKey(e)] = new ActivePlayback
+        var key = GetKey(e);
+        _recentlyStopped.TryRemove(key, out _);
+        _active[key] = new ActivePlayback
         {
+            Item = e.Item,
+            Users = [.. e.Users],
+            Client = e.ClientName ?? e.Session?.Client,
+            Device = e.DeviceName ?? e.Session?.DeviceName,
             StartedUtc = now,
             LastReportUtc = now,
             IsPaused = e.IsPaused,
@@ -93,64 +136,139 @@ public sealed class PlaybackTracker : IHostedService
 
     private void OnPlaybackProgress(object? sender, PlaybackProgressEventArgs e)
     {
-        if (e.Item is null || !_active.TryGetValue(GetKey(e), out var playback))
+        try
         {
-            // Playback that started before the server (or plugin) did: track it from now on.
-            OnPlaybackStart(sender, e);
-            return;
-        }
-
-        lock (playback)
-        {
-            Accumulate(playback);
-            playback.IsPaused = e.IsPaused;
-            playback.PositionTicks = e.PlaybackPositionTicks ?? playback.PositionTicks;
-            // Remember a transcode even if the session switches to direct play later.
-            if (playback.PlayMethod != PlayMethod.Transcode)
+            if (e.Item is null)
             {
-                playback.PlayMethod = e.Session?.PlayState?.PlayMethod ?? playback.PlayMethod;
+                return;
             }
+
+            var key = GetKey(e);
+            if (!_active.TryGetValue(key, out var playback))
+            {
+                // Playback that started before the server (or plugin) did is tracked from now on,
+                // unless this report trails a stop that just happened.
+                if (!_recentlyStopped.ContainsKey(key))
+                {
+                    Begin(e);
+                }
+
+                return;
+            }
+
+            lock (playback)
+            {
+                Accumulate(playback);
+                playback.IsPaused = e.IsPaused;
+                playback.PositionTicks = e.PlaybackPositionTicks ?? playback.PositionTicks;
+                // Remember a transcode even if the session switches to direct play later.
+                if (playback.PlayMethod != PlayMethod.Transcode)
+                {
+                    playback.PlayMethod = e.Session?.PlayState?.PlayMethod ?? playback.PlayMethod;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Jelly Twiggy: failed to track playback progress");
         }
     }
 
     private void OnPlaybackStopped(object? sender, PlaybackStopEventArgs e)
     {
-        if (e.Item is null || !_active.TryRemove(GetKey(e), out var playback))
-        {
-            return;
-        }
-
         try
         {
-            lock (playback)
+            if (e.Item is not null)
             {
-                Accumulate(playback);
-                playback.PositionTicks = e.PlaybackPositionTicks ?? playback.PositionTicks;
-            }
-
-            var completed = e.PlayedToCompletion || ReachedThreshold(playback.PositionTicks, e.Item.RunTimeTicks);
-            if (!completed && playback.PlayedSeconds < MinRecordedSeconds)
-            {
-                return;
-            }
-
-            foreach (var user in e.Users)
-            {
-                var record = CreateRecord(user, e.Item);
-                record.StartedUtc = playback.StartedUtc;
-                record.EndedUtc = DateTime.UtcNow;
-                record.PlayedSeconds = Math.Round(playback.PlayedSeconds);
-                record.PositionTicks = playback.PositionTicks;
-                record.Completed = completed;
-                record.Client = e.ClientName ?? e.Session?.Client;
-                record.Device = e.DeviceName ?? e.Session?.DeviceName;
-                record.PlayMethod = playback.PlayMethod?.ToString();
-                _store.Add(record);
+                Finish(GetKey(e), e.PlaybackPositionTicks, accumulate: true);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Jelly Twiggy: failed to record playback of {ItemId}", e.Item.Id);
+            _logger.LogError(ex, "Jelly Twiggy: failed to record playback of {ItemId}", e.Item?.Id);
+        }
+    }
+
+    // A closed tab or dropped connection ends the session without a stop event.
+    private void OnSessionEnded(object? sender, SessionEventArgs e)
+    {
+        try
+        {
+            var prefix = $"{e.SessionInfo?.Id}|";
+            foreach (var key in _active.Keys.Where(k => k.StartsWith(prefix, StringComparison.Ordinal)).ToList())
+            {
+                Finish(key, null, accumulate: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Jelly Twiggy: failed to record playback of an ended session");
+        }
+    }
+
+    private void Sweep()
+    {
+        try
+        {
+            var now = DateTime.UtcNow;
+            foreach (var (key, playback) in _active.ToArray())
+            {
+                if (now - playback.LastReportUtc > StaleAfter)
+                {
+                    // No reports for minutes: the time since the last one is not watch time.
+                    Finish(key, null, accumulate: false);
+                }
+            }
+
+            foreach (var (key, stoppedAt) in _recentlyStopped.ToArray())
+            {
+                if (now - stoppedAt > StoppedMemory)
+                {
+                    _recentlyStopped.TryRemove(key, out _);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Jelly Twiggy: failed to sweep stale playback");
+        }
+    }
+
+    private void Finish(string key, long? positionTicks, bool accumulate)
+    {
+        if (!_active.TryRemove(key, out var playback))
+        {
+            return;
+        }
+
+        _recentlyStopped[key] = DateTime.UtcNow;
+        lock (playback)
+        {
+            if (accumulate)
+            {
+                Accumulate(playback);
+            }
+
+            playback.PositionTicks = positionTicks ?? playback.PositionTicks;
+        }
+
+        var completed = IsCompleted(playback.PositionTicks, playback.PlayedSeconds, playback.Item.RunTimeTicks);
+        if (!completed && playback.PlayedSeconds < MinRecordedSeconds)
+        {
+            return;
+        }
+
+        foreach (var user in playback.Users)
+        {
+            var record = CreateRecord(user, playback.Item);
+            record.StartedUtc = playback.StartedUtc;
+            record.EndedUtc = DateTime.UtcNow;
+            record.PlayedSeconds = Math.Round(playback.PlayedSeconds);
+            record.PositionTicks = playback.PositionTicks;
+            record.Client = Truncate(playback.Client);
+            record.Device = Truncate(playback.Device);
+            record.PlayMethod = playback.PlayMethod?.ToString();
+            AddRecord(record, completed);
         }
     }
 
@@ -163,13 +281,6 @@ public sealed class PlaybackTracker : IHostedService
 
         try
         {
-            var since = DateTime.UtcNow - ManualMarkDedupWindow;
-            var itemId = e.Item.Id;
-            if (_store.Find(r => r.UserId == e.UserId && r.ItemId == itemId && r.Completed && r.EndedUtc >= since).Count > 0)
-            {
-                return;
-            }
-
             var user = _userManager.GetUserById(e.UserId);
             if (user is null)
             {
@@ -178,9 +289,8 @@ public sealed class PlaybackTracker : IHostedService
 
             var record = CreateRecord(user, e.Item);
             record.StartedUtc = record.EndedUtc = DateTime.UtcNow;
-            record.Completed = true;
             record.Manual = true;
-            _store.Add(record);
+            AddRecord(record, completed: true);
         }
         catch (Exception ex)
         {
@@ -188,8 +298,26 @@ public sealed class PlaybackTracker : IHostedService
         }
     }
 
-    // Same rule as Jellyfin's "Max resume percentage": past it, the item counts as played.
-    private bool ReachedThreshold(long positionTicks, long? runtimeTicks)
+    // The single place that decides whether a record counts as a view; dedup and write are one step.
+    private void AddRecord(PlaybackRecord record, bool completed)
+    {
+        lock (_recordLock)
+        {
+            var since = record.EndedUtc - CompletedDedupWindow;
+            var repeat = completed && _store.ForUserItem(record.UserId, record.ItemId).Any(r => r.Completed && r.EndedUtc >= since);
+            if (repeat && record.Manual)
+            {
+                return;
+            }
+
+            // A repeat that was actually watched keeps its watch time but is not a second view.
+            record.Completed = completed && !repeat;
+            _store.Add(record);
+        }
+    }
+
+    // Same point as Jellyfin's "Max resume percentage", plus enough real watch time to get there.
+    private bool IsCompleted(long positionTicks, double playedSeconds, long? runtimeTicks)
     {
         if (runtimeTicks is not > 0)
         {
@@ -197,7 +325,9 @@ public sealed class PlaybackTracker : IHostedService
         }
 
         var threshold = _serverConfiguration.Configuration.MaxResumePct;
-        return positionTicks >= runtimeTicks.Value * threshold / 100;
+        var thresholdTicks = runtimeTicks.Value * threshold / 100;
+        var neededSeconds = TimeSpan.FromTicks(thresholdTicks).TotalSeconds * MinWatchedShare;
+        return positionTicks >= thresholdTicks && playedSeconds >= neededSeconds;
     }
 
     private static PlaybackRecord CreateRecord(User user, BaseItem item)
@@ -205,10 +335,10 @@ public sealed class PlaybackTracker : IHostedService
         var record = new PlaybackRecord
         {
             UserId = user.Id,
-            UserName = user.Username,
+            UserName = Truncate(user.Username) ?? string.Empty,
             ItemId = item.Id,
             ItemType = item.GetBaseItemKind().ToString(),
-            ItemName = item.Name,
+            ItemName = Truncate(item.Name) ?? string.Empty,
             RuntimeTicks = item.RunTimeTicks
         };
 
@@ -216,12 +346,12 @@ public sealed class PlaybackTracker : IHostedService
         {
             case Episode episode:
                 record.SeriesId = episode.SeriesId == Guid.Empty ? null : episode.SeriesId;
-                record.SeriesName = episode.SeriesName;
+                record.SeriesName = Truncate(episode.SeriesName);
                 record.SeasonId = episode.SeasonId == Guid.Empty ? null : episode.SeasonId;
                 break;
             case Audio audio:
                 record.AlbumId = audio.AlbumEntity?.Id;
-                record.SeriesName = audio.AlbumEntity?.Name;
+                record.SeriesName = Truncate(audio.AlbumEntity?.Name);
                 break;
         }
 
@@ -241,6 +371,14 @@ public sealed class PlaybackTracker : IHostedService
 
     private sealed class ActivePlayback
     {
+        public required BaseItem Item { get; init; }
+
+        public required List<User> Users { get; init; }
+
+        public string? Client { get; init; }
+
+        public string? Device { get; init; }
+
         public DateTime StartedUtc { get; init; }
 
         public DateTime LastReportUtc { get; set; }

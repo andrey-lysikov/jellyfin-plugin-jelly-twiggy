@@ -80,7 +80,10 @@
                 renderRow(row, watchers || [], item?.Type);
             }
         } catch (e) {
-            console.error('[JellyTwiggy] watchers', e);
+            // 404: an item this user can't see; nothing to show, nothing to report.
+            if (!/: 404$/.test(e?.message || '')) {
+                console.error('[JellyTwiggy] watchers', e);
+            }
             row.hidden = true;
         }
     }
@@ -90,10 +93,14 @@
             return;
         }
 
-        const itemId = JT.routeParam('id');
+        // Only a real item id goes into an API path.
+        const itemId = JT.normalizeId(JT.routeParam('id'));
+        if (!/^[0-9a-f]{32}$/.test(itemId)) {
+            return;
+        }
         const page = JT.visiblePage('.itemDetailPage');
         const group = page?.querySelector('.itemDetailsGroup');
-        if (!itemId || !group) {
+        if (!group) {
             return;
         }
 

@@ -74,8 +74,9 @@
     // Poster left on a blurred copy of itself, user in the top-right corner, progress and tech at the bottom.
     JT.sessionCard = function (session) {
         const nowPlaying = session.NowPlaying;
+        const key = `${session.Id || [session.UserId, session.DeviceName, session.Client].join('/')}|${nowPlaying?.ItemId || 'idle'}`;
         if (!nowPlaying) {
-            return JT.el('div', { className: 'jt-session jt-session-idle' }, [
+            return JT.el('div', { className: 'jt-session jt-session-idle', 'data-jt-key': key }, [
                 JT.el('div', { className: 'jt-session-poster jt-session-poster-empty' }, JT.icon('devices')),
                 JT.el('div', { className: 'jt-session-info' }, JT.el('div', { className: 'jt-session-top' }, [
                     JT.el('div', { className: 'jt-session-titles' }, [
@@ -99,7 +100,7 @@
         }, { once: true });
 
         const methodClass = nowPlaying.PlayMethod === 'Transcode' ? 'jt-chip-warn' : 'jt-chip-ok';
-        return JT.el('a', { className: 'jt-session', href: `#/details?id=${nowPlaying.ItemId}` }, [
+        return JT.el('a', { className: 'jt-session', href: `#/details?id=${nowPlaying.ItemId}`, 'data-jt-key': key, 'data-jt-item': nowPlaying.ItemId }, [
             backdrop,
             poster,
             JT.el('div', { className: 'jt-session-info' }, [
@@ -122,6 +123,58 @@
                 ])
             ])
         ]);
+    };
+
+    // Quality and audio of what is playing, the same badges as on posters.
+    async function addBadges(card) {
+        const titles = card.querySelector('.jt-session-titles');
+        if (!titles || !card.dataset.jtItem || !JT.fetchBadges) {
+            return;
+        }
+        try {
+            const badges = await JT.fetchBadges(card.dataset.jtItem);
+            const row = badges ? [...JT.videoBadges(badges), badges.Audio ? JT.el('span', { className: 'jt-badge', text: badges.Audio }) : null].filter(Boolean) : [];
+            if (row.length && !titles.querySelector('.jt-session-badges')) {
+                titles.appendChild(JT.el('div', { className: 'jt-session-badges' }, row));
+            }
+        } catch (e) {
+            console.error('[JellyTwiggy] session badges', e);
+        }
+    }
+
+    // Updates cards in place by session and item: posters and backdrops stay, so nothing flashes on refresh.
+    JT.renderSessions = function (container, sessions, empty) {
+        if (!sessions.length) {
+            container.replaceChildren(empty);
+            return;
+        }
+
+        const existing = new Map(Array.from(container.children).filter((el) => el.dataset.jtKey).map((el) => [el.dataset.jtKey, el]));
+        const cards = sessions.map((session) => {
+            const fresh = JT.sessionCard(session);
+            const old = existing.get(fresh.dataset.jtKey);
+            if (!old) {
+                addBadges(fresh);
+                return fresh;
+            }
+            for (const selector of ['.jt-session-bottom', '.jt-session-device', '.jt-session-status']) {
+                const current = old.querySelector(selector);
+                const next = fresh.querySelector(selector);
+                if (current && next && current.outerHTML !== next.outerHTML) {
+                    current.replaceWith(next);
+                }
+            }
+            return old;
+        });
+
+        cards.forEach((card, index) => {
+            if (container.children[index] !== card) {
+                container.insertBefore(card, container.children[index] || null);
+            }
+        });
+        while (container.children.length > cards.length) {
+            container.lastElementChild.remove();
+        }
     };
 
     // ---- Header button ---------------------------------------------------------------------
@@ -200,7 +253,7 @@
             closePanel();
             return;
         }
-        panel.replaceChildren(...sessions.map(JT.sessionCard));
+        JT.renderSessions(panel, sessions, JT.el('span'));
     }
 
     function closePanel() {

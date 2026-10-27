@@ -1,3 +1,4 @@
+using Jellyfin.Data;
 using Jellyfin.Data.Enums;
 using Jellyfin.Database.Implementations.Entities;
 using Jellyfin.Database.Implementations.Enums;
@@ -56,10 +57,10 @@ public class WatchersService
         _store = store;
     }
 
-    /// <summary>Gets everyone who watched an item.</summary>
-    public List<WatcherDto>? GetWatchers(Guid itemId)
+    /// <summary>Gets everyone who watched an item; null when it doesn't exist or the viewer can't see it.</summary>
+    public List<WatcherDto>? GetWatchers(Guid itemId, User viewer)
     {
-        var item = _libraryManager.GetItemById(itemId);
+        var item = _libraryManager.GetItemById<BaseItem>(itemId, viewer);
         if (item is null)
         {
             return null;
@@ -73,7 +74,10 @@ public class WatchersService
         };
 
         var watchers = new List<WatcherDto>();
-        foreach (var user in _userManager.GetUsers())
+        // Disabled and hidden accounts are not shown to other users.
+        var users = _userManager.GetUsers()
+            .Where(u => !u.HasPermission(PermissionKind.IsDisabled) && !u.HasPermission(PermissionKind.IsHidden));
+        foreach (var user in users)
         {
             var watcher = childKind is null
                 ? GetItemWatcher(user, item)
@@ -96,11 +100,11 @@ public class WatchersService
     {
         var userId = user.Id;
         var itemId = item.Id;
-        var records = _store.Find(r => r.UserId == userId && r.ItemId == itemId);
+        var records = _store.ForUserItem(userId, itemId);
         var data = _userDataManager.GetUserData(user, item);
 
-        var loggedViews = records.Count(r => r.Completed);
-        var playCount = loggedViews > 0 ? loggedViews : data?.PlayCount ?? 0;
+        // PlayCount counts playback starts, so it only stands in when the log knows nothing about the item.
+        var playCount = records.Count > 0 ? records.Count(r => r.Completed) : data?.PlayCount ?? 0;
         if (playCount == 0 && data?.Played == true)
         {
             playCount = 1;
@@ -133,8 +137,9 @@ public class WatchersService
 
         var containerId = container.Id;
         var userId = user.Id;
-        var records = _store.Find(r => r.UserId == userId
-            && (r.SeriesId == containerId || r.SeasonId == containerId || r.AlbumId == containerId));
+        var records = _store.ForUser(userId)
+            .Where(r => r.SeriesId == containerId || r.SeasonId == containerId || r.AlbumId == containerId)
+            .ToList();
         DateTime? lastFromLog = records.Count > 0 ? records.Max(r => r.EndedUtc) : null;
 
         // The most recently played child gives the date for history older than the log.

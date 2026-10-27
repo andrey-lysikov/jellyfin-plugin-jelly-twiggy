@@ -13,17 +13,18 @@
 
     let currentItemId = null;
     let segments = [];
+    let segmentsLoad = 0; // a newer load makes the results of older ones stale
     const skipped = new Set();
 
     async function fetchNowPlayingItemId(previousId) {
-        // The server learns about a new item slightly after the video element does, so wait for
-        // the id to change; if it never does, the same item is simply being played again.
-        let found = null;
+        // The server learns about a new item slightly after the video element does, so wait for the id
+        // to change; if it never does, the item is unknown (the previous item's segments must not apply).
         for (let attempt = 0; attempt < 6; attempt++) {
             try {
                 const deviceId = window.ApiClient.deviceId();
                 const sessions = await JT.get(`Sessions?deviceId=${encodeURIComponent(deviceId)}`);
-                found = sessions?.find((s) => s.NowPlayingItem)?.NowPlayingItem?.Id || found;
+                const session = sessions?.find((s) => s.DeviceId === deviceId && s.NowPlayingItem);
+                const found = session?.NowPlayingItem?.Id;
                 if (found && found !== previousId) {
                     return found;
                 }
@@ -32,7 +33,7 @@
             }
             await new Promise((resolve) => setTimeout(resolve, 1000));
         }
-        return found;
+        return null;
     }
 
     async function loadSegments() {
@@ -43,13 +44,14 @@
         if (settings().AutoSkipOutro) {
             wanted.push('Outro');
         }
+        const load = ++segmentsLoad;
         segments = [];
         if (wanted.length === 0) {
             return;
         }
 
         const itemId = await fetchNowPlayingItemId(currentItemId);
-        if (!itemId) {
+        if (!itemId || load !== segmentsLoad) {
             return;
         }
         currentItemId = itemId;
@@ -58,7 +60,9 @@
         try {
             const query = wanted.map((type) => `includeSegmentTypes=${type}`).join('&');
             const result = await JT.get(`MediaSegments/${itemId}?${query}`);
-            segments = (result?.Items || []).filter((s) => wanted.includes(s.Type));
+            if (load === segmentsLoad) {
+                segments = (result?.Items || []).filter((s) => wanted.includes(s.Type));
+            }
         } catch (e) {
             console.error('[JellyTwiggy] media segments', e);
         }

@@ -7,32 +7,38 @@
         en: {
             periodAll: 'All time',
             statsRecent: 'Recent plays',
+            today: 'Today',
+            yesterday: 'Yesterday',
             watchTimeHint: 'Actual playing time without pauses; plays shorter than 30 seconds are not counted.',
             cpu: 'CPU',
             ram: 'RAM',
-            disks: 'Disks',
-            diskRead: 'read {value}',
-            diskWrite: 'write {value}'
+            disks: 'Disks:',
+            diskRead: 'Read: {value}',
+            diskWrite: 'Write: {value}'
         },
         ru: {
             periodAll: 'За всё время',
             statsRecent: 'Последние воспроизведения',
+            today: 'Сегодня',
+            yesterday: 'Вчера',
             watchTimeHint: 'Фактическое время воспроизведения без пауз; включения короче 30 секунд не учитываются.',
             cpu: 'ЦП',
             ram: 'ОЗУ',
-            disks: 'Диски',
-            diskRead: 'чтение {value}',
-            diskWrite: 'запись {value}'
+            disks: 'Диски:',
+            diskRead: 'Чтение: {value}',
+            diskWrite: 'Запись: {value}'
         },
         de: {
             periodAll: 'Gesamt',
             statsRecent: 'Letzte Wiedergaben',
+            today: 'Heute',
+            yesterday: 'Gestern',
             watchTimeHint: 'Tatsächliche Wiedergabezeit ohne Pausen; Wiedergaben unter 30 Sekunden zählen nicht.',
             cpu: 'CPU',
             ram: 'RAM',
-            disks: 'Festplatten',
-            diskRead: 'Lesen {value}',
-            diskWrite: 'Schreiben {value}'
+            disks: 'Festplatten:',
+            diskRead: 'Lesen: {value}',
+            diskWrite: 'Schreiben: {value}'
         }
     });
 
@@ -233,9 +239,7 @@
         }
         try {
             const sessions = await JT.get('JellyTwiggy/Sessions?includeIdle=true');
-            list.replaceChildren(...(sessions.length
-                ? sessions.map(JT.sessionCard)
-                : [JT.el('div', { className: 'jt-empty', text: JT.t('noDevices') })]));
+            JT.renderSessions(list, sessions, JT.el('div', { className: 'jt-empty', text: JT.t('noDevices') }));
         } catch (e) {
             console.error('[JellyTwiggy] devices', e);
         }
@@ -353,18 +357,49 @@
         }
     }
 
+    const toDate = (value) => new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(value) ? value : `${value}Z`);
+
+    function dayLabel(date) {
+        const start = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+        const days = Math.round((start(new Date()) - start(date)) / 86400000);
+        if (days === 0) {
+            return JT.t('today');
+        }
+        if (days === 1) {
+            return JT.t('yesterday');
+        }
+        return date.toLocaleDateString(JT.language(), { day: 'numeric', month: 'long', year: date.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
+    }
+
+    // Grouped by day; each row: who, what (series on top, episode below), then device, method, length and time.
     function renderRecent(stats) {
-        return [JT.el('div', { className: 'jt-stat-section jt-stat-recent' }, stats.Recent.map((play) => JT.el('div', { className: 'jt-stat-row' }, [
-            JT.avatar(play.UserId, play.UserName, undefined, 'jt-avatar-small'),
-            JT.el('div', { className: 'jt-stat-row-text' }, [
-                JT.el('span', { text: play.SeriesName ? `${play.SeriesName} — ${play.ItemName}` : play.ItemName }),
-                JT.el('span', {
-                    className: 'jt-muted',
-                    text: [play.UserName, JT.formatRelative(play.EndedUtc), JT.formatDuration(play.Seconds), play.Device, play.PlayMethod ? methodLabel(play.PlayMethod) : null].filter(Boolean).join(' · ')
-                })
-            ]),
-            play.Completed ? JT.icon('check_circle', 'jt-completed') : null
-        ])))];
+        const groups = [];
+        for (const play of stats.Recent) {
+            const ended = toDate(play.EndedUtc);
+            const label = dayLabel(ended);
+            if (groups.at(-1)?.label !== label) {
+                groups.push({ label, plays: [] });
+            }
+            groups.at(-1).plays.push({ play, ended });
+        }
+
+        return groups.map((group) => JT.el('section', { className: 'jt-recent-day' }, [
+            JT.el('h4', { text: group.label }),
+            ...group.plays.map(({ play, ended }) => JT.el('div', { className: `jt-recent-row${play.Completed ? ' jt-recent-done' : ''}` }, [
+                JT.avatar(play.UserId, play.UserName, undefined, 'jt-avatar-small'),
+                JT.el('div', { className: 'jt-recent-title' }, [
+                    JT.el('span', { className: 'jt-recent-main', text: play.SeriesName || play.ItemName }),
+                    JT.el('span', { className: 'jt-recent-sub', text: [play.SeriesName ? play.ItemName : null, play.UserName].filter(Boolean).join(' · ') })
+                ]),
+                JT.el('span', { className: 'jt-recent-device', text: play.Device || play.Client || '', title: [play.Device, play.Client].filter(Boolean).join(' · ') }),
+                play.PlayMethod
+                    ? JT.el('span', { className: `jt-chip ${play.PlayMethod === 'Transcode' ? 'jt-chip-warn' : 'jt-chip-ok'}`, text: methodLabel(play.PlayMethod) })
+                    : JT.el('span'),
+                JT.el('span', { className: 'jt-recent-length', text: JT.formatDuration(play.Seconds) }),
+                JT.el('span', { className: 'jt-recent-time', text: ended.toLocaleTimeString(JT.language(), { hour: '2-digit', minute: '2-digit' }) }),
+                play.Completed ? JT.icon('check_circle', 'jt-completed') : JT.el('span')
+            ]))
+        ]));
     }
 
     function renderStatsContent() {
@@ -438,40 +473,62 @@
         }
     }
 
-    function donut(label, percent) {
-        const r = 26;
-        const c = 2 * Math.PI * r;
-        const level = percent >= 85 ? 'high' : percent >= 60 ? 'mid' : 'low';
-        const element = JT.el('div', { className: `jt-donut jt-donut-${level}`, title: `${label}: ${percent}%` });
-        element.innerHTML = `<svg viewBox="0 0 64 64" width="64" height="64"><circle cx="32" cy="32" r="${r}" class="jt-donut-track"/>`
-            + `<circle cx="32" cy="32" r="${r}" class="jt-donut-value" stroke-dasharray="${c * percent / 100} ${c}" transform="rotate(-90 32 32)"/></svg>`;
+    const DONUT_R = 40;
+    const DONUT_C = 2 * Math.PI * DONUT_R;
+
+    function donut(label) {
+        const element = JT.el('div', { className: 'jt-donut' });
+        element.innerHTML = `<svg viewBox="0 0 96 96" width="96" height="96"><circle cx="48" cy="48" r="${DONUT_R}" class="jt-donut-track"/>`
+            + `<circle cx="48" cy="48" r="${DONUT_R}" class="jt-donut-value" stroke-dasharray="0 ${DONUT_C}" transform="rotate(-90 48 48)"/></svg>`;
         element.append(JT.el('div', { className: 'jt-donut-text' }, [
-            JT.el('span', { className: 'jt-donut-percent', text: `${Math.round(percent)}%` }),
+            JT.el('span', { className: 'jt-donut-percent' }),
             JT.el('span', { className: 'jt-donut-label', text: label })
         ]));
         return element;
     }
 
+    // Values change in place, so the panel doesn't flash on every poll.
+    function setDonut(element, label, percent) {
+        element.hidden = percent == null;
+        if (percent == null) {
+            return;
+        }
+        const level = percent >= 85 ? 'high' : percent >= 60 ? 'mid' : 'low';
+        element.className = `jt-donut jt-donut-${level}`;
+        element.title = `${label}: ${Math.round(percent)}%`;
+        element.querySelector('.jt-donut-value').setAttribute('stroke-dasharray', `${DONUT_C * percent / 100} ${DONUT_C}`);
+        element.querySelector('.jt-donut-percent').textContent = `${Math.round(percent)}%`;
+    }
+
     function speed(bytesPerSecond) {
-        return `${(bytesPerSecond / 1048576).toFixed(1)} MB/s`;
+        const units = ['B/s', 'KB/s', 'MB/s', 'GB/s'];
+        let value = bytesPerSecond || 0;
+        let unit = 0;
+        while (value >= 1024 && unit < units.length - 1) {
+            value /= 1024;
+            unit++;
+        }
+        return `${value.toFixed(value < 10 && unit > 0 ? 1 : 0)} ${units[unit]}`;
+    }
+
+    function buildMetrics(panel) {
+        panel.append(
+            JT.el('div', { className: 'jt-donuts' }, [donut(JT.t('cpu')), donut(JT.t('ram'))]),
+            JT.el('div', { className: 'jt-disks' }, [
+                JT.el('span', { className: 'jt-disks-label', text: JT.t('disks') }),
+                JT.el('span', { className: 'jt-disk-read' }),
+                JT.el('span', { className: 'jt-disk-write' })
+            ]));
     }
 
     function fillMetrics(panel) {
-        const parts = [];
-        if (metrics.CpuPercent != null) {
-            parts.push(donut(JT.t('cpu'), metrics.CpuPercent));
-        }
-        if (metrics.MemoryPercent != null) {
-            parts.push(donut(JT.t('ram'), metrics.MemoryPercent));
-        }
-        const disks = metrics.DiskReadBytesPerSecond != null
-            ? JT.el('div', { className: 'jt-disks' }, [
-                JT.el('span', { className: 'jt-disks-label', text: JT.t('disks') }),
-                JT.el('span', { text: JT.t('diskRead', { value: speed(metrics.DiskReadBytesPerSecond) }) }),
-                JT.el('span', { text: JT.t('diskWrite', { value: speed(metrics.DiskWriteBytesPerSecond || 0) }) })
-            ])
-            : null;
-        panel.replaceChildren(JT.el('div', { className: 'jt-donuts' }, parts), disks || '');
+        const [cpu, ram] = panel.querySelectorAll('.jt-donut');
+        setDonut(cpu, JT.t('cpu'), metrics.CpuPercent);
+        setDonut(ram, JT.t('ram'), metrics.MemoryPercent);
+        const disks = panel.querySelector('.jt-disks');
+        disks.hidden = metrics.DiskReadBytesPerSecond == null;
+        disks.querySelector('.jt-disk-read').textContent = JT.t('diskRead', { value: speed(metrics.DiskReadBytesPerSecond) });
+        disks.querySelector('.jt-disk-write').textContent = JT.t('diskWrite', { value: speed(metrics.DiskWriteBytesPerSecond) });
     }
 
     // Lives in the server widget's info row (name/versions), right side; hidden where the server has no data.
@@ -485,6 +542,7 @@
         }
         if (!panel && row && create) {
             panel = JT.el('div', { className: 'jt-sysmetrics' });
+            buildMetrics(panel);
             fillMetrics(panel);
             row.appendChild(panel);
         }

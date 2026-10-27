@@ -13,7 +13,6 @@
 
     let uploadTimer = null;
     let applying = false;
-    let syncedUser = null;
 
     const enabled = () => !!JT.settings?.SyncJellyfinSettings && !!JT.userId;
     const userPrefix = () => `${JT.userId}-`;
@@ -76,13 +75,14 @@
 
     // Server values win; settings read at startup (theme, language) need one reload to take effect.
     async function restore(saved) {
-        syncedUser = JT.userId;
+        const userId = JT.userId;
         if (!enabled()) {
             return;
         }
 
         saved = saved || await loadSaved();
-        if (!saved) {
+        // A user switch while loading: the values belong to the previous user.
+        if (!saved || userId !== JT.userId) {
             return;
         }
         if (Object.keys(saved).length === 0) {
@@ -94,7 +94,11 @@
         applying = true;
         try {
             for (const [name, value] of Object.entries(saved)) {
-                const key = fromStored(name);
+                // Only names this module writes, and only keys it would sync itself.
+                const key = /^(user|device):/.test(name) && typeof value === 'string' ? fromStored(name) : null;
+                if (!isSynced(key)) {
+                    continue;
+                }
                 if (localStorage.getItem(key) !== value) {
                     localStorage.setItem(key, value);
                     changed = true;
@@ -162,10 +166,10 @@
         init() {
             watchStorage();
             restore();
-            JT.onDomChange(() => {
-                if (JT.userId && JT.userId !== syncedUser) {
-                    restore();
-                }
+            JT.onUserChange(() => {
+                clearTimeout(uploadTimer);
+                uploadTimer = null;
+                restore();
             });
         }
     });
