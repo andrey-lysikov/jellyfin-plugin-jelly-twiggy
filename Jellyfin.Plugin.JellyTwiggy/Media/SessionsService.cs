@@ -21,9 +21,6 @@ public class SessionDto
     /// <summary>Gets or sets the client app name.</summary>
     public string? Client { get; set; }
 
-    /// <summary>Gets or sets the client app version.</summary>
-    public string? ApplicationVersion { get; set; }
-
     /// <summary>Gets or sets the device name.</summary>
     public string? DeviceName { get; set; }
 
@@ -42,9 +39,6 @@ public class NowPlayingDto
 {
     /// <summary>Gets or sets the item id.</summary>
     public Guid ItemId { get; set; }
-
-    /// <summary>Gets or sets the item kind.</summary>
-    public string ItemType { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the item name.</summary>
     public string? Name { get; set; }
@@ -96,9 +90,7 @@ public record TranscodeDto(
     int? Width,
     int? Height,
     float? Framerate,
-    double? CompletionPercentage,
-    string? HardwareAcceleration,
-    List<string> Reasons);
+    string? HardwareAcceleration);
 
 /// <summary>Lists client sessions.</summary>
 public class SessionsService
@@ -111,20 +103,20 @@ public class SessionsService
         _sessionManager = sessionManager;
     }
 
-    /// <summary>Gets sessions.</summary>
-    public List<SessionDto> GetSessions(bool playingOnly, TimeSpan activeWithin, bool includeAddresses)
+    /// <summary>Gets sessions: all of them for an admin, only the viewer's own otherwise.</summary>
+    public List<SessionDto> GetSessions(Guid viewerId, bool isAdmin, bool playingOnly, TimeSpan activeWithin)
     {
         var since = DateTime.UtcNow - activeWithin;
         return _sessionManager.Sessions
-            .Where(s => s.UserId != Guid.Empty)
+            .Where(s => s.UserId != Guid.Empty && (isAdmin || s.UserId == viewerId))
             .Where(s => s.NowPlayingItem is not null || (!playingOnly && s.LastActivityDate >= since))
-            .Select(s => ToDto(s, includeAddresses))
+            .Select(s => ToDto(s, isAdmin))
             .OrderBy(s => s.NowPlaying is null)
             .ThenByDescending(s => s.LastActivityDate)
             .ToList();
     }
 
-    private static SessionDto ToDto(SessionInfo session, bool includeAddresses)
+    private static SessionDto ToDto(SessionInfo session, bool isAdmin)
     {
         return new SessionDto
         {
@@ -133,15 +125,13 @@ public class SessionsService
             UserName = session.UserName,
             UserImageTag = session.UserPrimaryImageTag,
             Client = session.Client,
-            ApplicationVersion = session.ApplicationVersion,
             DeviceName = session.DeviceName,
-            RemoteEndPoint = includeAddresses ? session.RemoteEndPoint : null,
+            RemoteEndPoint = isAdmin ? session.RemoteEndPoint : null,
             LastActivityDate = session.LastActivityDate,
             NowPlaying = session.NowPlayingItem is { } item
                 ? new NowPlayingDto
                 {
                     ItemId = item.Id,
-                    ItemType = item.Type.ToString(),
                     Name = item.Name,
                     SeriesName = item.SeriesName,
                     SeasonNumber = item.ParentIndexNumber,
@@ -164,12 +154,7 @@ public class SessionsService
                             t.Width,
                             t.Height,
                             t.Framerate,
-                            t.CompletionPercentage,
-                            t.HardwareAccelerationType?.ToString(),
-                            Enum.GetValues<TranscodeReason>()
-                                .Where(r => r != 0 && t.TranscodeReasons.HasFlag(r))
-                                .Select(r => r.ToString())
-                                .ToList())
+                            isAdmin ? t.HardwareAccelerationType?.ToString() : null)
                         : null
                 }
                 : null

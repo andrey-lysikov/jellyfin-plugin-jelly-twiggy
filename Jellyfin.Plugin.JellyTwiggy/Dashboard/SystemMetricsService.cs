@@ -16,6 +16,7 @@ public class SystemMetricsService
 {
     private const int SectorBytes = 512;
     private static readonly TimeSpan MinInterval = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan MaxSampleAge = TimeSpan.FromSeconds(10);
 
     private readonly SemaphoreSlim _gate = new(1, 1);
     private Sample? _last;
@@ -37,8 +38,10 @@ public class SystemMetricsService
                 return _lastResult;
             }
 
-            var previous = _last ?? ReadSample();
-            if (_last is null)
+            // A sample from long ago would average the load over that whole gap: take a fresh pair.
+            var fresh = _last is null || DateTime.UtcNow - _last.Time > MaxSampleAge;
+            var previous = fresh ? ReadSample() : _last!;
+            if (fresh)
             {
                 await Task.Delay(500, cancellationToken).ConfigureAwait(false);
             }
@@ -82,11 +85,16 @@ public class SystemMetricsService
         try
         {
             // "cpu  user nice system idle iowait irq softirq steal ...": idle time is idle + iowait.
-            var cpu = File.ReadLines("/proc/stat").First().Split(' ', StringSplitOptions.RemoveEmptyEntries).Skip(1).Take(8).Select(ParseLong).ToArray();
-            sample.CpuTotal = cpu.Sum();
-            sample.CpuIdle = cpu.ElementAtOrDefault(3) + cpu.ElementAtOrDefault(4);
+            var first = File.ReadLines("/proc/stat").FirstOrDefault() ?? string.Empty;
+            var parts = first.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length >= 5 && parts[0] == "cpu")
+            {
+                var cpu = parts.Skip(1).Take(8).Select(ParseLong).ToArray();
+                sample.CpuTotal = cpu.Sum();
+                sample.CpuIdle = cpu[3] + cpu.ElementAtOrDefault(4);
+            }
         }
-        catch (IOException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
         }
 
@@ -105,7 +113,7 @@ public class SystemMetricsService
                 }
             }
         }
-        catch (IOException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
         }
 
@@ -122,7 +130,7 @@ public class SystemMetricsService
                 }
             }
         }
-        catch (IOException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
         }
 

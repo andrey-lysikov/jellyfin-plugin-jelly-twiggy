@@ -1,5 +1,6 @@
 using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Entities;
+using Jellyfin.Plugin.JellyTwiggy.Media;
 using MediaBrowser.Controller.Library;
 
 namespace Jellyfin.Plugin.JellyTwiggy.Dashboard;
@@ -26,13 +27,19 @@ public class LibraryCountsService
     {
         lock (_lock)
         {
-            if (_cached is null || DateTime.UtcNow - _cachedAt > CacheLifetime)
+            if (_cached is not null && DateTime.UtcNow - _cachedAt <= CacheLifetime)
             {
-                _cached = Kinds.ToDictionary(kind => kind.ToString(), CountKind);
-                _cachedAt = DateTime.UtcNow;
+                return _cached;
             }
+        }
 
-            return _cached;
+        // Counted outside the lock: a slow library query must not block other dashboard requests.
+        var counts = Kinds.ToDictionary(kind => kind.ToString(), CountKind);
+        lock (_lock)
+        {
+            _cached = counts;
+            _cachedAt = DateTime.UtcNow;
+            return counts;
         }
     }
 
@@ -48,7 +55,7 @@ public class LibraryCountsService
 
         foreach (var item in items)
         {
-            if (Classify(item.Width, item.Height) is { } bucket)
+            if (Bucket(Resolution.Classify(item.Width, item.Height)) is { } bucket)
             {
                 counts[bucket]++;
             }
@@ -57,24 +64,13 @@ public class LibraryCountsService
         return counts;
     }
 
-    // Same thresholds as the poster badges (MediaBadgeService); 8K counts as 4K, unknown size is skipped.
-    private static string? Classify(int width, int height)
+    // The dashboard groups the poster badge labels into four buckets; unknown size is skipped.
+    private static string? Bucket(string? resolution) => resolution switch
     {
-        if (width <= 0 && height <= 0)
-        {
-            return null;
-        }
-
-        if (width >= 3200 || height >= 2000)
-        {
-            return "4K";
-        }
-
-        if (width >= 1800 || height >= 1000)
-        {
-            return "1080p";
-        }
-
-        return width >= 1200 || height >= 700 ? "720p" : "SD";
-    }
+        null => null,
+        "8K" or "4K" => "4K",
+        "1080p" => "1080p",
+        "720p" => "720p",
+        _ => "SD"
+    };
 }

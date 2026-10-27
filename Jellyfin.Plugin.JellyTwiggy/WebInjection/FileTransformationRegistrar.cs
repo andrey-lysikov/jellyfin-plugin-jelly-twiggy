@@ -47,7 +47,7 @@ public sealed class FileTransformationRegistrar : IHostedService
     {
         var assembly = AssemblyLoadContext.All
             .SelectMany(context => context.Assemblies)
-            .FirstOrDefault(a => a.FullName?.Contains(".FileTransformation", StringComparison.Ordinal) ?? false);
+            .FirstOrDefault(a => a.GetName().Name == "Jellyfin.Plugin.FileTransformation");
         if (assembly is null)
         {
             _logger.LogWarning("Jelly Twiggy: File Transformation plugin is not installed, the web client UI is disabled");

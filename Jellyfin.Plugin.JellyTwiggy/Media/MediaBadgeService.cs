@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Globalization;
 using Jellyfin.Data.Enums;
+using Jellyfin.Database.Implementations.Entities;
 using Jellyfin.Database.Implementations.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
@@ -30,10 +31,10 @@ public class MediaBadgeService
         _mediaSourceManager = mediaSourceManager;
     }
 
-    /// <summary>Gets badges for an item.</summary>
-    public ItemBadges? GetBadges(Guid itemId)
+    /// <summary>Gets badges for an item; null when it doesn't exist or the viewer can't see it.</summary>
+    public ItemBadges? GetBadges(Guid itemId, User viewer)
     {
-        var item = _libraryManager.GetItemById(itemId);
+        var item = _libraryManager.GetItemById<BaseItem>(itemId, viewer);
         if (item is null)
         {
             return null;
@@ -66,7 +67,7 @@ public class MediaBadgeService
             var firstAudio = streams.Where(s => s.Type == MediaStreamType.Audio).OrderBy(s => s.IsDefault ? 0 : 1).ThenBy(s => s.Index).FirstOrDefault();
             if (video is not null)
             {
-                resolution = FormatResolution(video.Width ?? 0, video.Height ?? 0);
+                resolution = Resolution.Classify(video.Width, video.Height);
                 codec = FormatVideoCodec(video.Codec);
                 range = FormatRange(video.VideoRangeType);
             }
@@ -117,37 +118,6 @@ public class MediaBadgeService
         };
 
         return channels is null ? codec : $"{codec} {channels}";
-    }
-
-    private static string FormatResolution(int width, int height)
-    {
-        // Width first: scope films are much shorter than 1080/2160 rows.
-        if (width >= 7000 || height >= 4000)
-        {
-            return "8K";
-        }
-
-        if (width >= 3200 || height >= 2000)
-        {
-            return "4K";
-        }
-
-        if (width >= 1800 || height >= 1000)
-        {
-            return "1080p";
-        }
-
-        if (width >= 1200 || height >= 700)
-        {
-            return "720p";
-        }
-
-        if (height >= 560)
-        {
-            return "576p";
-        }
-
-        return height >= 470 ? "480p" : "SD";
     }
 
     private static string? FormatRange(VideoRangeType rangeType) => rangeType switch

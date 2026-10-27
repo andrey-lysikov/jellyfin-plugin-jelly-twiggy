@@ -77,13 +77,16 @@ public class UserSettingsStore
     /// <summary>Gets a user's settings, or defaults if none were saved.</summary>
     public UserSettings Get(Guid userId) => _cache.GetOrAdd(userId, Load);
 
-    /// <summary>Saves a user's settings.</summary>
-    public void Save(Guid userId, UserSettings settings)
+    /// <summary>The only writer: changes a copy of the current settings and saves it under the lock.</summary>
+    public UserSettings Update(Guid userId, Func<UserSettings, UserSettings> change)
     {
         lock (_writeLock)
         {
-            JsonFiles.WriteAtomic(GetPath(userId), settings);
-            _cache[userId] = settings;
+            var current = Get(userId);
+            var updated = change(JsonSerializer.Deserialize<UserSettings>(JsonSerializer.Serialize(current, JsonFiles.Options), JsonFiles.Options)!);
+            JsonFiles.WriteAtomic(GetPath(userId), updated);
+            _cache[userId] = updated;
+            return updated;
         }
     }
 

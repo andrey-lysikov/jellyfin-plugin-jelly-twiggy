@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1.0
+
+- Bugfix
+- Security fix
+
 ## 0.2.0.0
 
 - Watched circle in the top-right corner of cards: empty ring, number of unwatched episodes, or green with a check; replaces the native indicators

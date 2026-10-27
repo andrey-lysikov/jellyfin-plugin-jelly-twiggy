@@ -31,17 +31,20 @@
             width = badges.getBoundingClientRect().width;
         } else {
             const context = canvas.getContext('2d');
-            context.font = getComputedStyle(select).font;
+            // The "font" shorthand is empty for selects in Safari, so it is built from its parts.
+            const style = getComputedStyle(select);
+            context.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
             width = context.measureText(select.options[select.selectedIndex]?.text || '').width;
         }
-        const target = `${Math.ceil(width) + 28}px`;
+        const target = `${Math.ceil(width) + 34}px`;
         if (select.style.width !== target) {
             select.style.width = target;
         }
     }
 
     function update() {
-        if (!JT.config?.TweakItemPage) {
+        // Runs on every DOM change: leave at once off item pages.
+        if (!JT.config?.TweakItemPage || !JT.route().startsWith('#/details')) {
             return;
         }
 

@@ -5,7 +5,7 @@
     <RootNamespace>Jellyfin.Plugin.JellyTwiggy</RootNamespace>
     <AssemblyName>Jellyfin.Plugin.JellyTwiggy</AssemblyName>
     <!-- Overridden by the release workflow from the tag (vX.Y.Z.W). -->
-    <Version>0.2.0.0</Version>
+    <Version>0.2.1.0</Version>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>

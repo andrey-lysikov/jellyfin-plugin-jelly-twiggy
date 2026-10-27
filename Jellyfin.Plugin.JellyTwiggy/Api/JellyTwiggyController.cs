@@ -1,11 +1,13 @@
 using System.Collections.Frozen;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using Jellyfin.Database.Implementations.Entities;
 using Jellyfin.Plugin.JellyTwiggy.History;
 using Jellyfin.Plugin.JellyTwiggy.Media;
 using Jellyfin.Plugin.JellyTwiggy.Storage;
 using Jellyfin.Plugin.JellyTwiggy.WebInjection;
 using MediaBrowser.Common.Api;
+using MediaBrowser.Controller.Library;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -24,6 +26,14 @@ public class JellyTwiggyController : ControllerBase
     private const int MaxBadgeItems = 300;
     private const int MaxSyncedSettings = 500;
     private const int MaxSyncedChars = 1_000_000;
+    private const int MaxLayoutBlocks = 50;
+    private const int MaxBlockIdLength = 64;
+
+    private static readonly FrozenSet<string> RadiusChoices = new[] { "none", "default", "large" }.ToFrozenSet(StringComparer.Ordinal);
+
+    // Block widths in grid columns, plus the names older layouts used.
+    private static readonly FrozenSet<string> SizeChoices =
+        new[] { "1", "2", "3", "4", "5", "6", "third", "half", "twoThirds", "full" }.ToFrozenSet(StringComparer.Ordinal);
 
     private static readonly FileExtensionContentTypeProvider ContentTypes = new();
 
@@ -39,6 +49,7 @@ public class JellyTwiggyController : ControllerBase
     private readonly WatchersService _watchers;
     private readonly SessionsService _sessions;
     private readonly StatisticsService _statistics;
+    private readonly IUserManager _userManager;
 
     /// <summary>Initializes a new instance of the <see cref="JellyTwiggyController"/> class.</summary>
     public JellyTwiggyController(
@@ -46,13 +57,15 @@ public class JellyTwiggyController : ControllerBase
         MediaBadgeService badges,
         WatchersService watchers,
         SessionsService sessions,
-        StatisticsService statistics)
+        StatisticsService statistics,
+        IUserManager userManager)
     {
         _userSettings = userSettings;
         _badges = badges;
         _watchers = watchers;
         _sessions = sessions;
         _statistics = statistics;
+        _userManager = userManager;
     }
 
     private bool IsAdmin => User.IsInRole(AdministratorRole);
@@ -130,6 +143,7 @@ public class JellyTwiggyController : ControllerBase
     [HttpPost("UserSettings")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public ActionResult SaveJellyTwiggyUserSettings([FromBody, Required] UserSettings settings)
     {
@@ -139,8 +153,17 @@ public class JellyTwiggyController : ControllerBase
             return Unauthorized();
         }
 
-        settings.DashboardLayout = _userSettings.Get(userId.Value).DashboardLayout;
-        _userSettings.Save(userId.Value, settings);
+        if (settings.CardRadius is not { } card || settings.UiRadius is not { } ui
+            || !RadiusChoices.Contains(card) || !RadiusChoices.Contains(ui))
+        {
+            return BadRequest();
+        }
+
+        _userSettings.Update(userId.Value, current =>
+        {
+            settings.DashboardLayout = current.DashboardLayout;
+            return settings;
+        });
         return NoContent();
     }
 
@@ -175,7 +198,10 @@ public class JellyTwiggyController : ControllerBase
         }
 
         // Generous for custom CSS, but bounded: this is a settings file, not storage.
-        if (values.Count > MaxSyncedSettings || values.Sum(v => v.Key.Length + (v.Value?.Length ?? 0)) > MaxSyncedChars)
+        // Only jellyfin-web's own per-user and per-device keys are synced.
+        if (values.Count > MaxSyncedSettings
+            || values.Sum(v => v.Key.Length + (v.Value?.Length ?? 0)) > MaxSyncedChars
+            || values.Keys.Any(k => !k.StartsWith("user:", StringComparison.Ordinal) && !k.StartsWith("device:", StringComparison.Ordinal)))
         {
             return BadRequest();
         }
@@ -188,6 +214,7 @@ public class JellyTwiggyController : ControllerBase
     [HttpPost("DashboardLayout")]
     [Authorize(Policy = Policies.RequiresElevation)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public ActionResult SaveJellyTwiggyDashboardLayout([FromBody, Required] DashboardLayout layout)
     {
@@ -197,9 +224,16 @@ public class JellyTwiggyController : ControllerBase
             return Unauthorized();
         }
 
-        var settings = _userSettings.Get(userId.Value);
-        settings.DashboardLayout = layout;
-        _userSettings.Save(userId.Value, settings);
+        if (!IsValidLayout(layout))
+        {
+            return BadRequest();
+        }
+
+        _userSettings.Update(userId.Value, current =>
+        {
+            current.DashboardLayout = layout;
+            return current;
+        });
         return NoContent();
     }
 
@@ -207,12 +241,25 @@ public class JellyTwiggyController : ControllerBase
     [HttpPost("Badges")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public ActionResult<Dictionary<Guid, ItemBadges>> GetJellyTwiggyBadges([FromBody, Required] BadgesRequest request)
     {
-        var result = new Dictionary<Guid, ItemBadges>();
-        foreach (var id in request.ItemIds.Distinct().Take(MaxBadgeItems))
+        if (request.ItemIds is null)
         {
-            if (_badges.GetBadges(id) is { } badges)
+            return BadRequest();
+        }
+
+        if (GetCurrentUser() is not { } viewer)
+        {
+            return Unauthorized();
+        }
+
+        // Cap before Distinct, so a huge body isn't hashed in full.
+        var result = new Dictionary<Guid, ItemBadges>();
+        foreach (var id in request.ItemIds.Take(MaxBadgeItems).Distinct())
+        {
+            if (_badges.GetBadges(id, viewer) is { } badges)
             {
                 result[id] = badges;
             }
@@ -225,10 +272,17 @@ public class JellyTwiggyController : ControllerBase
     [HttpGet("Items/{itemId}/Watchers")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public ActionResult<List<WatcherDto>> GetJellyTwiggyWatchers([FromRoute, Required] Guid itemId)
     {
-        var watchers = _watchers.GetWatchers(itemId);
+        if (GetCurrentUser() is not { } viewer)
+        {
+            return Unauthorized();
+        }
+
+        // Null for a missing item and for one the viewer can't see alike.
+        var watchers = _watchers.GetWatchers(itemId, viewer);
         if (watchers is null)
         {
             return NotFound();
@@ -237,14 +291,21 @@ public class JellyTwiggyController : ControllerBase
         return watchers;
     }
 
-    /// <summary>Gets client sessions. Everyone sees what is playing; idle sessions and addresses are for admins.</summary>
+    /// <summary>Gets client sessions: admins see all, other users only their own. Idle sessions are for admins.</summary>
     [HttpGet("Sessions")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public ActionResult<List<SessionDto>> GetJellyTwiggySessions([FromQuery] bool includeIdle = false)
     {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
         var isAdmin = IsAdmin;
-        return _sessions.GetSessions(!(includeIdle && isAdmin), TimeSpan.FromHours(1), isAdmin);
+        return _sessions.GetSessions(userId.Value, isAdmin, !(includeIdle && isAdmin), TimeSpan.FromHours(1));
     }
 
     /// <summary>Gets playback statistics.</summary>
@@ -256,10 +317,25 @@ public class JellyTwiggyController : ControllerBase
         return _statistics.GetStatistics(days);
     }
 
+    private static bool IsValidLayout(DashboardLayout layout)
+    {
+        static bool IsId(string? id) => !string.IsNullOrEmpty(id) && id.Length <= MaxBlockIdLength;
+
+        return layout.Order is { Count: <= MaxLayoutBlocks } order && order.All(IsId)
+            && layout.Hidden is { Count: <= MaxLayoutBlocks } hidden && hidden.All(IsId)
+            && layout.Sizes is { Count: <= MaxLayoutBlocks } sizes
+            && sizes.All(s => IsId(s.Key) && s.Value is not null && SizeChoices.Contains(s.Value));
+    }
+
     private Guid? GetUserId()
     {
         var value = User.FindFirstValue(UserIdClaim);
         return Guid.TryParse(value, out var id) && id != Guid.Empty ? id : null;
+    }
+
+    private User? GetCurrentUser()
+    {
+        return GetUserId() is { } id ? _userManager.GetUserById(id) : null;
     }
 }
 

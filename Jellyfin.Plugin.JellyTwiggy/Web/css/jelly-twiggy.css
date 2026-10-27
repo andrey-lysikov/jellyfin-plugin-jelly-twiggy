@@ -1067,6 +1067,7 @@ html.jt-style-cards .playedIndicator { display: none !important; }
     cursor: pointer;
     opacity: 0;
     transition: opacity 0.15s;
+    will-change: opacity;
 }
 
 /* Watched circle: empty ring (hover), unwatched count, or green with a check. */
@@ -1139,7 +1140,6 @@ html.jt-hide-cast .MuiToolbar-root button:has(svg[data-testid="CastIcon"], svg[d
 
 html.jt-card-radius-none :is(.cardScalable, .cardImageContainer, .cardContent, .cardOverlayContainer, .cardImage, .listItemImage) { border-radius: 0 !important; }
 html.jt-card-radius-large :is(.cardScalable, .cardImageContainer, .cardContent, .cardOverlayContainer, .cardImage, .listItemImage) { border-radius: 14px !important; }
-html.jt-card-radius-large .cardScalable { overflow: hidden; }
 
 html.jt-ui-radius-none :is(.emby-button, .button-flat, .raised, .emby-input, .emby-select, .emby-textarea, .dialog, .actionSheet, .MuiButton-root, .MuiOutlinedInput-root, .MuiPaper-root, .jt-button, .jt-dialog, .jt-streams-panel, .jt-select) { border-radius: 0 !important; }
 html.jt-ui-radius-large :is(.emby-button, .button-flat, .raised, .emby-input, .emby-select, .emby-textarea, .dialog, .actionSheet, .MuiButton-root, .MuiOutlinedInput-root, .MuiPaper-root, .jt-button, .jt-dialog, .jt-streams-panel, .jt-select) { border-radius: 14px !important; }
@@ -1160,4 +1160,12 @@ html.jt-ui-radius-large :is(.emby-button, .button-flat, .raised, .emby-input, .e
     font: inherit;
     color: var(--jt-text);
     background: var(--jt-surface);
+}
+
+/* Quality and audio badges in stream cards. */
+.jt-session-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-top: 4px;
 }
