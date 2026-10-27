@@ -16,6 +16,19 @@
             longPressSpeedUp: 'Long press / hold for 2x speed',
             settingsInterfaceSection: 'Interface',
             hideFavorites: 'Hide favorites everywhere',
+            hideCast: 'Hide the Google Cast button',
+            settingsSyncSection: 'Sync',
+            syncAskTitle: 'Saved settings found',
+            syncAskText: 'The server already has settings saved for you, for example from another device. Apply them in this browser, or replace them with this browser’s settings?',
+            syncApplyServer: 'Apply from the server',
+            syncKeepLocal: 'Keep this browser’s settings',
+            syncJellyfinSettings: 'Sync all settings of the current user',
+            syncHint: 'Keeps Jellyfin settings that normally live only in this browser (theme, language, playback quality, custom CSS…) on the server and restores them after clearing the cache or on another device.',
+            cardRadius: 'Poster and card corners',
+            uiRadius: 'Button, field and dialog corners',
+            radius_none: 'Square',
+            radius_default: 'As now',
+            radius_large: 'Large',
             autoSkipHint: 'Uses intro and outro segments detected by Intro Skipper.',
             autoPipHint: 'Takes precedence over auto-pause when the browser supports it.',
             save: 'Save',
@@ -86,7 +99,12 @@
             cfgPosterBadges: 'Poster badges (quality, audio, rating)',
             cfgActiveStreams: 'Active streams button',
             cfgWatchedBy: '"Watched" row with user avatars on item pages',
-            cfgDashboard: 'Dashboard customization, devices and statistics blocks'
+            cfgDashboard: 'Dashboard customization, devices and statistics blocks',
+            cfgTweaks: 'Page tweaks',
+            cfgTweakItemPage: 'Item page: borderless track selects, "6+" age ratings, video track as badges',
+            cfgTweakPlayer: 'Player: volume shown only in the bottom bar',
+            cfgAnimations: 'Animations: spinning streams ring, watched circle pop',
+            cfgStyleCards: 'Cards: badge depth, stream backdrops, watched circle and card buttons'
         },
         ru: {
             settingsTitle: 'Jelly Twiggy',
@@ -101,6 +119,19 @@
             longPressSpeedUp: 'Удержание — ускорение 2x',
             settingsInterfaceSection: 'Интерфейс',
             hideFavorites: 'Скрыть избранное везде',
+            hideCast: 'Скрыть кнопку Google Cast',
+            settingsSyncSection: 'Синхронизация',
+            syncAskTitle: 'Найдены сохранённые настройки',
+            syncAskText: 'На сервере уже есть ваши сохранённые настройки, например с другого устройства. Применить их в этом браузере или заменить их настройками этого браузера?',
+            syncApplyServer: 'Применить с сервера',
+            syncKeepLocal: 'Оставить настройки этого браузера',
+            syncJellyfinSettings: 'Синхронизировать все настройки текущего пользователя',
+            syncHint: 'Хранит на сервере настройки Jellyfin, которые обычно живут только в браузере (тема, язык, качество воспроизведения, свой CSS…), и восстанавливает их после очистки кэша или на другом устройстве.',
+            cardRadius: 'Скругление постеров и карточек',
+            uiRadius: 'Скругление кнопок, полей и окон',
+            radius_none: 'Нет',
+            radius_default: 'Как сейчас',
+            radius_large: 'Большое',
             autoSkipHint: 'Использует сегменты заставки и титров, найденные Intro Skipper.',
             autoPipHint: 'Если браузер поддерживает, имеет приоритет над автопаузой.',
             save: 'Сохранить',
@@ -171,7 +202,12 @@
             cfgPosterBadges: 'Бейджи на постерах (качество, звук, рейтинг)',
             cfgActiveStreams: 'Кнопка активных потоков',
             cfgWatchedBy: 'Строка «Просмотрено» с аватарами на странице медиа',
-            cfgDashboard: 'Настройка панели управления, блоки устройств и статистики'
+            cfgDashboard: 'Настройка панели управления, блоки устройств и статистики',
+            cfgTweaks: 'Доработка страниц',
+            cfgTweakItemPage: 'Страница медиа: списки дорожек без рамки, возраст «6+», видеодорожка бейджами',
+            cfgTweakPlayer: 'Плеер: громкость только в нижней панели',
+            cfgAnimations: 'Анимации: вращение кольца потоков, пульс круга «просмотрено»',
+            cfgStyleCards: 'Карточки: объём бейджей, фон карточек потоков, круг «просмотрено» и кнопки на карточках'
         },
         de: {
             settingsTitle: 'Jelly Twiggy',
@@ -186,6 +222,19 @@
             longPressSpeedUp: 'Gedrückt halten für 2x Geschwindigkeit',
             settingsInterfaceSection: 'Oberfläche',
             hideFavorites: 'Favoriten überall ausblenden',
+            hideCast: 'Google-Cast-Schaltfläche ausblenden',
+            settingsSyncSection: 'Synchronisierung',
+            syncAskTitle: 'Gespeicherte Einstellungen gefunden',
+            syncAskText: 'Auf dem Server sind bereits Einstellungen für Sie gespeichert, zum Beispiel von einem anderen Gerät. In diesem Browser übernehmen oder durch die Einstellungen dieses Browsers ersetzen?',
+            syncApplyServer: 'Vom Server übernehmen',
+            syncKeepLocal: 'Einstellungen dieses Browsers behalten',
+            syncJellyfinSettings: 'Alle Einstellungen des aktuellen Benutzers synchronisieren',
+            syncHint: 'Speichert Jellyfin-Einstellungen, die sonst nur in diesem Browser liegen (Design, Sprache, Wiedergabequalität, eigenes CSS…), auf dem Server und stellt sie nach dem Leeren des Caches oder auf einem anderen Gerät wieder her.',
+            cardRadius: 'Ecken von Postern und Karten',
+            uiRadius: 'Ecken von Schaltflächen, Feldern und Dialogen',
+            radius_none: 'Eckig',
+            radius_default: 'Wie bisher',
+            radius_large: 'Groß',
             autoSkipHint: 'Verwendet die von Intro Skipper erkannten Intro- und Abspann-Segmente.',
             autoPipHint: 'Hat Vorrang vor dem automatischen Pausieren, wenn der Browser es unterstützt.',
             save: 'Speichern',
@@ -256,7 +305,12 @@
             cfgPosterBadges: 'Poster-Badges (Qualität, Ton, Bewertung)',
             cfgActiveStreams: 'Schaltfläche für aktive Streams',
             cfgWatchedBy: 'Zeile „Gesehen“ mit Benutzer-Avataren auf Medienseiten',
-            cfgDashboard: 'Dashboard-Anpassung, Geräte- und Statistikblöcke'
+            cfgDashboard: 'Dashboard-Anpassung, Geräte- und Statistikblöcke',
+            cfgTweaks: 'Seitenanpassungen',
+            cfgTweakItemPage: 'Medienseite: Spurauswahl ohne Rahmen, Alter „6+“, Videospur als Badges',
+            cfgTweakPlayer: 'Player: Lautstärke nur in der unteren Leiste',
+            cfgAnimations: 'Animationen: drehender Stream-Ring, Puls des Gesehen-Kreises',
+            cfgStyleCards: 'Karten: Badge-Tiefe, Stream-Hintergründe, Gesehen-Kreis und Kartenknöpfe'
         }
     };
 
@@ -289,4 +343,11 @@
     };
 
     JT.language = detectLanguage;
+
+    // Lets feature modules ship their own strings: JT.addStrings({ en: {...}, ru: {...}, de: {...} }).
+    JT.addStrings = function (strings) {
+        for (const [language, values] of Object.entries(strings)) {
+            Object.assign(dictionaries[language] || (dictionaries[language] = {}), values);
+        }
+    };
 })(window.JellyTwiggy);

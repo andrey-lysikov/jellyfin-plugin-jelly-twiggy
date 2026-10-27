@@ -16,4 +16,16 @@ public class PluginConfiguration : BasePluginConfiguration
 
     /// <summary>Gets or sets a value indicating whether the admin dashboard customizations are enabled.</summary>
     public bool EnableDashboard { get; set; } = true;
+
+    /// <summary>Gets or sets a value indicating whether item pages are restyled (track selects, age rating, video badges).</summary>
+    public bool TweakItemPage { get; set; } = true;
+
+    /// <summary>Gets or sets a value indicating whether the player volume is shown only in the bottom bar.</summary>
+    public bool TweakPlayer { get; set; } = true;
+
+    /// <summary>Gets or sets a value indicating whether animations (streams ring, watched pop) are on.</summary>
+    public bool EnableAnimations { get; set; } = true;
+
+    /// <summary>Gets or sets a value indicating whether cards get badge depth, stream backdrops and the watched circle.</summary>
+    public bool StyleCards { get; set; } = true;
 }

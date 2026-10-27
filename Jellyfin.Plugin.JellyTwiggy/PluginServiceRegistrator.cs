@@ -20,6 +20,8 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
         serviceCollection.AddSingleton<WatchersService>();
         serviceCollection.AddSingleton<SessionsService>();
         serviceCollection.AddSingleton<StatisticsService>();
+        serviceCollection.AddSingleton<Dashboard.SystemMetricsService>();
+        serviceCollection.AddSingleton<Dashboard.LibraryCountsService>();
         serviceCollection.AddHostedService<PlaybackTracker>();
         serviceCollection.AddHostedService<FileTransformationRegistrar>();
     }

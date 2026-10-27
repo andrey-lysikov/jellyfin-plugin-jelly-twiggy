@@ -185,7 +185,7 @@
             host.appendChild(ratings);
         }
 
-        if (video.length || badges.Audio || ratings) {
+        if ((video.length || badges.Audio || ratings) && JT.config?.StyleCards) {
             card.classList.add('jt-has-badges');
             host.append(...cardButtons(card.dataset.jtBadges));
         }

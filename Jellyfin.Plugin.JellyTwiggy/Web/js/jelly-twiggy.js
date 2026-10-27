@@ -11,16 +11,18 @@
     const scriptUrl = new URL(script.src, window.location.href);
     const version = scriptUrl.searchParams.get('v') || '';
     const base = scriptUrl.href.replace(/js\/jelly-twiggy\.js.*$/, '');
-    const modules = ['i18n', 'core', 'badges', 'player', 'settings', 'streams', 'watchers', 'dashboard', 'favorites', 'mediainfo'];
+    const modules = ['i18n', 'core', 'badges', 'player', 'settings', 'streams', 'watchers', 'dashboard', 'favorites', 'mediainfo', 'alphabet', 'sync'];
 
     const versioned = (path) => `${base}${path}?v=${encodeURIComponent(version)}`;
 
     window.JellyTwiggy = { version, asset: versioned };
 
-    document.head.appendChild(Object.assign(document.createElement('link'), {
-        rel: 'stylesheet',
-        href: versioned('css/jelly-twiggy.css')
-    }));
+    for (const sheet of ['jelly-twiggy', 'dashboard', 'alphabet']) {
+        document.head.appendChild(Object.assign(document.createElement('link'), {
+            rel: 'stylesheet',
+            href: versioned(`css/${sheet}.css`)
+        }));
+    }
 
     function load(index) {
         if (index === modules.length) {

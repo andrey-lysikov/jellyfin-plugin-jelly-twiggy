@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Globalization;
 using Jellyfin.Data.Enums;
+using Jellyfin.Database.Implementations.Enums;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
@@ -53,16 +54,16 @@ public class MediaBadgeService
 
     private ItemBadges Compute(BaseItem item)
     {
-        var mediaItem = item.GetBaseItemKind() is BaseItemKind.Series or BaseItemKind.Season
-            ? FindEpisode(item)
-            : item;
+        var streams = item.GetBaseItemKind() is BaseItemKind.Series or BaseItemKind.Season
+            ? FindEpisodeStreams(item)
+            : item.IsFolder ? null : _mediaSourceManager.GetMediaStreams(item.Id);
 
         string? resolution = null, codec = null, range = null, audio = null;
-        if (mediaItem is not null && !mediaItem.IsFolder)
+        if (streams is not null)
         {
-            var streams = _mediaSourceManager.GetMediaStreams(mediaItem.Id);
             var video = streams.Where(s => s.Type == MediaStreamType.Video).OrderBy(s => s.Index).FirstOrDefault();
-            var firstAudio = streams.Where(s => s.Type == MediaStreamType.Audio).OrderBy(s => s.Index).FirstOrDefault();
+            // The default track is what the player picks; the first one when none is marked.
+            var firstAudio = streams.Where(s => s.Type == MediaStreamType.Audio).OrderBy(s => s.IsDefault ? 0 : 1).ThenBy(s => s.Index).FirstOrDefault();
             if (video is not null)
             {
                 resolution = FormatResolution(video.Width ?? 0, video.Height ?? 0);
@@ -82,16 +83,21 @@ public class MediaBadgeService
         return new ItemBadges(resolution, codec, range, audio, rating, critic);
     }
 
-    private BaseItem? FindEpisode(BaseItem parent)
+    // First episodes in order; the first one that was scanned (has an audio track) gives the badges.
+    private IReadOnlyList<MediaStream>? FindEpisodeStreams(BaseItem parent)
     {
-        return _libraryManager.GetItemList(new InternalItemsQuery
+        var episodes = _libraryManager.GetItemList(new InternalItemsQuery
         {
             AncestorIds = [parent.Id],
             IncludeItemTypes = [BaseItemKind.Episode],
             Recursive = true,
             IsVirtualItem = false,
-            Limit = 1
-        }).FirstOrDefault();
+            OrderBy = [(ItemSortBy.ParentIndexNumber, SortOrder.Ascending), (ItemSortBy.IndexNumber, SortOrder.Ascending)],
+            Limit = 10
+        });
+        return episodes
+            .Select(e => _mediaSourceManager.GetMediaStreams(e.Id))
+            .FirstOrDefault(streams => streams.Any(s => s.Type == MediaStreamType.Audio));
     }
 
     /// <summary>Formats an audio track like "DTS 5.1".</summary>

@@ -14,10 +14,11 @@ Jelly Twiggy extends the Jellyfin web client with poster badges, playback option
 - Poster badges: resolution, HDR / DV, codec, first audio track, rating and Rotten Tomatoes score
 - User preferences for: Auto-skip intro and outro, Auto-pause, auto-resume and auto Picture-in-Picture on tab switch
 - Long press / hold for 2x speed
-- Option to hide favorites everywhere
+- Options to hide favorites and the Google Cast button, corner radius of cards and of the interface
+- Sync of Jellyfin's browser-only settings across browsers and devices
 - Active streams button with progress, device and transcoding details
-- Dashboard: move, resize, show and hide blocks, devices in the active streams style
-- Playback statistics for 24 hours / 7 days / month
+- Dashboard: move, resize, show and hide blocks, and more
+- Library alphabet picker with the letters of your titles in any language
 - "Watched" row on item pages with who watched, how many times and when
 - Localization (English, German, Russian)
 

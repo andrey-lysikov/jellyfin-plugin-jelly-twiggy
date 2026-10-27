@@ -1,0 +1,18 @@
+/* Library alphabet picker with letters from the library (any alphabet). */
+
+.alphaPicker.alphaPicker-fixed-right.jt-alpha {
+    max-height: calc(100vh - 9em);
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.alphaPicker.jt-alpha::-webkit-scrollbar { display: none; }
+
+/* Two alphabets (e.g. Latin and Cyrillic) don't fit the usual spacing. */
+.alphaPicker.jt-alpha-compact { font-size: 82%; }
+
+.alphaPicker.jt-alpha-compact .alphaPickerButton-vertical {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    line-height: 1.2;
+}

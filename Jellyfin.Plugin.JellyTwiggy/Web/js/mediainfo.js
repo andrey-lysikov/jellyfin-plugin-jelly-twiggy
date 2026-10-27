@@ -1,4 +1,4 @@
-// Item page tweaks: age ratings such as "age6+" as plain "6+", video track as quality badges.
+// Item page tweaks: "age6+" as "6+", video track as quality badges, select arrows right after the text.
 (function (JT) {
     'use strict';
 
@@ -19,12 +19,45 @@
         }
     }
 
+    const canvas = document.createElement('canvas');
+
+    // A select is as wide as its longest option; size it to the chosen one so the arrow follows the text.
+    function fitSelect(select) {
+        const container = select.closest('.selectContainer');
+        const badges = container?.querySelector('.jt-video-badges');
+        let width;
+        if (badges) {
+            badges.style.left = `${select.offsetLeft}px`;
+            width = badges.getBoundingClientRect().width;
+        } else {
+            const context = canvas.getContext('2d');
+            context.font = getComputedStyle(select).font;
+            width = context.measureText(select.options[select.selectedIndex]?.text || '').width;
+        }
+        const target = `${Math.ceil(width) + 28}px`;
+        if (select.style.width !== target) {
+            select.style.width = target;
+        }
+    }
+
     function update() {
+        if (!JT.config?.TweakItemPage) {
+            return;
+        }
+
         const itemId = JT.route().startsWith('#/details') ? JT.routeParam('id') : null;
         const container = itemId && JT.visiblePage('.itemDetailPage')?.querySelector('.selectVideoContainer');
         if (container && JT.config?.EnablePosterBadges && container.dataset.jtVideoBadges !== itemId) {
             showVideoBadges(container, itemId);
         }
+
+        document.querySelectorAll('.trackSelections .detailTrackSelect').forEach((select) => {
+            if (!select.dataset.jtFit) {
+                select.dataset.jtFit = 'true';
+                select.addEventListener('change', () => fitSelect(select));
+            }
+            fitSelect(select);
+        });
 
         document.querySelectorAll('.mediaInfoOfficialRating').forEach((element) => {
             // Edit text nodes in place: React keeps references to them.
