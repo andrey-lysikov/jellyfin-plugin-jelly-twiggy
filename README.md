@@ -18,7 +18,6 @@ Jelly Twiggy extends the Jellyfin web client with poster badges, playback option
 - Sync of Jellyfin's browser-only settings across browsers and devices
 - Active streams button with progress, device and transcoding details
 - Dashboard: move, resize, show and hide blocks, and more
-- Library alphabet picker with the letters of your titles in any language
 - "Watched" row on item pages with who watched, how many times and when
 - Localization (English, German, Russian)
 
@@ -37,9 +36,6 @@ Jelly Twiggy extends the Jellyfin web client with poster badges, playback option
 <p align="center">
   <img src="assets/previews/stats.png" width="58%" alt="Playback statistics">
   <img src="assets/previews/settings.png" width="34%" alt="User settings">
-</p>
-<p align="center">
-  <img src="assets/previews/alphabet.jpg" width="60%" alt="Alphabet picker">
 </p>
 
 *Screenshots use posters of the Blender open movies Big Buck Bunny, Sintel, Tears of Steel, Spring and Cosmos Laundromat (© Blender Foundation, CC BY) and Boris Bilinsky's Metropolis poster (public domain); users and statistics are made up.*

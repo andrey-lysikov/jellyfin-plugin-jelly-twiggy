@@ -1015,32 +1015,36 @@ html.jt-tweak-item .mediaInfoOfficialRating {
     padding-right: 0 !important;
 }
 
-/* Video track as badges over its select. */
-.selectVideoContainer.jt-has-video-badges { position: relative; }
-/* The select stays in place and clickable, but fully transparent: its text never shows through. */
-.selectVideoContainer.jt-has-video-badges .detailTrackSelect { opacity: 0 !important; }
+/* Video track as badges: they stand in the row with the arrow right after them; the transparent select covers the line. */
+.trackSelections .selectVideoContainer.jt-has-video-badges {
+    position: relative;
+    align-items: center;
+    width: fit-content;
+}
+
+.trackSelections .selectVideoContainer.jt-has-video-badges .detailTrackSelect {
+    position: absolute !important;
+    inset: 0;
+    width: 100% !important;
+    opacity: 0 !important;
+}
+
+.trackSelections .selectVideoContainer.jt-has-video-badges .selectArrowContainer {
+    position: static !important;
+    order: 2;
+    flex: none;
+    display: flex;
+    margin-left: 0.25em;
+}
 
 .jt-video-badges {
-    position: absolute;
-    top: 50%;
-    left: 0;
+    order: 1;
     display: flex;
     gap: 4px;
-    transform: translateY(-50%);
     pointer-events: none;
 }
 
 .jt-video-badges .jt-badge { font-size: 0.75rem; padding: 1px 7px; }
-
-/* Track selects on item pages: plain text with the dropdown arrow, no box. */
-html.jt-tweak-item .trackSelections .selectContainer { width: fit-content; position: relative; }
-
-html.jt-tweak-item .trackSelections .selectContainer .detailTrackSelect {
-    border: 0 !important;
-    background-color: transparent !important;
-    box-shadow: none !important;
-    padding-left: 0 !important;
-}
 
 /* Watched items: no "played" circle on cards (unplayed episode counts stay). */
 html.jt-style-cards .playedIndicator { display: none !important; }

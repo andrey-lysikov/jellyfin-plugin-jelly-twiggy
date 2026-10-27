@@ -101,7 +101,7 @@
             cfgWatchedBy: '"Watched" row with user avatars on item pages',
             cfgDashboard: 'Dashboard customization, devices and statistics blocks',
             cfgTweaks: 'Page tweaks',
-            cfgTweakItemPage: 'Item page: borderless track selects, "6+" age ratings, video track as badges',
+            cfgTweakItemPage: 'Item page: "6+" age ratings, video track as badges',
             cfgTweakPlayer: 'Player: volume shown only in the bottom bar',
             cfgAnimations: 'Animations: spinning streams ring, watched circle pop',
             cfgStyleCards: 'Cards: badge depth, stream backdrops, watched circle and card buttons'
@@ -204,7 +204,7 @@
             cfgWatchedBy: 'Строка «Просмотрено» с аватарами на странице медиа',
             cfgDashboard: 'Настройка панели управления, блоки устройств и статистики',
             cfgTweaks: 'Доработка страниц',
-            cfgTweakItemPage: 'Страница медиа: списки дорожек без рамки, возраст «6+», видеодорожка бейджами',
+            cfgTweakItemPage: 'Страница медиа: возраст «6+», видеодорожка бейджами',
             cfgTweakPlayer: 'Плеер: громкость только в нижней панели',
             cfgAnimations: 'Анимации: вращение кольца потоков, пульс круга «просмотрено»',
             cfgStyleCards: 'Карточки: объём бейджей, фон карточек потоков, круг «просмотрено» и кнопки на карточках'
@@ -307,7 +307,7 @@
             cfgWatchedBy: 'Zeile „Gesehen“ mit Benutzer-Avataren auf Medienseiten',
             cfgDashboard: 'Dashboard-Anpassung, Geräte- und Statistikblöcke',
             cfgTweaks: 'Seitenanpassungen',
-            cfgTweakItemPage: 'Medienseite: Spurauswahl ohne Rahmen, Alter „6+“, Videospur als Badges',
+            cfgTweakItemPage: 'Medienseite: Alter „6+“, Videospur als Badges',
             cfgTweakPlayer: 'Player: Lautstärke nur in der unteren Leiste',
             cfgAnimations: 'Animationen: drehender Stream-Ring, Puls des Gesehen-Kreises',
             cfgStyleCards: 'Karten: Badge-Tiefe, Stream-Hintergründe, Gesehen-Kreis und Kartenknöpfe'

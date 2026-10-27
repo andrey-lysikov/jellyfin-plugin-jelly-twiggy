@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.3.0
+
+- Library alphabet picker is back to the standard one: Jellyfin filters letters by sort name, so the plugin no longer changes it
+- Item page: audio and subtitle selects are standard again (frame and arrow as in Jellyfin); the video track stays as badges with the arrow right after them
+
 ## 0.2.2.0
 
 - Active streams: the icon ring spins smoothly around its centre; the triangle stays still
