@@ -64,12 +64,19 @@
         ]);
     }
 
+    // One line: device and client shrink with an ellipsis, the address stays whole.
     function deviceLine(session) {
-        return JT.el('div', {
-            className: 'jt-session-device',
-            text: [session.DeviceName, session.Client, session.RemoteEndPoint].filter(Boolean).join(' · ')
-        });
+        const name = [session.DeviceName, session.Client].filter(Boolean).join(' · ');
+        return JT.el('div', { className: 'jt-session-device' }, [
+            name ? JT.el('span', { className: 'jt-session-device-name', text: name }) : null,
+            session.RemoteEndPoint ? JT.el('span', { className: 'jt-session-device-ip', text: (name ? ' · ' : '') + session.RemoteEndPoint }) : null
+        ]);
     }
+
+    // Inline SVG so the ring spins as a vector around its own centre, without pixel snapping.
+    const ICON_SVG = '<svg viewBox="0 0 1000 1000" fill="none" stroke="currentColor" stroke-width="80">'
+        + '<path class="jt-streams-ring" stroke-linecap="round" d="M105 500 A395 395 0 1 1 154 690"/>'
+        + '<path stroke-linejoin="round" d="M396 360 L632 500 L396 640 Z"/></svg>';
 
     // Poster left on a blurred copy of itself, user in the top-right corner, progress and tech at the bottom.
     JT.sessionCard = function (session) {
@@ -190,6 +197,7 @@
                 togglePanel(button);
             }
         }, JT.el('span', { className: 'jt-streams-icon', 'aria-hidden': 'true' }));
+        button.firstChild.innerHTML = ICON_SVG;
         return button;
     }
 

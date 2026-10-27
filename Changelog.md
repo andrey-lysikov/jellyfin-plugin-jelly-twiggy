@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.2.0
+
+- Active streams: the icon ring spins smoothly around its centre; the triangle stays still
+- Stream cards keep device, client and IP address on one line; long names are shortened instead
+- Fix: dropdown arrows of audio and subtitle selects no longer overlap the text
+- Dashboard: resolution badges show the count first and the type in brackets, e.g. 619 [4K]
+- Fix: statistics period tabs did not switch the data after returning to the dashboard
+- Fix: library alphabet picker shows the letters of your titles in the default (modern) layout too
+- Fix: users hidden from the login screen are shown again in the "Watched" row
+- Smaller watched circle on cards
+
 ## 0.2.1.0
 
 - Bugfix
