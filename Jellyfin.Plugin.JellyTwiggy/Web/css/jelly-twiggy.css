@@ -405,8 +405,9 @@ html.jt-anim .jt-streams-active .jt-streams-ring { animation: jt-spin 2.4s linea
     position: relative;
     isolation: isolate;
     overflow: hidden;
-    display: flex;
-    gap: 0.9em;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.6em 0.9em;
     padding: 0.75em;
     border: 1px solid var(--jt-border);
     border-radius: var(--jt-radius);
@@ -458,9 +459,7 @@ a.jt-session:hover { border-color: rgba(255, 255, 255, 0.3); }
 .jt-session-info {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    gap: 0.5em;
-    flex: 1 1 auto;
+    gap: 0.35em;
     min-width: 0;
 }
 
@@ -480,6 +479,7 @@ a.jt-session:hover { border-color: rgba(255, 255, 255, 0.3); }
 }
 
 .jt-session-title { font-weight: 700; font-size: 1.05em; }
+.jt-session-note { margin-left: 0.4em; font-weight: 400; font-size: 0.85em; color: var(--jt-muted); }
 
 .jt-session-subtitle,
 .jt-session-device {
@@ -513,6 +513,8 @@ a.jt-session:hover { border-color: rgba(255, 255, 255, 0.3); }
     display: flex;
     flex-direction: column;
     gap: 0.4em;
+    margin-top: auto;
+    padding-top: 0.2em;
 }
 
 .jt-session-progress {
@@ -539,11 +541,15 @@ a.jt-session:hover { border-color: rgba(255, 255, 255, 0.3); }
 
 .jt-session-status .material-icons { font-size: 1.2em; }
 
+/* Transcoding chips: the bottom row of the card, under the poster too. */
 .jt-session-chips {
+    grid-column: 1 / -1;
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
 }
+
+.jt-session-chips:empty { display: none; }
 
 .jt-session-chips span {
     padding: 0 6px;
@@ -1164,5 +1170,6 @@ html.jt-ui-radius-large :is(.emby-button, .button-flat, .raised, .emby-input, .e
     display: flex;
     flex-wrap: wrap;
     gap: 3px;
-    margin-top: 4px;
 }
+
+.jt-session-badges:empty { display: none; }

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.5.0
+
+- Stream cards: new layout — poster with title ("Series · S04E01", film with the year in brackets), badges, device and progress on the right, transcoding details across the bottom; device and IP on one line
+
 ## 0.2.4.0
 
 - Dashboard: even larger CPU and RAM charts and disk speeds
