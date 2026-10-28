@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "0.3.0.0",
+        "changelog": "- Active streams and dashboard devices: playing cards keep their order by playback start (earliest first) instead of jumping; a new item or a resume after pause moves the card down\n- Stream cards: the bitrate sent to the client next to the quality and audio badges\n- Posters: the right-click menu opens at the pointer and grows right and down\n- Dashboard: block titles line up with the content below them\n- Phones: the settings dialog is full screen with a solid background, nothing shows through or hides under the browser bars\n- Phones: statistics period tabs no longer stick to the tiles when they wrap under the title\n- Dashboard: on a narrow server card the CPU / RAM charts and disks move to their own line instead of squeezing the server info",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/andrey-lysikov/jellyfin-plugin-jelly-twiggy/releases/download/v0.3.0.0/jelly-twiggy_0.3.0.0.zip",
+        "checksum": "c425eb2c7ffea1683667d8add94a16e5",
+        "timestamp": "2026-10-28T17:40:49Z"
+      },
+      {
         "version": "0.2.6.2",
         "changelog": "- Active streams: the move drop-down is labelled \"Send to\"\n- Item page: the \"Play on…\" icon is no longer black",
         "targetAbi": "12.0.0.0",
