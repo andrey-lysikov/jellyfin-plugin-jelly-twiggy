@@ -7,6 +7,8 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5em;
+    /* Keeps a gap above the tiles when the tabs wrap under the title on phones. */
+    margin-block: 8px;
 }
 
 .jt-stat-overview {
@@ -122,6 +124,20 @@
 
 @media (prefers-reduced-motion: reduce) {
     .jt-donut-value { transition: none; }
+}
+
+/* A narrow server card puts the charts and disks on their own line under the server info. */
+.MuiPaper-root:has(> .MuiStack-root > .jt-sysmetrics) { container-type: inline-size; }
+
+@container (max-width: 760px) {
+    .MuiStack-root:has(> .jt-sysmetrics) { flex-wrap: wrap; }
+
+    .jt-sysmetrics {
+        flex: 1 1 100%;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin: 16px 0 0;
+    }
 }
 
 /* ---- Recent plays: day groups, aligned columns ---------------------------------------- */

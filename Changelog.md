@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0.0
+
+- Phones: the settings dialog is full screen with a solid background, nothing shows through or hides under the browser bars
+- Phones: statistics period tabs no longer stick to the tiles when they wrap under the title
+- Dashboard: on a narrow server card the CPU / RAM charts and disks move to their own line instead of squeezing the server info
+
 ## 0.2.6.2
 
 - Active streams: the move drop-down is labelled "Send to"
