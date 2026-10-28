@@ -128,6 +128,37 @@ public class HandoffService
         return new HandoffResult(HandoffStatus.Ok, target.DeviceName);
     }
 
+    /// <summary>Moves one of the caller's sessions to another of their devices, keeping position and tracks.</summary>
+    public async Task<HandoffResult> Move(Guid userId, string deviceId, string sessionId, string targetDeviceId, CancellationToken cancellationToken)
+    {
+        var sessions = _sessions.GetSessions();
+        var source = sessions.FirstOrDefault(s => s.Id == sessionId);
+        if (source is null || HandoffRules.WhyNotTakeover(source, userId, deviceId, _now()) is not null)
+        {
+            return new HandoffResult(HandoffStatus.SourceGone);
+        }
+
+        // Checked before anything stops: a missing target must leave the source playing.
+        var target = ResolveTarget(sessions, userId, deviceId, targetDeviceId);
+        if (target is null || target.DeviceId == source.DeviceId)
+        {
+            return new HandoffResult(HandoffStatus.TargetGone);
+        }
+
+        var controlling = OwnSession(sessions, userId, deviceId)?.Id ?? string.Empty;
+        if (HandoffRules.IsSwiftly(source.Client))
+        {
+            await _sessions.SendMessage(controlling, source.Id, HandoffRules.HintHeader, target.DeviceName ?? string.Empty, HandoffRules.HintTimeoutMs, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        var stoppedAt = await _sessions.StopAndWait(controlling, source.Id, HandoffRules.StopWait, cancellationToken).ConfigureAwait(false);
+        var start = HandoffRules.StartPoint(null, stoppedAt, source.PositionTicks ?? 0);
+        var play = HandoffRules.BuildPlay(source.ItemId!.Value, start, source.MediaSourceId, source.AudioStreamIndex, source.SubtitleStreamIndex);
+        await _sessions.Play(controlling, target.Id, play, cancellationToken).ConfigureAwait(false);
+        return new HandoffResult(HandoffStatus.Ok, target.DeviceName);
+    }
+
     // The caller's own session that can receive commands; its device id comes from the request token.
     private static HandoffSession? OwnSession(IEnumerable<HandoffSession> sessions, Guid userId, string deviceId) =>
         sessions.Where(s => s.UserId == userId && s.SupportsRemoteControl && string.Equals(s.DeviceId, deviceId, StringComparison.Ordinal))

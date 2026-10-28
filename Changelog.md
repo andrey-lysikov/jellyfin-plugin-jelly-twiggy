@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.6.1
+
+- Active streams: "Continue here" is now "Continue in browser"; next to it a drop-down moves the playback to another of your Swiftly devices
+- Item page: the "Play on…" button has no stray ring and its icon matches the other buttons
+
 ## 0.2.6.0
 
 - Statistics: play methods and popular titles moved to the left column, users to the right

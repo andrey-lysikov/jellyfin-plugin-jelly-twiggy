@@ -8,8 +8,10 @@
 
     JT.addStrings({
         en: {
-            continueHere: 'Continue here',
-            continueHereHint: 'Stop it on that device and continue here from the same position',
+            continueHere: 'Continue in browser',
+            moveTo: 'Move to another device',
+            noTargets: 'No other devices with Swiftly',
+            continueHereHint: 'Stop it on that device and continue in this browser from the same position',
             continuingHere: 'Continuing here from “{device}”',
             sourceGone: 'Nothing to take over: playback on that device has ended',
             noOwnSession: 'This browser can’t receive playback right now, reload the page',
@@ -24,8 +26,10 @@
             enableHandoffHint: '“Continue here” in active streams and “Play on…” on item pages and in the player, between your devices with Swiftly Player.'
         },
         ru: {
-            continueHere: 'Продолжить здесь',
-            continueHereHint: 'Остановить на том устройстве и продолжить здесь с того же места',
+            continueHere: 'Продолжить в браузере',
+            moveTo: 'Перенести на другое устройство',
+            noTargets: 'Нет других устройств со Swiftly',
+            continueHereHint: 'Остановить на том устройстве и продолжить в этом браузере с того же места',
             continuingHere: 'Продолжаем здесь с «{device}»',
             sourceGone: 'Забирать нечего: на том устройстве воспроизведение закончилось',
             noOwnSession: 'Этот браузер сейчас не может принять воспроизведение, обновите страницу',
@@ -40,8 +44,10 @@
             enableHandoffHint: '«Продолжить здесь» в активных потоках и «Играть на…» на странице элемента и в плеере — между вашими устройствами со Swiftly Player.'
         },
         de: {
-            continueHere: 'Hier fortsetzen',
-            continueHereHint: 'Auf dem anderen Gerät stoppen und hier an derselben Stelle fortsetzen',
+            continueHere: 'Im Browser fortsetzen',
+            moveTo: 'Auf ein anderes Gerät verschieben',
+            noTargets: 'Keine anderen Geräte mit Swiftly',
+            continueHereHint: 'Auf dem anderen Gerät stoppen und in diesem Browser an derselben Stelle fortsetzen',
             continuingHere: 'Hier fortgesetzt von „{device}“',
             sourceGone: 'Nichts zu übernehmen: Die Wiedergabe auf dem Gerät ist beendet',
             noOwnSession: 'Dieser Browser kann gerade keine Wiedergabe empfangen, Seite neu laden',
@@ -130,22 +136,74 @@
 
         const dialog = JT.dialog(JT.t('playOnTitle'));
         for (const target of list) {
-            dialog.body.appendChild(JT.el('button', {
-                type: 'button',
-                className: 'jt-handoff-target',
-                onClick: () => {
-                    dialog.close();
-                    send(target, buildBody());
-                }
-            }, [
-                JT.icon('tv'),
-                JT.el('span', { className: 'jt-handoff-target-text' }, [
-                    JT.el('span', { text: target.DeviceName || target.DeviceId }),
-                    JT.el('span', { className: 'jt-muted', text: [target.Client, target.ItemId ? JT.t('nowPlayingThere') : null].filter(Boolean).join(' · ') })
-                ])
-            ]));
+            dialog.body.appendChild(targetRow(target, () => {
+                dialog.close();
+                send(target, buildBody());
+            }));
         }
     }
+
+    function targetRow(target, onPick) {
+        return JT.el('button', { type: 'button', className: 'jt-handoff-target', onClick: onPick }, [
+            JT.icon('tv'),
+            JT.el('span', { className: 'jt-handoff-target-text' }, [
+                JT.el('span', { text: target.DeviceName || target.DeviceId }),
+                JT.el('span', { className: 'jt-muted', text: [target.Client, target.ItemId ? JT.t('nowPlayingThere') : null].filter(Boolean).join(' · ') })
+            ])
+        ]);
+    }
+
+    // ---- Move A → B (active streams panel) -------------------------------------------------
+
+    let menu = null;
+
+    function closeMenu() {
+        menu?.remove();
+        menu = null;
+        document.removeEventListener('click', onMenuOutside, true);
+    }
+
+    function onMenuOutside(e) {
+        if (menu && !menu.contains(e.target) && !e.target.closest('.jt-session-move')) {
+            closeMenu();
+        }
+    }
+
+    async function move(session, target) {
+        try {
+            const result = await JT.post('JellyTwiggy/Handoff/Move', { SessionId: session.Id, DeviceId: target.DeviceId });
+            JT.toast(JT.t('playingOn', { device: result?.DeviceName || target.DeviceName || '' }));
+        } catch (e) {
+            console.error('[JellyTwiggy] move', e);
+            JT.toast(failureText(e, target.DeviceName || target.DeviceId));
+        }
+    }
+
+    // Drop-down under the button with the user's other Swiftly devices; the source's own is left out.
+    JT.openMoveMenu = async function (session, anchor) {
+        if (menu) {
+            closeMenu();
+            return;
+        }
+
+        const rect = anchor.getBoundingClientRect();
+        const opened = menu = JT.el('div', { className: 'jt-handoff-menu' }, JT.el('div', { className: 'jt-handoff-menu-empty', text: JT.t('loading') }));
+        menu.style.top = `${rect.bottom + 4}px`;
+        menu.style.right = `${Math.max(8, window.innerWidth - rect.right)}px`;
+        document.body.appendChild(menu);
+        document.addEventListener('click', onMenuOutside, true);
+
+        const list = (await loadTargets(true)).filter((target) => target.DeviceId !== session.DeviceId);
+        if (menu !== opened) {
+            return;
+        }
+        menu.replaceChildren(...(list.length
+            ? list.map((target) => targetRow(target, () => {
+                closeMenu();
+                move(session, target);
+            }))
+            : [JT.el('div', { className: 'jt-handoff-menu-empty', text: JT.t('noTargets') })]));
+    };
 
     // Item page: the version and tracks chosen here go along; no start position resumes a started item.
     function itemBody(page, itemId) {
@@ -201,6 +259,10 @@
                 onClick: () => pickTarget(() => itemBody(page, button.dataset.jtItem))
             }, JT.el('div', { className: 'detailButton-content' }, JT.icon('tv', 'detailButton-icon')));
             play.insertAdjacentElement('afterend', button);
+            const nativeIcon = play.querySelector('.material-icons');
+            if (nativeIcon) {
+                button.querySelector('.material-icons').style.fontSize = getComputedStyle(nativeIcon).fontSize;
+            }
         }
         if (button.dataset.jtItem === itemId) {
             return;
@@ -260,6 +322,7 @@
                     loadTargets();
                 }
             }, TARGETS_TTL_MS);
+            JT.onNavigate(closeMenu);
             JT.onUserChange(() => {
                 targets = [];
                 targetsAt = 0;
