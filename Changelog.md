@@ -2,6 +2,10 @@
 
 ## 0.3.0.0
 
+- Active streams and dashboard devices: playing cards keep their order by playback start (earliest first) instead of jumping; a new item or a resume after pause moves the card down
+- Stream cards: the bitrate sent to the client next to the quality and audio badges
+- Posters: the right-click menu opens at the pointer and grows right and down
+- Dashboard: block titles line up with the content below them
 - Phones: the settings dialog is full screen with a solid background, nothing shows through or hides under the browser bars
 - Phones: statistics period tabs no longer stick to the tiles when they wrap under the title
 - Dashboard: on a narrow server card the CPU / RAM charts and disks move to their own line instead of squeezing the server info

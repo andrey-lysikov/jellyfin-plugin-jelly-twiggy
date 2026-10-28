@@ -1,4 +1,6 @@
+using System.Collections.Concurrent;
 using Jellyfin.Plugin.JellyTwiggy.Handoff;
+using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Session;
 using MediaBrowser.Model.Session;
 
@@ -80,6 +82,9 @@ public class NowPlayingDto
     /// <summary>Gets or sets a value indicating whether playback is paused.</summary>
     public bool IsPaused { get; set; }
 
+    /// <summary>Gets or sets the bitrate sent to the client: the transcode's, or the file's for direct play.</summary>
+    public int? Bitrate { get; set; }
+
     /// <summary>Gets or sets the play method.</summary>
     public string? PlayMethod { get; set; }
 
@@ -100,33 +105,71 @@ public record TranscodeDto(
     string? HardwareAcceleration);
 
 /// <summary>Lists client sessions.</summary>
-public class SessionsService
+public sealed class SessionsService : IDisposable
 {
     private readonly ISessionManager _sessionManager;
+
+    // When each session started (or resumed) its current item: playing cards keep their place by it.
+    private readonly ConcurrentDictionary<string, (Guid ItemId, DateTime StartedUtc, bool Paused)> _started = new(StringComparer.Ordinal);
 
     /// <summary>Initializes a new instance of the <see cref="SessionsService"/> class.</summary>
     public SessionsService(ISessionManager sessionManager)
     {
         _sessionManager = sessionManager;
+        _sessionManager.PlaybackStart += OnPlaybackStart;
     }
+
+    /// <inheritdoc />
+    public void Dispose() => _sessionManager.PlaybackStart -= OnPlaybackStart;
 
     /// <summary>Gets sessions: all of them for an admin, only the viewer's own otherwise.</summary>
     public List<SessionDto> GetSessions(Guid viewerId, string? viewerDeviceId, bool handoff, bool isAdmin, bool playingOnly, TimeSpan activeWithin)
     {
         var now = DateTime.UtcNow;
         var since = now - activeWithin;
-        return _sessionManager.Sessions
+        var all = _sessionManager.Sessions.ToList();
+        ForgetEnded(all);
+        return all
             .Where(s => s.UserId != Guid.Empty && (isAdmin || s.UserId == viewerId))
             .Where(s => s.NowPlayingItem is not null || (!playingOnly && s.LastActivityDate >= since))
             .Select(s =>
             {
                 var dto = ToDto(s, isAdmin);
                 dto.CanTakeOver = handoff && HandoffRules.WhyNotTakeover(JellyfinHandoffSessions.ToHandoff(s), viewerId, viewerDeviceId, now) is null;
-                return dto;
+                return (Dto: dto, Started: dto.NowPlaying is { } playing ? StartedAt(s.Id, playing.ItemId, playing.IsPaused, now) : DateTime.MaxValue);
             })
-            .OrderBy(s => s.NowPlaying is null)
-            .ThenByDescending(s => s.LastActivityDate)
+            // Playing first, the earliest start on top; a new item or a resume after pause moves the card down.
+            .OrderBy(x => x.Started)
+            .ThenByDescending(x => x.Dto.LastActivityDate)
+            .Select(x => x.Dto)
             .ToList();
+    }
+
+    // Sessions playing since before the plugin loaded count from the first time they are seen.
+    private DateTime StartedAt(string sessionId, Guid itemId, bool paused, DateTime now)
+    {
+        var entry = _started.AddOrUpdate(
+            sessionId,
+            (itemId, now, paused),
+            (_, old) => old.ItemId != itemId || (old.Paused && !paused) ? (itemId, now, paused) : old with { Paused = paused });
+        return entry.StartedUtc;
+    }
+
+    private void ForgetEnded(List<SessionInfo> sessions)
+    {
+        var alive = sessions.Where(s => s.NowPlayingItem is not null).Select(s => s.Id).ToHashSet(StringComparer.Ordinal);
+        foreach (var id in _started.Keys.Where(id => !alive.Contains(id)))
+        {
+            _started.TryRemove(id, out _);
+        }
+    }
+
+    private void OnPlaybackStart(object? sender, PlaybackProgressEventArgs e)
+    {
+        if (e.Session?.Id is { } id && e.Item is { } item)
+        {
+            _started[id] = (item.Id, DateTime.UtcNow, false);
+        }
     }
 
     private static SessionDto ToDto(SessionInfo session, bool isAdmin)
@@ -158,6 +201,9 @@ public class SessionsService
                     PositionTicks = session.PlayState?.PositionTicks,
                     IsPaused = session.PlayState?.IsPaused ?? false,
                     PlayMethod = session.PlayState?.PlayMethod?.ToString(),
+                    Bitrate = session.PlayState?.PlayMethod == PlayMethod.Transcode
+                        ? session.TranscodingInfo?.Bitrate
+                        : session.FullNowPlayingItem?.TotalBitrate,
                     Transcode = session.PlayState?.PlayMethod == PlayMethod.Transcode && session.TranscodingInfo is { } t
                         ? new TranscodeDto(
                             t.VideoCodec,
