@@ -22,6 +22,9 @@ public class SessionDto
     /// <summary>Gets or sets the client app name.</summary>
     public string? Client { get; set; }
 
+    /// <summary>Gets or sets the device id.</summary>
+    public string? DeviceId { get; set; }
+
     /// <summary>Gets or sets the device name.</summary>
     public string? DeviceName { get; set; }
 
@@ -135,6 +138,7 @@ public class SessionsService
             UserName = session.UserName,
             UserImageTag = session.UserPrimaryImageTag,
             Client = session.Client,
+            DeviceId = session.DeviceId,
             DeviceName = session.DeviceName,
             RemoteEndPoint = isAdmin ? session.RemoteEndPoint : null,
             LastActivityDate = session.LastActivityDate,

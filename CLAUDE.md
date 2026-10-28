@@ -54,7 +54,7 @@
     `Web/**` как embedded resources, анонимно), `Status`, `ClientConfig`, `UserSettings`,
     `DashboardLayout`, `Badges`, `Items/{id}/Watchers`, `Sessions`, `Statistics`; плюс
     `JellyTwiggyDashboardController` (`LibraryResolutions`, `SystemMetrics`) и
-    `JellyTwiggyHandoffController` (`Handoff/Sources|Targets|Explain|Takeover/{id}|Play`).
+    `JellyTwiggyHandoffController` (`Handoff/Sources|Targets|Explain|Takeover/{id}|Play|Move`).
     Имена методов — с префиксом `JellyTwiggy`: Jellyfin делает из них operationId в swagger;
   - `History/` — журнал воспроизведений (`PlaybackTracker` слушает события сессий и
     `UserDataSaved`, `PlaybackHistoryStore` — JSONL в памяти), «Просмотрено», статистика;
@@ -128,7 +128,7 @@
   `https://raw.githubusercontent.com/andrey-lysikov/jellyfin-plugin-jelly-twiggy/manifest/manifest.json`.
 - **Сборка — только через GitHub Actions** (релиз по тегу). На локальной машине **не собираем и
   не устанавливаем** dotnet или другие тулчейны; проверка сборки — через CI.
-- **Версионирование:** 4 компонента везде (сборка, `manifest.json`, тег) — текущая **0.2.6.0**,
+- **Версионирование:** 4 компонента везде (сборка, `manifest.json`, тег) — текущая **0.2.6.1**,
   тег релиза `vX.Y.Z.W`.
 - **Лицензия:** GPL-3.0. Код JE (тоже GPL-3.0) заимствовать можно — с указанием источника
   в комментарии у заимствованного фрагмента и в разделе Credits README.
@@ -162,7 +162,7 @@
   содержит `Video`, свежая, Swiftly; одна запись на `DeviceId` (самая свежая); играть не обязана.
   Цель хранится как `DeviceId` (id сессии меняется при перезапуске) и разрешается в сессию при отправке.
 - **Из плеера:** `PlayNow` с текущей позиции → дождаться успеха → только потом стоп у себя; подсказка не нужна.
-- **Перенос A → B** (не реализован): подсказка на A → стоп A → `PlaybackStopped` ≤ 3 с → `PlayNow` на B
+- **Перенос A → B** (меню в панели потоков): подсказка на A → стоп A → `PlaybackStopped` ≤ 3 с → `PlayNow` на B
   с дорожками A; B не ответил — ошибка, A молча не перезапускать.
 - **Состояние Swiftly:** takeover работает с 1.0.9; приём `Play` заявлен, но выпущенные версии его пока
   молча отбрасывают — отправку на Swiftly проверить нельзя, только отбор целей.

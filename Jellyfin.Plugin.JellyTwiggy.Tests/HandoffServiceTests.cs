@@ -153,4 +153,40 @@ public class HandoffServiceTests
             Service(fake).MoveFromPlayer(Me, MyDevice, "tv-wohnzimmer", null, CancellationToken.None));
         Assert.DoesNotContain("stop own", fake.Calls);
     }
+
+    [Fact]
+    public async Task MoveSendsHintThenStopsSourceThenPlaysOnTarget()
+    {
+        var source = Session("tv", position: 300 * Second);
+        var target = Session("ipad", deviceId: "ipad-kueche", deviceName: "iPad Küche", idle: true);
+        var fake = new FakeSessions(Browser, source, target) { StoppedAt = 304 * Second };
+        var result = await Service(fake).Move(Me, MyDevice, "tv", "ipad-kueche", CancellationToken.None);
+
+        Assert.Equal(HandoffStatus.Ok, result.Status);
+        Assert.Equal(new[] { "message tv Swiftly-Uebernahme iPad Küche 1000", "stop tv", "play ipad" }, fake.Calls);
+        var play = fake.Plays.Single().Request;
+        Assert.Equal(304 * Second, play.StartPositionTicks);
+        Assert.Equal(1, play.AudioStreamIndex);
+        Assert.Equal(2, play.SubtitleStreamIndex);
+    }
+
+    [Fact]
+    public async Task MoveToMissingDeviceLeavesSourcePlaying()
+    {
+        var fake = new FakeSessions(Browser, Session("tv"), Session("ipad", deviceId: "ipad-kueche", secondsAgo: 300, idle: true));
+        var result = await Service(fake).Move(Me, MyDevice, "tv", "ipad-kueche", CancellationToken.None);
+
+        Assert.Equal(HandoffStatus.TargetGone, result.Status);
+        Assert.Empty(fake.Calls);
+    }
+
+    [Fact]
+    public async Task MoveToSameDeviceIsRejected()
+    {
+        var fake = new FakeSessions(Browser, Session("tv"));
+        var result = await Service(fake).Move(Me, MyDevice, "tv", "tv-wohnzimmer", CancellationToken.None);
+
+        Assert.Equal(HandoffStatus.TargetGone, result.Status);
+        Assert.Empty(fake.Calls);
+    }
 }

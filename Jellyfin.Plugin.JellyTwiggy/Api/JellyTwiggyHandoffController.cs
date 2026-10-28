@@ -154,6 +154,34 @@ public class JellyTwiggyHandoffController : ControllerBase
         return ToResponse(result);
     }
 
+    /// <summary>Moves one of the caller's sessions on another device to a third device.</summary>
+    [HttpPost("Move")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<HandoffResultDto>> JellyTwiggyHandoffMove([FromBody, Required] HandoffMoveRequest request, CancellationToken cancellationToken)
+    {
+        if (GetCaller() is not { } caller)
+        {
+            return Unauthorized();
+        }
+
+        if (string.IsNullOrEmpty(request.SessionId) || string.IsNullOrEmpty(request.DeviceId))
+        {
+            return BadRequest();
+        }
+
+        if (!Enabled(caller.UserId))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden);
+        }
+
+        var result = await _handoff.Move(caller.UserId, caller.DeviceId, request.SessionId, request.DeviceId, cancellationToken).ConfigureAwait(false);
+        return ToResponse(result);
+    }
+
     private static HandoffSessionDto ToDto(HandoffSession s) =>
         new(s.Id, s.DeviceId, s.DeviceName, s.Client, s.ItemId, s.PositionTicks, s.LastActivityDate);
 
@@ -188,6 +216,16 @@ public record HandoffExplainDto(string SessionId, Guid UserId, string? DeviceNam
 
 /// <summary>Outcome of a handoff: Ok, NoOwnSession, SourceGone or TargetGone, and the other device's name.</summary>
 public record HandoffResultDto(string Status, string? DeviceName);
+
+/// <summary>Move request: which session goes to which device.</summary>
+public class HandoffMoveRequest
+{
+    /// <summary>Gets or sets the session to move.</summary>
+    public string? SessionId { get; set; }
+
+    /// <summary>Gets or sets the target device id.</summary>
+    public string? DeviceId { get; set; }
+}
 
 /// <summary>"Play on" request. With <see cref="FromPlayer"/> the item and tracks come from this device's player.</summary>
 public class HandoffPlayRequest

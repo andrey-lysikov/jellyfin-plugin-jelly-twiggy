@@ -81,17 +81,31 @@
         + '<path class="jt-streams-ring" stroke-linecap="round" d="M105 500 A395 395 0 1 1 154 690"/>'
         + '<path stroke-linejoin="round" d="M396 360 L632 500 L396 640 Z"/></svg>';
 
-    // "Continue here" on the viewer's own playback elsewhere (panel only); handoff.js does the work.
-    function takeoverButton(session) {
-        return JT.el('button', {
-            type: 'button',
-            className: 'jt-chip jt-session-takeover',
-            title: JT.t('continueHereHint'),
-            onClick: (e) => {
-                e.preventDefault();
-                JT.takeOver?.(session);
-            }
-        }, [JT.icon('input'), JT.t('continueHere')]);
+    // "Continue in browser" and "Move to…" on the viewer's own playback elsewhere (panel only); handoff.js does the work.
+    function takeoverButtons(session) {
+        return JT.el('span', { className: 'jt-session-handoff' }, [
+            JT.el('button', {
+                type: 'button',
+                className: 'jt-chip jt-session-takeover',
+                title: JT.t('continueHereHint'),
+                onClick: (e) => {
+                    e.preventDefault();
+                    JT.takeOver?.(session);
+                }
+            }, [JT.icon('input'), JT.t('continueHere')]),
+            JT.el('button', {
+                type: 'button',
+                className: 'jt-chip jt-session-takeover jt-session-move',
+                title: JT.t('moveTo'),
+                'aria-label': JT.t('moveTo'),
+                onClick: (e) => {
+                    // Keeps the panel open (it closes on clicks on a card) while the menu shows.
+                    e.preventDefault();
+                    e.stopPropagation();
+                    JT.openMoveMenu?.(session, e.currentTarget);
+                }
+            }, [JT.icon('tv'), JT.icon('arrow_drop_down')])
+        ]);
     }
 
     // Poster left on a blurred copy of itself, user in the top-right corner, progress and tech at the bottom.
@@ -146,7 +160,7 @@
                         JT.icon(nowPlaying.IsPaused ? 'pause' : 'play_arrow'),
                         JT.el('span', { text: `${JT.formatTicks(nowPlaying.PositionTicks)} / ${JT.formatTicks(nowPlaying.RunTimeTicks)}` }),
                         nowPlaying.PlayMethod ? JT.el('span', { className: `jt-chip ${methodClass}`, text: playMethodLabel(nowPlaying.PlayMethod) }) : null,
-                        options?.takeover && session.CanTakeOver ? takeoverButton(session) : null
+                        options?.takeover && session.CanTakeOver ? takeoverButtons(session) : null
                     ])
                 ])
             ]),
