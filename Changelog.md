@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.6.0
+
+- Statistics: play methods and popular titles moved to the left column, users to the right
+- Dashboard library counts: "619 · 4K" instead of "619 [4K]", plus HDR and DV counters
+- Dashboard: "Customize dashboard" is now a pencil icon in the header next to active streams; save, reset and cancel are header icons with tooltips while editing
+- Dashboard: "Recent plays" header links to the activity page, like the other blocks
+- Continue watching with Swiftly clients (user setting, off by default): "Continue here" in the active streams panel takes over your playback from another device at the same position and tracks; "Play on…" sends a video from its page, or the playing one from the player, to another device
+
 ## 0.2.5.0
 
 - Stream cards: new layout — poster with title ("Series · S04E01", film with the year in brackets), badges, device and progress on the right, transcoding details across the bottom; device and IP on one line

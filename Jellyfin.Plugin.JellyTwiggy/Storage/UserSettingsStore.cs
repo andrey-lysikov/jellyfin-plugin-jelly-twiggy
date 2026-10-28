@@ -26,6 +26,9 @@ public class UserSettings
     /// <summary>Gets or sets a value indicating whether a long press on the video plays at 2x speed.</summary>
     public bool LongPressSpeedUp { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether "Continue here" and "Play on" with Swiftly clients are offered.</summary>
+    public bool EnableHandoff { get; set; }
+
     /// <summary>Gets or sets a value indicating whether favorite buttons, tabs and filters are hidden.</summary>
     public bool HideFavorites { get; set; }
 

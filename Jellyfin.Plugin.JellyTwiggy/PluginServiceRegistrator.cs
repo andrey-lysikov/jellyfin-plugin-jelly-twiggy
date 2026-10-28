@@ -19,6 +19,9 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
         serviceCollection.AddSingleton<MediaBadgeService>();
         serviceCollection.AddSingleton<WatchersService>();
         serviceCollection.AddSingleton<SessionsService>();
+        serviceCollection.AddSingleton<Handoff.JellyfinHandoffSessions>();
+        serviceCollection.AddSingleton<Handoff.IHandoffSessions>(provider => provider.GetRequiredService<Handoff.JellyfinHandoffSessions>());
+        serviceCollection.AddSingleton(provider => new Handoff.HandoffService(provider.GetRequiredService<Handoff.IHandoffSessions>()));
         serviceCollection.AddSingleton<StatisticsService>();
         serviceCollection.AddSingleton<Dashboard.SystemMetricsService>();
         serviceCollection.AddSingleton<Dashboard.LibraryCountsService>();

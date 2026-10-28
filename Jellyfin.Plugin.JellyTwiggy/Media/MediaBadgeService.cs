@@ -120,7 +120,8 @@ public class MediaBadgeService
         return channels is null ? codec : $"{codec} {channels}";
     }
 
-    private static string? FormatRange(VideoRangeType rangeType) => rangeType switch
+    /// <summary>Formats a video range like "HDR" or "DV"; null for SDR.</summary>
+    internal static string? FormatRange(VideoRangeType rangeType) => rangeType switch
     {
         VideoRangeType.DOVI
             or VideoRangeType.DOVIWithHDR10
