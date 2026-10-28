@@ -104,7 +104,7 @@
                     e.stopPropagation();
                     JT.openMoveMenu?.(session, e.currentTarget);
                 }
-            }, [JT.icon('tv'), JT.icon('arrow_drop_down')])
+            }, [JT.t('sendTo'), JT.icon('tv'), JT.icon('arrow_drop_down')])
         ]);
     }
 

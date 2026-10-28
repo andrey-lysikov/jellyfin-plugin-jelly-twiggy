@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.6.2
+
+- Active streams: the move drop-down is labelled "Send to"
+- Item page: the "Play on…" icon is no longer black
+
 ## 0.2.6.1
 
 - Active streams: "Continue here" is now "Continue in browser"; next to it a drop-down moves the playback to another of your Swiftly devices
