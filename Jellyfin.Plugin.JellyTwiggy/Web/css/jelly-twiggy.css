@@ -58,6 +58,7 @@
 .jt-q-576p,
 .jt-q-480p { background: rgba(255, 193, 7, 0.85); color: #000; }
 .jt-q-sd { background: rgba(128, 128, 128, 0.8); }
+.jt-badge-bitrate { background: rgba(0, 150, 136, 0.9); }
 
 .jt-badge-row {
     display: flex;
@@ -831,7 +832,8 @@ html.jt-dashboard #dashboardPage .content-primary > .MuiGrid-container > .jt-das
     display: inline-flex;
     align-items: center;
     gap: 0.2em;
-    margin: 8px 0;
+    /* The hover padding sits outside, so the title lines up with the block's content. */
+    margin: 8px 0 8px -8px;
     padding: 6px 8px;
     border-radius: 4px;
     color: inherit;

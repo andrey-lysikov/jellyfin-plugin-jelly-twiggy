@@ -290,8 +290,52 @@
         }
     }
 
+    // ---- Card context menu -----------------------------------------------------------------
+
+    // jellyfin-web centres the menu on the card; after a right click it opens at the pointer, growing right and down.
+    let menuPoint = null;
+
+    function onContextMenu(e) {
+        menuPoint = e.target.closest?.('.card') ? { x: e.clientX, y: e.clientY, at: Date.now() } : null;
+    }
+
+    function placeMenu(sheet, retried) {
+        if (!sheet.style.left && !retried) {
+            requestAnimationFrame(() => placeMenu(sheet, true));
+            return;
+        }
+        const point = menuPoint;
+        menuPoint = null;
+        if (!point || Date.now() - point.at > 2000 || !sheet.style.left) {
+            return;
+        }
+        const margin = 10;
+        const left = Math.max(margin, Math.min(point.x, window.innerWidth - sheet.offsetWidth - margin));
+        const top = Math.max(margin, Math.min(point.y, window.innerHeight - sheet.offsetHeight - margin));
+        sheet.style.left = `${left}px`;
+        sheet.style.top = `${top}px`;
+        sheet.style.transformOrigin = `${point.x - left}px ${point.y - top}px`;
+    }
+
+    function watchMenus() {
+        document.addEventListener('contextmenu', onContextMenu, true);
+        new MutationObserver((records) => {
+            if (!menuPoint) {
+                return;
+            }
+            for (const node of records.flatMap((record) => Array.from(record.addedNodes))) {
+                const sheet = node.nodeType === Node.ELEMENT_NODE && (node.matches('.actionSheet') ? node : node.querySelector('.actionSheet'));
+                if (sheet) {
+                    placeMenu(sheet, false);
+                    return;
+                }
+            }
+        }).observe(document.body, { childList: true });
+    }
+
     JT.register({
         init() {
+            watchMenus();
             JT.onDomChange(scan);
             JT.onNavigate(() => {
                 clearTimeout(refreshTimer);

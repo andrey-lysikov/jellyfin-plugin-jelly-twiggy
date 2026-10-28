@@ -47,9 +47,6 @@
             `${JT.t('techVideo')}: ${transcode.IsVideoDirect ? direct : `${(transcode.VideoCodec || '?').toUpperCase()}${transcode.Height ? ` ${transcode.Height}p` : ''}`}`,
             `${JT.t('techAudio')}: ${transcode.IsAudioDirect ? direct : (transcode.AudioCodec || '?').toUpperCase()}`
         ];
-        if (transcode.Bitrate) {
-            parts.push(`${(transcode.Bitrate / 1e6).toFixed(1)} Mbps`);
-        }
         if (transcode.Framerate) {
             parts.push(`${Math.round(transcode.Framerate)} fps`);
         }
@@ -138,7 +135,7 @@
 
         const methodClass = nowPlaying.PlayMethod === 'Transcode' ? 'jt-chip-warn' : 'jt-chip-ok';
         // Top: poster | title, badges, device, progress. Bottom, full width: transcoding chips.
-        return JT.el('a', { className: 'jt-session', href: `#/details?id=${nowPlaying.ItemId}`, 'data-jt-key': key, 'data-jt-item': nowPlaying.ItemId }, [
+        return JT.el('a', { className: 'jt-session', href: `#/details?id=${nowPlaying.ItemId}`, 'data-jt-key': key, 'data-jt-item': nowPlaying.ItemId, 'data-jt-bitrate': nowPlaying.Bitrate || null }, [
             backdrop,
             poster,
             JT.el('div', { className: 'jt-session-info' }, [
@@ -168,20 +165,25 @@
         ]);
     };
 
-    // Quality and audio of what is playing, the same badges as on posters.
+    // Quality and audio of what is playing (the same badges as on posters), then the bitrate sent to the client.
     async function addBadges(card) {
         const slot = card.querySelector('.jt-session-badges');
         if (!slot || !card.dataset.jtItem || !JT.fetchBadges) {
             return;
         }
+        const bitrate = Number(card.dataset.jtBitrate);
+        const bitrateBadge = bitrate > 0 ? JT.el('span', { className: 'jt-badge jt-badge-bitrate', text: JT.t('mbps', { value: (bitrate / 1e6).toFixed(1) }) }) : null;
         try {
             const badges = await JT.fetchBadges(card.dataset.jtItem);
-            const row = badges ? [...JT.videoBadges(badges), badges.Audio ? JT.el('span', { className: 'jt-badge', text: badges.Audio }) : null].filter(Boolean) : [];
+            const row = [...(badges ? JT.videoBadges(badges) : []), badges?.Audio ? JT.el('span', { className: 'jt-badge', text: badges.Audio }) : null, bitrateBadge].filter(Boolean);
             if (row.length && !slot.hasChildNodes()) {
                 slot.replaceChildren(...row);
             }
         } catch (e) {
             console.error('[JellyTwiggy] session badges', e);
+            if (bitrateBadge && !slot.hasChildNodes()) {
+                slot.replaceChildren(bitrateBadge);
+            }
         }
     }
 
