@@ -30,7 +30,7 @@
             body: body === undefined ? undefined : JSON.stringify(body)
         });
         if (!response.ok) {
-            throw new Error(`${method} ${path}: ${response.status}`);
+            throw Object.assign(new Error(`${method} ${path}: ${response.status}`), { status: response.status });
         }
         return response.status === 204 ? null : response.json();
     };

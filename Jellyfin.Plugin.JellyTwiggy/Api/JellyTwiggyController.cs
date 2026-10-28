@@ -22,6 +22,7 @@ public class JellyTwiggyController : ControllerBase
 {
     private const string WebResourcePrefix = "Web/";
     private const string UserIdClaim = "Jellyfin-UserId";
+    private const string DeviceIdClaim = "Jellyfin-DeviceId";
     private const string AdministratorRole = "Administrator";
     private const int MaxBadgeItems = 300;
     private const int MaxSyncedSettings = 500;
@@ -305,7 +306,7 @@ public class JellyTwiggyController : ControllerBase
         }
 
         var isAdmin = IsAdmin;
-        return _sessions.GetSessions(userId.Value, isAdmin, !(includeIdle && isAdmin), TimeSpan.FromHours(1));
+        return _sessions.GetSessions(userId.Value, User.FindFirstValue(DeviceIdClaim), _userSettings.Get(userId.Value).EnableHandoff, isAdmin, !(includeIdle && isAdmin), TimeSpan.FromHours(1));
     }
 
     /// <summary>Gets playback statistics.</summary>

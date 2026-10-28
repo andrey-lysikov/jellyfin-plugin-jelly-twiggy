@@ -11,7 +11,7 @@
     const scriptUrl = new URL(script.src, window.location.href);
     const version = scriptUrl.searchParams.get('v') || '';
     const base = scriptUrl.href.replace(/js\/jelly-twiggy\.js.*$/, '');
-    const modules = ['i18n', 'core', 'badges', 'player', 'settings', 'streams', 'watchers', 'dashboard', 'favorites', 'mediainfo', 'sync'];
+    const modules = ['i18n', 'core', 'badges', 'player', 'settings', 'streams', 'watchers', 'dashboard', 'favorites', 'mediainfo', 'sync', 'handoff'];
 
     const versioned = (path) => `${base}${path}?v=${encodeURIComponent(version)}`;
 

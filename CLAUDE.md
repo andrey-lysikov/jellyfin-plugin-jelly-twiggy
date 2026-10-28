@@ -53,15 +53,19 @@
   - `Api/JellyTwiggyController.cs` — весь REST под `/JellyTwiggy/...`: `client/{path}` (раздача
     `Web/**` как embedded resources, анонимно), `Status`, `ClientConfig`, `UserSettings`,
     `DashboardLayout`, `Badges`, `Items/{id}/Watchers`, `Sessions`, `Statistics`; плюс
-    `JellyTwiggyDashboardController` (`LibraryResolutions`, `SystemMetrics`).
+    `JellyTwiggyDashboardController` (`LibraryResolutions`, `SystemMetrics`) и
+    `JellyTwiggyHandoffController` (`Handoff/Sources|Targets|Explain|Takeover/{id}|Play`).
     Имена методов — с префиксом `JellyTwiggy`: Jellyfin делает из них operationId в swagger;
   - `History/` — журнал воспроизведений (`PlaybackTracker` слушает события сессий и
     `UserDataSaved`, `PlaybackHistoryStore` — JSONL в памяти), «Просмотрено», статистика;
   - `Media/` — бейджи (качество/звук/рейтинг), список сессий;
+  - `Handoff/` — «Продолжить здесь» / «Играть на…», совместимо со Swiftly (правила и строки протокола —
+    см. «Handoff со Swiftly» ниже): `HandoffRules` (чистые правила), `HandoffService` (порядок шагов),
+    `IHandoffSessions` (шов над `ISessionManager` для тестов);
   - `Storage/` — пользовательские настройки и раскладка панели (JSON на пользователя);
   - `Configuration/` — конфиг плагина и страница настроек админа;
   - `Web/` — клиент: `js/jelly-twiggy.js` (загрузчик) грузит по порядку `i18n`, `core`, `badges`,
-    `player`, `settings`, `streams`, `watchers`, `dashboard`, `favorites`, `mediainfo`, `sync`;
+    `player`, `settings`, `streams`, `watchers`, `dashboard`, `favorites`, `mediainfo`, `sync`, `handoff`;
     стили — `css/jelly-twiggy.css` + `css/dashboard.css`; строки модулей — `JT.addStrings`.
     Глобальный объект `window.JellyTwiggy` (`JT`), модули регистрируются через `JT.register`.
 - Данные плагина: `<jellyfin data>/jellytwiggy/` (не в папке плагина — переживают обновления).
@@ -73,7 +77,8 @@
   `/System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc -e "checkSyntax('file.js')"`.
 - `manifest.json` — репозиторий плагинов Jellyfin, лежит в отдельной ветке `manifest` (в `main` его нет);
   обновляется только release-workflow, `main` бот не трогает.
-- `.github/workflows/build.yml` — сборка + `node --check` JS на push/PR;
+- `Jellyfin.Plugin.JellyTwiggy.Tests/` — xUnit-тесты (пока только handoff), гоняются в CI.
+- `.github/workflows/build.yml` — сборка, `dotnet test`, `node --check` JS на push/PR;
   `release.yml` — по тегу `vX.Y.Z.W`: сборка, zip с dll, GitHub release, обновление manifest в ветке `manifest`.
 
 ## Ограничения и заметки
@@ -123,7 +128,7 @@
   `https://raw.githubusercontent.com/andrey-lysikov/jellyfin-plugin-jelly-twiggy/manifest/manifest.json`.
 - **Сборка — только через GitHub Actions** (релиз по тегу). На локальной машине **не собираем и
   не устанавливаем** dotnet или другие тулчейны; проверка сборки — через CI.
-- **Версионирование:** 4 компонента везде (сборка, `manifest.json`, тег) — текущая **0.2.5.0**,
+- **Версионирование:** 4 компонента везде (сборка, `manifest.json`, тег) — текущая **0.2.6.0**,
   тег релиза `vX.Y.Z.W`.
 - **Лицензия:** GPL-3.0. Код JE (тоже GPL-3.0) заимствовать можно — с указанием источника
   в комментарии у заимствованного фрагмента и в разделе Credits README.
@@ -131,3 +136,35 @@
   остановиться и попросить запушить.
 - **Локализация UI:** ru / en / de.
 - **README.md** держать актуальным при изменении функций, требований или процесса установки.
+
+## Handoff со Swiftly («Продолжить здесь» / «Играть на…»)
+
+Совместимость со Swiftly Player: те же правила отбора, сообщения и порядок шагов. Своего протокола
+между устройствами нет — только API сессий Jellyfin. Включается пользовательской настройкой
+`EnableHandoff` (по умолчанию выкл.), работает только с клиентами Swiftly.
+
+- **Строки протокола не менять** (иначе старые Swiftly перестанут понимать плагин): заголовок
+  подсказки `Swiftly-Uebernahme`; Swiftly — `Client` начинается с `"Swiftly"` и ≠ `"Swiftly Music"`.
+- **Не перекодировать:** отправляем только ItemIds, позицию, MediaSourceId и индексы дорожек; план
+  строит принимающее устройство. Никаких `MaxStreamingBitrate`, профилей и контейнеров.
+- **Только свой пользователь**, админ тоже: чужое воспроизведение не предлагать и не останавливать.
+- **Не играть молча в другом месте:** цель пропала — сообщить и ничего не запускать.
+- **Отбор для «Продолжить здесь»** (порядок как в Swiftly `Takeover.fits`): `DeviceId` ≠ свой →
+  `UserId` = свой → есть `NowPlayingItem.Id` → видео (не `Audio`/`AudioBook`/`MusicAlbum`/`Playlist`,
+  не `Swiftly Music`) → `SupportsRemoteControl` → `now − LastActivityDate ≤ 90 с`; плюс у нас — Swiftly.
+  Сортировка — самая свежая первой; несколько подходящих — список, не угадывать.
+- **Порядок передачи:** подсказка `{"Header":"Swiftly-Uebernahme","Text":"<имя забирающего>","TimeoutMs":1000}`
+  (только Swiftly; окно 3 с, стоп — после неё и внутри окна) → `Stop` → позиция из `PlaybackStopped`
+  (ждать ≤ 3 с) → `PlayNow` здесь.
+- **Позиция (`Takeover.startPoint`):** нет отчёта или он равен «до» — позиция сессии (отстаёт до 10 с);
+  иначе отчёт, если он ≥ позиции сессии − 1 с, иначе позиция сессии (Jellyfin обнуляет у начала/конца).
+- **Цели «Играть на…»:** свой пользователь, чужое устройство, `SupportsRemoteControl`, `PlayableMediaTypes`
+  содержит `Video`, свежая, Swiftly; одна запись на `DeviceId` (самая свежая); играть не обязана.
+  Цель хранится как `DeviceId` (id сессии меняется при перезапуске) и разрешается в сессию при отправке.
+- **Из плеера:** `PlayNow` с текущей позиции → дождаться успеха → только потом стоп у себя; подсказка не нужна.
+- **Перенос A → B** (не реализован): подсказка на A → стоп A → `PlaybackStopped` ≤ 3 с → `PlayNow` на B
+  с дорожками A; B не ответил — ошибка, A молча не перезапускать.
+- **Состояние Swiftly:** takeover работает с 1.0.9; приём `Play` заявлен, но выпущенные версии его пока
+  молча отбрасывают — отправку на Swiftly проверить нельзя, только отбор целей.
+- **Отладка:** `GET /JellyTwiggy/Handoff/Explain` — причина отказа одним словом на каждое условие.
+- Тестовые данные — только на de / en / ru.

@@ -2,6 +2,8 @@ using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Entities;
 using Jellyfin.Plugin.JellyTwiggy.Media;
 using MediaBrowser.Controller.Library;
+using MediaBrowser.Controller.Persistence;
+using MediaBrowser.Model.Entities;
 
 namespace Jellyfin.Plugin.JellyTwiggy.Dashboard;
 
@@ -12,17 +14,19 @@ public class LibraryCountsService
     private static readonly BaseItemKind[] Kinds = [BaseItemKind.Movie, BaseItemKind.Episode, BaseItemKind.MusicVideo];
 
     private readonly ILibraryManager _libraryManager;
+    private readonly IMediaSourceManager _mediaSourceManager;
     private readonly Lock _lock = new();
     private Dictionary<string, Dictionary<string, int>>? _cached;
     private DateTime _cachedAt;
 
     /// <summary>Initializes a new instance of the <see cref="LibraryCountsService"/> class.</summary>
-    public LibraryCountsService(ILibraryManager libraryManager)
+    public LibraryCountsService(ILibraryManager libraryManager, IMediaSourceManager mediaSourceManager)
     {
         _libraryManager = libraryManager;
+        _mediaSourceManager = mediaSourceManager;
     }
 
-    /// <summary>Gets counts keyed by item kind (Movie, Episode, MusicVideo), then by 4K / 1080p / 720p / SD.</summary>
+    /// <summary>Gets counts keyed by item kind (Movie, Episode, MusicVideo), then by 4K / 1080p / 720p / SD / HDR / DV.</summary>
     public Dictionary<string, Dictionary<string, int>> GetCounts()
     {
         lock (_lock)
@@ -45,7 +49,7 @@ public class LibraryCountsService
 
     private Dictionary<string, int> CountKind(BaseItemKind kind)
     {
-        var counts = new Dictionary<string, int> { ["4K"] = 0, ["1080p"] = 0, ["720p"] = 0, ["SD"] = 0 };
+        var counts = new Dictionary<string, int> { ["4K"] = 0, ["1080p"] = 0, ["720p"] = 0, ["SD"] = 0, ["HDR"] = 0, ["DV"] = 0 };
         var items = _libraryManager.GetItemList(new InternalItemsQuery
         {
             IncludeItemTypes = [kind],
@@ -59,9 +63,28 @@ public class LibraryCountsService
             {
                 counts[bucket]++;
             }
+
+            if (RangeBucket(item.Id) is { } range)
+            {
+                counts[range]++;
+            }
         }
 
         return counts;
+    }
+
+    // Range lives only on the video stream, so it costs a query per item; the hourly cache absorbs it.
+    private string? RangeBucket(Guid itemId)
+    {
+        var video = _mediaSourceManager.GetMediaStreams(new MediaStreamQuery { ItemId = itemId, Type = MediaStreamType.Video })
+            .OrderBy(s => s.Index)
+            .FirstOrDefault();
+        return video is null ? null : MediaBadgeService.FormatRange(video.VideoRangeType) switch
+        {
+            null => null,
+            "DV" => "DV",
+            _ => "HDR"
+        };
     }
 
     // The dashboard groups the poster badge labels into four buckets; unknown size is skipped.

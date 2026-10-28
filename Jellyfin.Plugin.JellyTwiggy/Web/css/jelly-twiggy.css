@@ -340,7 +340,8 @@
     margin-right: 0.6em;
 }
 
-.jt-streams-button-mui {
+.jt-streams-button-mui,
+.jt-header-icon-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -353,7 +354,11 @@
     cursor: pointer;
 }
 
-.jt-streams-button-mui:hover { background: rgba(255, 255, 255, 0.08); }
+.jt-streams-button-mui:hover,
+.jt-header-icon-button:hover { background: rgba(255, 255, 255, 0.08); }
+
+.jt-dash-header { display: inline-flex; align-items: center; }
+.jt-header-icon-button:disabled { opacity: 0.4; cursor: default; }
 
 .jt-streams-icon {
     display: inline-flex;
@@ -571,6 +576,22 @@ a.jt-session:hover { border-color: rgba(255, 255, 255, 0.3); }
 .jt-chip-ok { color: #a5d6a7; background: rgba(76, 175, 80, 0.18); }
 .jt-chip-warn { color: #ffcc80; background: rgba(255, 152, 0, 0.18); }
 
+/* "Continue here" on own playback in the active streams panel. */
+.jt-session-takeover {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    margin-left: auto;
+    border: 0;
+    font-family: inherit;
+    color: #fff;
+    background: var(--jt-accent);
+    cursor: pointer;
+}
+
+.jt-session-takeover:hover { filter: brightness(1.15); }
+.jt-session-takeover .material-icons { font-size: 1.2em; }
+
 /* ---- Watched by ------------------------------------------------------------------------- */
 
 .jt-watched-row {
@@ -632,6 +653,8 @@ a.jt-session:hover { border-color: rgba(255, 255, 255, 0.3); }
     justify-content: flex-end;
     margin: 8px 0 0;
 }
+
+.jt-dash-toolbar:empty { display: none; }
 
 html.jt-dashboard #dashboardPage .content-primary > .MuiGrid-container {
     display: grid;
@@ -1173,3 +1196,24 @@ html.jt-ui-radius-large :is(.emby-button, .button-flat, .raised, .emby-input, .e
 }
 
 .jt-session-badges:empty { display: none; }
+
+/* ---- Play on ----------------------------------------------------------------------------- */
+
+.jt-handoff-target {
+    display: flex;
+    align-items: center;
+    gap: 0.8em;
+    width: 100%;
+    padding: 0.7em 0.8em;
+    border: 0;
+    border-radius: 6px;
+    font: inherit;
+    text-align: left;
+    color: inherit;
+    background: transparent;
+    cursor: pointer;
+}
+
+.jt-handoff-target:hover { background: rgba(255, 255, 255, 0.08); }
+.jt-handoff-target-text { display: flex; flex-direction: column; min-width: 0; }
+.jt-handoff-target .jt-muted { font-size: 0.85em; color: var(--jt-muted); }

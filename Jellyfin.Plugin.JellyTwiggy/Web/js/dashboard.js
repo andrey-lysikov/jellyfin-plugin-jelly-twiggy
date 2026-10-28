@@ -65,7 +65,7 @@
     const STATS_REFRESH_MS = 60000;
     const METRICS_REFRESH_MS = 3000;
     const RESOLUTION_CARDS = [['MovieIcon', 'Movie'], ['TvIcon', 'Episode'], ['MusicVideoIcon', 'MusicVideo']];
-    const RESOLUTION_KEYS = ['4K', '1080p', '720p', 'SD'];
+    const RESOLUTION_KEYS = ['4K', '1080p', '720p', 'SD', 'HDR', 'DV'];
     const PERIODS = [{ days: 1, label: 'period24h' }, { days: 7, label: 'period7d' }, { days: 30, label: 'period30d' }, { days: 0, label: 'periodAll' }];
     const RECENT_DAYS = 0; // the latest plays whenever they happened
     const root = document.documentElement;
@@ -338,12 +338,12 @@
             ]))
         ]);
 
-        return [tiles, JT.el('div', { className: 'jt-stat-overview' }, [users, JT.el('div', { className: 'jt-stat-side' }, [playMethods, titles])])];
+        return [tiles, JT.el('div', { className: 'jt-stat-overview' }, [JT.el('div', { className: 'jt-stat-side' }, [playMethods, titles]), users])];
     }
 
     function createRecentBlock() {
         return JT.el('div', { className: 'jt-dash-block', 'data-jt-block': 'recent' }, [
-            blockHeader(JT.t('statsRecent')),
+            blockHeader(JT.t('statsRecent'), '#/dashboard/activity'),
             JT.el('div', { className: 'jt-recent' }, JT.el('div', { className: 'jt-empty', text: JT.t('loading') }))
         ]);
     }
@@ -452,8 +452,8 @@
                 continue;
             }
             const badges = RESOLUTION_KEYS.filter((key) => counts[key] > 0).map((key) => JT.el('span', {
-                className: `jt-badge jt-q-${key.toLowerCase()}`,
-                text: `${counts[key].toLocaleString(JT.language())} [${key}]`
+                className: `jt-badge ${key === 'HDR' || key === 'DV' ? 'jt-r' : 'jt-q'}-${key.toLowerCase()}`,
+                text: `${counts[key].toLocaleString(JT.language())} · ${key}`
             }));
             if (badges.length) {
                 card.classList.add('jt-res-card');
@@ -742,32 +742,47 @@
         }
     }
 
+    const headerButton = (icon, title, onClick) => JT.el('button', {
+        type: 'button', className: 'jt-header-icon-button', title, 'aria-label': title, onClick
+    }, JT.icon(icon));
+
+    // Edit controls live in the MUI header, left of the active streams button (or the user menu);
+    // the page toolbar only carries the hint while editing.
     function renderToolbar() {
         const toolbar = document.querySelector('.jt-dash-toolbar');
-        if (!toolbar) {
-            return;
-        }
+        toolbar?.replaceChildren(...(edit ? [JT.el('span', { className: 'jt-hint jt-edit-hint', text: JT.t('dashboardLayoutHint') })] : []));
+        document.querySelectorAll('.jt-dash-header').forEach(renderHeader);
+    }
 
+    function renderHeader(group) {
         if (!edit) {
-            toolbar.replaceChildren(JT.el('button', { type: 'button', className: 'jt-button', onClick: startEdit }, [JT.icon('dashboard_customize'), JT.t('customizeDashboard')]));
+            group.replaceChildren(headerButton('edit', JT.t('customizeDashboard'), startEdit));
             return;
         }
-
-        const save = JT.el('button', { type: 'button', className: 'jt-button jt-button-primary', text: JT.t('save') });
-        save.addEventListener('click', () => saveEdit(save));
-        toolbar.replaceChildren(
-            JT.el('span', { className: 'jt-hint jt-edit-hint', text: JT.t('dashboardLayoutHint') }),
-            JT.el('button', {
-                type: 'button',
-                className: 'jt-button',
-                text: JT.t('resetLayout'),
-                onClick: () => {
-                    edit.draft = { Order: [], Hidden: [], Sizes: {} };
-                    applyLayout(edit.draft);
-                }
+        const save = headerButton('check', JT.t('save'), () => saveEdit(save));
+        group.replaceChildren(
+            headerButton('restart_alt', JT.t('resetLayout'), () => {
+                edit.draft = { Order: [], Hidden: [], Sizes: {} };
+                applyLayout(edit.draft);
             }),
-            JT.el('button', { type: 'button', className: 'jt-button', text: JT.t('cancel'), onClick: () => stopEdit(false) }),
+            headerButton('close', JT.t('cancel'), () => stopEdit(false)),
             save);
+    }
+
+    function placeHeader(show) {
+        if (!show) {
+            document.querySelectorAll('.jt-dash-header').forEach((el) => el.remove());
+            return;
+        }
+        document.querySelectorAll('.MuiToolbar-root').forEach((toolbar) => {
+            const holder = toolbar.querySelector('button[aria-controls="app-user-menu"]')?.parentElement;
+            if (!holder || holder.parentElement !== toolbar || toolbar.querySelector(':scope > .jt-dash-header')) {
+                return;
+            }
+            const group = JT.el('span', { className: 'jt-dash-header' });
+            renderHeader(group);
+            toolbar.insertBefore(group, toolbar.querySelector(':scope > .jt-streams-button') || holder);
+        });
     }
 
     // ---- Wiring ----------------------------------------------------------------------------
@@ -786,6 +801,7 @@
             document.getElementById('jt-dashboard-rows')?.remove();
             root.classList.remove('jt-masonry');
         }
+        placeHeader(enabled() && isDashboardHome());
         if (!enabled() || !isDashboardHome()) {
             stopTimers();
             return;

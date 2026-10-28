@@ -19,5 +19,8 @@ jobs:
       - name: Build
         run: dotnet build Jellyfin.Plugin.JellyTwiggy/Jellyfin.Plugin.JellyTwiggy.csproj -c Release
 
+      - name: Test
+        run: dotnet test Jellyfin.Plugin.JellyTwiggy.Tests/Jellyfin.Plugin.JellyTwiggy.Tests.csproj -c Release
+
       - name: Check JavaScript syntax
         run: find Jellyfin.Plugin.JellyTwiggy/Web -name '*.js' -print0 | xargs -0 -n1 node --check

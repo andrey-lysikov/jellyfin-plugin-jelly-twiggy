@@ -81,8 +81,21 @@
         + '<path class="jt-streams-ring" stroke-linecap="round" d="M105 500 A395 395 0 1 1 154 690"/>'
         + '<path stroke-linejoin="round" d="M396 360 L632 500 L396 640 Z"/></svg>';
 
+    // "Continue here" on the viewer's own playback elsewhere (panel only); handoff.js does the work.
+    function takeoverButton(session) {
+        return JT.el('button', {
+            type: 'button',
+            className: 'jt-chip jt-session-takeover',
+            title: JT.t('continueHereHint'),
+            onClick: (e) => {
+                e.preventDefault();
+                JT.takeOver?.(session);
+            }
+        }, [JT.icon('input'), JT.t('continueHere')]);
+    }
+
     // Poster left on a blurred copy of itself, user in the top-right corner, progress and tech at the bottom.
-    JT.sessionCard = function (session) {
+    JT.sessionCard = function (session, options) {
         const nowPlaying = session.NowPlaying;
         const key = `${session.Id || [session.UserId, session.DeviceName, session.Client].join('/')}|${nowPlaying?.ItemId || 'idle'}`;
         if (!nowPlaying) {
@@ -132,7 +145,8 @@
                     JT.el('div', { className: 'jt-session-status' }, [
                         JT.icon(nowPlaying.IsPaused ? 'pause' : 'play_arrow'),
                         JT.el('span', { text: `${JT.formatTicks(nowPlaying.PositionTicks)} / ${JT.formatTicks(nowPlaying.RunTimeTicks)}` }),
-                        nowPlaying.PlayMethod ? JT.el('span', { className: `jt-chip ${methodClass}`, text: playMethodLabel(nowPlaying.PlayMethod) }) : null
+                        nowPlaying.PlayMethod ? JT.el('span', { className: `jt-chip ${methodClass}`, text: playMethodLabel(nowPlaying.PlayMethod) }) : null,
+                        options?.takeover && session.CanTakeOver ? takeoverButton(session) : null
                     ])
                 ])
             ]),
@@ -158,7 +172,7 @@
     }
 
     // Updates cards in place by session and item: posters and backdrops stay, so nothing flashes on refresh.
-    JT.renderSessions = function (container, sessions, empty) {
+    JT.renderSessions = function (container, sessions, empty, options) {
         if (!sessions.length) {
             container.replaceChildren(empty);
             return;
@@ -166,7 +180,7 @@
 
         const existing = new Map(Array.from(container.children).filter((el) => el.dataset.jtKey).map((el) => [el.dataset.jtKey, el]));
         const cards = sessions.map((session) => {
-            const fresh = JT.sessionCard(session);
+            const fresh = JT.sessionCard(session, options);
             const old = existing.get(fresh.dataset.jtKey);
             if (!old) {
                 addBadges(fresh);
@@ -269,7 +283,7 @@
             closePanel();
             return;
         }
-        JT.renderSessions(panel, sessions, JT.el('span'));
+        JT.renderSessions(panel, sessions, JT.el('span'), { takeover: true });
     }
 
     function closePanel() {

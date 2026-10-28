@@ -1,3 +1,4 @@
+using Jellyfin.Plugin.JellyTwiggy.Handoff;
 using MediaBrowser.Controller.Session;
 using MediaBrowser.Model.Session;
 
@@ -29,6 +30,9 @@ public class SessionDto
 
     /// <summary>Gets or sets the last activity time.</summary>
     public DateTime LastActivityDate { get; set; }
+
+    /// <summary>Gets or sets a value indicating whether the viewer can continue this playback on their own device.</summary>
+    public bool CanTakeOver { get; set; }
 
     /// <summary>Gets or sets what is playing, or null for an idle session.</summary>
     public NowPlayingDto? NowPlaying { get; set; }
@@ -104,13 +108,19 @@ public class SessionsService
     }
 
     /// <summary>Gets sessions: all of them for an admin, only the viewer's own otherwise.</summary>
-    public List<SessionDto> GetSessions(Guid viewerId, bool isAdmin, bool playingOnly, TimeSpan activeWithin)
+    public List<SessionDto> GetSessions(Guid viewerId, string? viewerDeviceId, bool handoff, bool isAdmin, bool playingOnly, TimeSpan activeWithin)
     {
-        var since = DateTime.UtcNow - activeWithin;
+        var now = DateTime.UtcNow;
+        var since = now - activeWithin;
         return _sessionManager.Sessions
             .Where(s => s.UserId != Guid.Empty && (isAdmin || s.UserId == viewerId))
             .Where(s => s.NowPlayingItem is not null || (!playingOnly && s.LastActivityDate >= since))
-            .Select(s => ToDto(s, isAdmin))
+            .Select(s =>
+            {
+                var dto = ToDto(s, isAdmin);
+                dto.CanTakeOver = handoff && HandoffRules.WhyNotTakeover(JellyfinHandoffSessions.ToHandoff(s), viewerId, viewerDeviceId, now) is null;
+                return dto;
+            })
             .OrderBy(s => s.NowPlaying is null)
             .ThenByDescending(s => s.LastActivityDate)
             .ToList();

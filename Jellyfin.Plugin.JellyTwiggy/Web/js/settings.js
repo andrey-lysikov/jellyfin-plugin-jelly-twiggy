@@ -5,6 +5,7 @@
     const SECTIONS = [
         { title: 'settingsSkipSection', hint: 'autoSkipHint', keys: ['AutoSkipIntro', 'AutoSkipOutro'] },
         { title: 'settingsPlayerSection', hint: 'autoPipHint', keys: ['AutoPauseOnTabSwitch', 'AutoResumeOnTabSwitch', 'AutoPipOnTabSwitch', 'LongPressSpeedUp'] },
+        { title: 'settingsHandoffSection', hint: 'enableHandoffHint', keys: ['EnableHandoff'] },
         { title: 'settingsInterfaceSection', keys: ['HideFavorites', 'HideCast', 'CardRadius', 'UiRadius'] },
         { title: 'settingsSyncSection', hint: 'syncHint', keys: ['SyncJellyfinSettings'] }
     ];
