@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "0.2.6.2",
+        "changelog": "- Active streams: the move drop-down is labelled \"Send to\"\n- Item page: the \"Play on…\" icon is no longer black",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/andrey-lysikov/jellyfin-plugin-jelly-twiggy/releases/download/v0.2.6.2/jelly-twiggy_0.2.6.2.zip",
+        "checksum": "44c2e5c11f5c80518c8c99ae14f17531",
+        "timestamp": "2026-10-28T12:51:46Z"
+      },
+      {
         "version": "0.2.6.1",
         "changelog": "- Active streams: \"Continue here\" is now \"Continue in browser\"; next to it a drop-down moves the playback to another of your Swiftly devices\n- Item page: the \"Play on…\" button has no stray ring and its icon matches the other buttons",
         "targetAbi": "12.0.0.0",
