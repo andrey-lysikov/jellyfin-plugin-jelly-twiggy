@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "0.2.6.1",
+        "changelog": "- Active streams: \"Continue here\" is now \"Continue in browser\"; next to it a drop-down moves the playback to another of your Swiftly devices\n- Item page: the \"Play on…\" button has no stray ring and its icon matches the other buttons",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/andrey-lysikov/jellyfin-plugin-jelly-twiggy/releases/download/v0.2.6.1/jelly-twiggy_0.2.6.1.zip",
+        "checksum": "996cfbfd96b70df2225f41ebdb707d1f",
+        "timestamp": "2026-10-28T12:26:25Z"
+      },
+      {
         "version": "0.2.6.0",
         "changelog": "- Statistics: play methods and popular titles moved to the left column, users to the right\n- Dashboard library counts: \"619 · 4K\" instead of \"619 [4K]\", plus HDR and DV counters\n- Dashboard: \"Customize dashboard\" is now a pencil icon in the header next to active streams; save, reset and cancel are header icons with tooltips while editing\n- Dashboard: \"Recent plays\" header links to the activity page, like the other blocks\n- Continue watching with Swiftly clients (user setting, off by default): \"Continue here\" in the active streams panel takes over your playback from another device at the same position and tracks; \"Play on…\" sends a video from its page, or the playing one from the player, to another device",
         "targetAbi": "12.0.0.0",
