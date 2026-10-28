@@ -10,6 +10,7 @@
         en: {
             continueHere: 'Continue in browser',
             moveTo: 'Move to another device',
+            sendTo: 'Send to',
             noTargets: 'No other devices with Swiftly',
             continueHereHint: 'Stop it on that device and continue in this browser from the same position',
             continuingHere: 'Continuing here from “{device}”',
@@ -28,6 +29,7 @@
         ru: {
             continueHere: 'Продолжить в браузере',
             moveTo: 'Перенести на другое устройство',
+            sendTo: 'Отправить на',
             noTargets: 'Нет других устройств со Swiftly',
             continueHereHint: 'Остановить на том устройстве и продолжить в этом браузере с того же места',
             continuingHere: 'Продолжаем здесь с «{device}»',
@@ -46,6 +48,7 @@
         de: {
             continueHere: 'Im Browser fortsetzen',
             moveTo: 'Auf ein anderes Gerät verschieben',
+            sendTo: 'Senden an',
             noTargets: 'Keine anderen Geräte mit Swiftly',
             continueHereHint: 'Auf dem anderen Gerät stoppen und in diesem Browser an derselben Stelle fortsetzen',
             continuingHere: 'Hier fortgesetzt von „{device}“',
@@ -253,7 +256,7 @@
         if (!button) {
             button = JT.el('button', {
                 type: 'button',
-                className: 'button-flat detailButton jt-handoff-button jt-handoff-item hide',
+                className: 'emby-button button-flat detailButton jt-handoff-button jt-handoff-item hide',
                 title: JT.t('playOn'),
                 'aria-label': JT.t('playOn'),
                 onClick: () => pickTarget(() => itemBody(page, button.dataset.jtItem))

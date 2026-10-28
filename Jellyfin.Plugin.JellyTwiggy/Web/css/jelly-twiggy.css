@@ -597,7 +597,7 @@ a.jt-session:hover { border-color: rgba(255, 255, 255, 0.3); }
 .jt-session-takeover:hover { filter: brightness(1.15); }
 .jt-session-takeover .material-icons { font-size: 1.2em; }
 .jt-session-handoff .jt-session-takeover:first-child { border-radius: 1em 0 0 1em; }
-.jt-session-move { padding-inline: 0.4em 0.2em; border-radius: 0 1em 1em 0; }
+.jt-session-move { padding-inline: 0.5em 0.2em; border-radius: 0 1em 1em 0; }
 .jt-session-move .material-icons + .material-icons { margin-left: -0.3em; }
 
 /* ---- Watched by ------------------------------------------------------------------------- */
@@ -1226,8 +1226,8 @@ html.jt-ui-radius-large :is(.emby-button, .button-flat, .raised, .emby-input, .e
 .jt-handoff-target-text { display: flex; flex-direction: column; min-width: 0; }
 .jt-handoff-target .jt-muted { font-size: 0.85em; color: var(--jt-muted); }
 
-/* Plain buttons: no browser border (it showed as a ring on the round detail button). */
-.jt-handoff-button { border: 0; }
+/* Plain buttons: no browser border (a ring on the round detail button) and no default black text. */
+.jt-handoff-button { border: 0; color: inherit; }
 
 .jt-handoff-menu {
     position: fixed;
