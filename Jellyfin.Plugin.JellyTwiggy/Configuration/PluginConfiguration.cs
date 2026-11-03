@@ -11,6 +11,9 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Gets or sets a value indicating whether the active streams header button is shown.</summary>
     public bool EnableActiveStreams { get; set; } = true;
 
+    /// <summary>Gets or sets a value indicating whether the active sessions button ring spins while something plays.</summary>
+    public bool AnimateActiveStreams { get; set; } = true;
+
     /// <summary>Gets or sets a value indicating whether the "Watched by" row is shown on item pages.</summary>
     public bool EnableWatchedBy { get; set; } = true;
 
@@ -22,9 +25,6 @@ public class PluginConfiguration : BasePluginConfiguration
 
     /// <summary>Gets or sets a value indicating whether the player volume is shown only in the bottom bar.</summary>
     public bool TweakPlayer { get; set; } = true;
-
-    /// <summary>Gets or sets a value indicating whether animations (streams ring, watched pop) are on.</summary>
-    public bool EnableAnimations { get; set; } = true;
 
     /// <summary>Gets or sets a value indicating whether cards get badge depth, stream backdrops and the watched circle.</summary>
     public bool StyleCards { get; set; } = true;

@@ -116,11 +116,11 @@ public class JellyTwiggyController : ControllerBase
             IsAdmin,
             config.EnablePosterBadges,
             config.EnableActiveStreams,
+            config.AnimateActiveStreams,
             config.EnableWatchedBy,
             config.EnableDashboard,
             config.TweakItemPage,
             config.TweakPlayer,
-            config.EnableAnimations,
             config.StyleCards);
     }
 
@@ -349,11 +349,11 @@ public record ClientConfigDto(
     bool IsAdmin,
     bool EnablePosterBadges,
     bool EnableActiveStreams,
+    bool AnimateActiveStreams,
     bool EnableWatchedBy,
     bool EnableDashboard,
     bool TweakItemPage,
     bool TweakPlayer,
-    bool EnableAnimations,
     bool StyleCards);
 
 /// <summary>Badges request.</summary>

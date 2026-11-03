@@ -58,7 +58,8 @@
     Имена методов — с префиксом `JellyTwiggy`: Jellyfin делает из них operationId в swagger;
   - `History/` — журнал воспроизведений (`PlaybackTracker` слушает события сессий и
     `UserDataSaved`, `PlaybackHistoryStore` — JSONL в памяти), «Просмотрено», статистика;
-  - `Media/` — бейджи (качество/звук/рейтинг), список сессий;
+  - `Media/` — бейджи (качество/звук/рейтинг), список сессий, `ResumeFilter` (MVC-фильтр ответа
+    `/UserItems/Resume`: убирает просмотренное по настройке `HideWatchedFromResume`);
   - `Handoff/` — «Продолжить здесь» / «Играть на…», совместимо со Swiftly (правила и строки протокола —
     см. «Handoff со Swiftly» ниже): `HandoffRules` (чистые правила), `HandoffService` (порядок шагов),
     `IHandoffSessions` (шов над `ISessionManager` для тестов);
@@ -128,7 +129,7 @@
   `https://raw.githubusercontent.com/andrey-lysikov/jellyfin-plugin-jelly-twiggy/manifest/manifest.json`.
 - **Сборка — только через GitHub Actions** (релиз по тегу). На локальной машине **не собираем и
   не устанавливаем** dotnet или другие тулчейны; проверка сборки — через CI.
-- **Версионирование:** 4 компонента везде (сборка, `manifest.json`, тег) — текущая **0.3.0.0**,
+- **Версионирование:** 4 компонента везде (сборка, `manifest.json`, тег) — текущая **0.4.0.0**,
   тег релиза `vX.Y.Z.W`.
 - **Лицензия:** GPL-3.0. Код JE (тоже GPL-3.0) заимствовать можно — с указанием источника
   в комментарии у заимствованного фрагмента и в разделе Credits README.

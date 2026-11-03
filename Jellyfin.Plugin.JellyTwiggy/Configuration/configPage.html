@@ -28,13 +28,19 @@
                         <div class="checkboxContainer">
                             <label>
                                 <input is="emby-checkbox" type="checkbox" id="EnableActiveStreams" />
-                                <span data-jt-i18n="cfgActiveStreams">Active streams button</span>
+                                <span data-jt-i18n="cfgActiveStreams">Show the active sessions button</span>
+                            </label>
+                        </div>
+                        <div class="checkboxContainer">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="AnimateActiveStreams" />
+                                <span data-jt-i18n="cfgAnimateActiveStreams">Animate the active sessions button</span>
                             </label>
                         </div>
                         <div class="checkboxContainer">
                             <label>
                                 <input is="emby-checkbox" type="checkbox" id="EnableWatchedBy" />
-                                <span data-jt-i18n="cfgWatchedBy">"Watched" row with user avatars on item pages</span>
+                                <span data-jt-i18n="cfgWatchedBy">Show who watched in the media details</span>
                             </label>
                         </div>
                         <div class="checkboxContainer">
@@ -50,25 +56,19 @@
                         <div class="checkboxContainer">
                             <label>
                                 <input is="emby-checkbox" type="checkbox" id="TweakItemPage" />
-                                <span data-jt-i18n="cfgTweakItemPage">Item page: "6+" age ratings, video track as badges</span>
+                                <span data-jt-i18n="cfgTweakItemPage">Refresh the media details design</span>
                             </label>
                         </div>
                         <div class="checkboxContainer">
                             <label>
                                 <input is="emby-checkbox" type="checkbox" id="TweakPlayer" />
-                                <span data-jt-i18n="cfgTweakPlayer">Player: volume shown only in the bottom bar</span>
-                            </label>
-                        </div>
-                        <div class="checkboxContainer">
-                            <label>
-                                <input is="emby-checkbox" type="checkbox" id="EnableAnimations" />
-                                <span data-jt-i18n="cfgAnimations">Animations: spinning streams ring, watched circle pop</span>
+                                <span data-jt-i18n="cfgTweakPlayer">Remove the extra volume control</span>
                             </label>
                         </div>
                         <div class="checkboxContainer">
                             <label>
                                 <input is="emby-checkbox" type="checkbox" id="StyleCards" />
-                                <span data-jt-i18n="cfgStyleCards">Cards: badge depth, stream backdrops, watched circle and card buttons</span>
+                                <span data-jt-i18n="cfgStyleCards">Add media info to posters</span>
                             </label>
                         </div>
                     </div>
@@ -84,7 +84,7 @@
         <script type="text/javascript">
             (function () {
                 const pluginId = '71c422cd-3468-4d47-aad3-19d3d0c5be48';
-                const flags = ['EnablePosterBadges', 'EnableActiveStreams', 'EnableWatchedBy', 'EnableDashboard', 'TweakItemPage', 'TweakPlayer', 'EnableAnimations', 'StyleCards'];
+                const flags = ['EnablePosterBadges', 'EnableActiveStreams', 'AnimateActiveStreams', 'EnableWatchedBy', 'EnableDashboard', 'TweakItemPage', 'TweakPlayer', 'StyleCards'];
                 const page = document.querySelector('#JellyTwiggyConfigPage');
                 // The client script provides translations; without it the English text stays.
                 const t = (key, fallback) => (window.JellyTwiggy && window.JellyTwiggy.t ? window.JellyTwiggy.t(key) : fallback);

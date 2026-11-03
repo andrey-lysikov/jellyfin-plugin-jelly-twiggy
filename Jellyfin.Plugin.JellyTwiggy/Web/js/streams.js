@@ -294,12 +294,7 @@
             return;
         }
 
-        // Nothing left to show: the panel closes, as it never opens empty.
-        if (sessions.length === 0) {
-            closePanel();
-            return;
-        }
-        JT.renderSessions(panel, sessions, JT.el('span'), { takeover: true });
+        JT.renderSessions(panel, sessions, JT.el('div', { className: 'jt-empty', text: JT.t('noSessions') }), { takeover: true });
     }
 
     function closePanel() {
@@ -322,7 +317,7 @@
         }
 
         await refresh();
-        if (sessions.length === 0 || panel) {
+        if (panel) {
             return;
         }
 

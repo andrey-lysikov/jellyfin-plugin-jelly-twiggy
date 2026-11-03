@@ -313,7 +313,7 @@
         const settings = JT.settings || {};
         root.classList.toggle('jt-tweak-item', !!config.TweakItemPage);
         root.classList.toggle('jt-tweak-player', !!config.TweakPlayer);
-        root.classList.toggle('jt-anim', !!config.EnableAnimations);
+        root.classList.toggle('jt-anim-streams', !!config.AnimateActiveStreams);
         root.classList.toggle('jt-style-cards', !!config.StyleCards);
         root.classList.toggle('jt-hide-cast', !!settings.HideCast);
         for (const [prefix, value] of [['jt-card-radius-', settings.CardRadius], ['jt-ui-radius-', settings.UiRadius]]) {
