@@ -15,6 +15,7 @@ Jelly Twiggy extends the Jellyfin web client with poster badges, playback option
 - User preferences for: Auto-skip intro and outro, Auto-pause, auto-resume and auto Picture-in-Picture on tab switch
 - Long press / hold for 2x speed
 - Options to hide favorites and the Google Cast button, corner radius of cards and of the interface
+- Option to keep watched items out of Continue Watching, in every client
 - Sync of Jellyfin's browser-only settings across browsers and devices
 - Active streams button with progress, device and transcoding details
 - "Continue in browser", "Play on…" and moving playback between your devices with Swiftly Player

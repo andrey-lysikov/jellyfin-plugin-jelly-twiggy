@@ -4,6 +4,7 @@ using Jellyfin.Plugin.JellyTwiggy.Storage;
 using Jellyfin.Plugin.JellyTwiggy.WebInjection;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Plugins;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Jellyfin.Plugin.JellyTwiggy;
@@ -25,6 +26,7 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
         serviceCollection.AddSingleton<StatisticsService>();
         serviceCollection.AddSingleton<Dashboard.SystemMetricsService>();
         serviceCollection.AddSingleton<Dashboard.LibraryCountsService>();
+        serviceCollection.Configure<MvcOptions>(options => options.Filters.Add<ResumeFilter>());
         serviceCollection.AddHostedService<PlaybackTracker>();
         serviceCollection.AddHostedService<FileTransformationRegistrar>();
     }

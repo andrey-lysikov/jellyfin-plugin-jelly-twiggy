@@ -35,6 +35,9 @@ public class UserSettings
     /// <summary>Gets or sets a value indicating whether the Google Cast button is hidden.</summary>
     public bool HideCast { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether watched items are left out of Continue Watching.</summary>
+    public bool HideWatchedFromResume { get; set; }
+
     /// <summary>Gets or sets the corner radius of posters and cards: none, default or large.</summary>
     public string CardRadius { get; set; } = "default";
 

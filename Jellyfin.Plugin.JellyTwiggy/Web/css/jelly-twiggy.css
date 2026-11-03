@@ -398,14 +398,14 @@
 }
 
 .jt-streams-active .jt-streams-icon { color: #ffd60a; }
-html.jt-anim .jt-streams-active .jt-streams-ring { animation: jt-spin 2.4s linear infinite; }
+html.jt-anim-streams .jt-streams-active .jt-streams-ring { animation: jt-spin 2.4s linear infinite; }
 
 @keyframes jt-spin {
     to { transform: rotate(360deg); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    html.jt-anim .jt-streams-active .jt-streams-ring { animation: none; }
+    html.jt-anim-streams .jt-streams-active .jt-streams-ring { animation: none; }
 }
 
 .jt-streams-panel {
@@ -1142,7 +1142,7 @@ html.jt-style-cards .playedIndicator { display: none !important; }
 
 .jt-card-played svg { width: 14px; height: 14px; }
 .jt-card-played.jt-card-count { background: rgba(0, 0, 0, 0.6); opacity: 1; }
-html.jt-anim .jt-card-played.jt-pop { animation: jt-pop 0.3s ease-out; }
+.jt-card-played.jt-pop { animation: jt-pop 0.3s ease-out; }
 
 @keyframes jt-pop {
     50% { transform: scale(1.25); }

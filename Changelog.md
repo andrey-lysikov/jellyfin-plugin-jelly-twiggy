@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0.0
+
+- Profile settings → Interface: "Hide watched items from Continue Watching" — a rewatched item that is already marked watched no longer shows there, in every client
+- Plugin settings: "Show the active sessions button" and a separate "Animate the active sessions button" option for the spinning ring; the "Animations" option is gone, the watched circle pop comes with the "Add media info to posters" option
+- Active sessions: with nothing playing the button opens a panel saying "No active sessions" instead of doing nothing
+- Plugin settings: the item page option is now called "Refresh the media details design", the player option "Remove the extra volume control", the cards option "Add media info to posters", the "Watched" row option "Show who watched in the media details"
+
 ## 0.3.0.0
 
 - Active streams and dashboard devices: playing cards keep their order by playback start (earliest first) instead of jumping; a new item or a resume after pause moves the card down
