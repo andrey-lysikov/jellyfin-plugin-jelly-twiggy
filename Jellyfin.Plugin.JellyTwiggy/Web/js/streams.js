@@ -36,25 +36,15 @@
         return { title: nowPlaying.Name, note: nowPlaying.Year ? `(${nowPlaying.Year})` : '' };
     }
 
-    // Always present (empty without transcoding info), so in-place updates can swap it.
-    function techChips(transcode) {
-        if (!transcode) {
-            return JT.el('div', { className: 'jt-session-chips' });
+    // "Transcode · 26.4 Mbit": play method with the bitrate sent to the client.
+    function methodChip(nowPlaying) {
+        if (!nowPlaying.PlayMethod) {
+            return null;
         }
-
-        const direct = JT.t('techDirect');
-        const parts = [
-            `${JT.t('techVideo')}: ${transcode.IsVideoDirect ? direct : `${(transcode.VideoCodec || '?').toUpperCase()}${transcode.Height ? ` ${transcode.Height}p` : ''}`}`,
-            `${JT.t('techAudio')}: ${transcode.IsAudioDirect ? direct : (transcode.AudioCodec || '?').toUpperCase()}`
-        ];
-        if (transcode.Framerate) {
-            parts.push(`${Math.round(transcode.Framerate)} fps`);
-        }
-        if (transcode.HardwareAcceleration && transcode.HardwareAcceleration.toLowerCase() !== 'none') {
-            parts.push(`${JT.t('hardware')}: ${transcode.HardwareAcceleration.toUpperCase()}`);
-        }
-
-        return JT.el('div', { className: 'jt-session-chips' }, parts.map((text) => JT.el('span', { text })));
+        const mbit = nowPlaying.Bitrate > 0 ? nowPlaying.Bitrate / 1e6 : 0;
+        const rate = mbit ? JT.t('mbps', { value: mbit < 10 ? mbit.toFixed(1) : Math.round(mbit) }) : '';
+        const methodClass = nowPlaying.PlayMethod === 'Transcode' ? 'jt-chip-warn' : 'jt-chip-ok';
+        return JT.el('span', { className: `jt-chip ${methodClass}`, text: [playMethodLabel(nowPlaying.PlayMethod), rate].filter(Boolean).join(' · ') });
     }
 
     function userChip(session) {
@@ -105,7 +95,7 @@
         ]);
     }
 
-    // Poster left on a blurred copy of itself, user in the top-right corner, progress and tech at the bottom.
+    // Poster left on a blurred copy of itself, user in the top-right corner, progress at the bottom.
     JT.sessionCard = function (session, options) {
         const nowPlaying = session.NowPlaying;
         const key = `${session.Id || [session.UserId, session.DeviceName, session.Client].join('/')}|${nowPlaying?.ItemId || 'idle'}`;
@@ -133,9 +123,8 @@
             poster.replaceWith(JT.el('div', { className: 'jt-session-poster jt-session-poster-empty' }, JT.icon('movie')));
         }, { once: true });
 
-        const methodClass = nowPlaying.PlayMethod === 'Transcode' ? 'jt-chip-warn' : 'jt-chip-ok';
-        // Top: poster | title, badges, device, progress. Bottom, full width: transcoding chips.
-        return JT.el('a', { className: 'jt-session', href: `#/details?id=${nowPlaying.ItemId}`, 'data-jt-key': key, 'data-jt-item': nowPlaying.ItemId, 'data-jt-bitrate': nowPlaying.Bitrate || null }, [
+        // Poster on the full height | title, badges, device, progress.
+        return JT.el('a', { className: 'jt-session', href: `#/details?id=${nowPlaying.ItemId}`, 'data-jt-key': key, 'data-jt-item': nowPlaying.ItemId }, [
             backdrop,
             poster,
             JT.el('div', { className: 'jt-session-info' }, [
@@ -156,34 +145,28 @@
                     JT.el('div', { className: 'jt-session-status' }, [
                         JT.icon(nowPlaying.IsPaused ? 'pause' : 'play_arrow'),
                         JT.el('span', { text: `${JT.formatTicks(nowPlaying.PositionTicks)} / ${JT.formatTicks(nowPlaying.RunTimeTicks)}` }),
-                        nowPlaying.PlayMethod ? JT.el('span', { className: `jt-chip ${methodClass}`, text: playMethodLabel(nowPlaying.PlayMethod) }) : null,
+                        methodChip(nowPlaying),
                         options?.takeover && session.CanTakeOver ? takeoverButtons(session) : null
                     ])
                 ])
-            ]),
-            techChips(nowPlaying.Transcode)
+            ])
         ]);
     };
 
-    // Quality and audio of what is playing (the same badges as on posters), then the bitrate sent to the client.
+    // Quality and audio of what is playing (the same badges as on posters).
     async function addBadges(card) {
         const slot = card.querySelector('.jt-session-badges');
         if (!slot || !card.dataset.jtItem || !JT.fetchBadges) {
             return;
         }
-        const bitrate = Number(card.dataset.jtBitrate);
-        const bitrateBadge = bitrate > 0 ? JT.el('span', { className: 'jt-badge jt-badge-bitrate', text: JT.t('mbps', { value: (bitrate / 1e6).toFixed(1) }) }) : null;
         try {
             const badges = await JT.fetchBadges(card.dataset.jtItem);
-            const row = [...(badges ? JT.videoBadges(badges) : []), badges?.Audio ? JT.el('span', { className: 'jt-badge', text: badges.Audio }) : null, bitrateBadge].filter(Boolean);
+            const row = [...(badges ? JT.videoBadges(badges) : []), badges?.Audio ? JT.el('span', { className: 'jt-badge', text: badges.Audio }) : null].filter(Boolean);
             if (row.length && !slot.hasChildNodes()) {
                 slot.replaceChildren(...row);
             }
         } catch (e) {
             console.error('[JellyTwiggy] session badges', e);
-            if (bitrateBadge && !slot.hasChildNodes()) {
-                slot.replaceChildren(bitrateBadge);
-            }
         }
     }
 
@@ -202,7 +185,7 @@
                 addBadges(fresh);
                 return fresh;
             }
-            for (const selector of ['.jt-session-bottom', '.jt-session-device', '.jt-session-status', '.jt-session-chips']) {
+            for (const selector of ['.jt-session-bottom', '.jt-session-device', '.jt-session-status']) {
                 const current = old.querySelector(selector);
                 const next = fresh.querySelector(selector);
                 if (current && next && current.outerHTML !== next.outerHTML) {
