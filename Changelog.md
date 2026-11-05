@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1.0
+
+- Stream cards (header panel and dashboard): simpler layout — poster on the full card height, the transcoding details row is gone, the bitrate sits in the play method chip as "Transcode · 26.4 Mbit"
+
 ## 0.4.0.0
 
 - Profile settings → Interface: "Hide watched items from Continue Watching" — a rewatched item that is already marked watched no longer shows there, in every client

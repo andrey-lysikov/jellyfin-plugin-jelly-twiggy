@@ -87,22 +87,7 @@ public class NowPlayingDto
 
     /// <summary>Gets or sets the play method.</summary>
     public string? PlayMethod { get; set; }
-
-    /// <summary>Gets or sets the transcoding details, when transcoding.</summary>
-    public TranscodeDto? Transcode { get; set; }
 }
-
-/// <summary>Transcoding details.</summary>
-public record TranscodeDto(
-    string? VideoCodec,
-    string? AudioCodec,
-    bool IsVideoDirect,
-    bool IsAudioDirect,
-    int? Bitrate,
-    int? Width,
-    int? Height,
-    float? Framerate,
-    string? HardwareAcceleration);
 
 /// <summary>Lists client sessions.</summary>
 public sealed class SessionsService : IDisposable
@@ -203,19 +188,7 @@ public sealed class SessionsService : IDisposable
                     PlayMethod = session.PlayState?.PlayMethod?.ToString(),
                     Bitrate = session.PlayState?.PlayMethod == PlayMethod.Transcode
                         ? session.TranscodingInfo?.Bitrate
-                        : session.FullNowPlayingItem?.TotalBitrate,
-                    Transcode = session.PlayState?.PlayMethod == PlayMethod.Transcode && session.TranscodingInfo is { } t
-                        ? new TranscodeDto(
-                            t.VideoCodec,
-                            t.AudioCodec,
-                            t.IsVideoDirect,
-                            t.IsAudioDirect,
-                            t.Bitrate,
-                            t.Width,
-                            t.Height,
-                            t.Framerate,
-                            isAdmin ? t.HardwareAccelerationType?.ToString() : null)
-                        : null
+                        : session.FullNowPlayingItem?.TotalBitrate
                 }
                 : null
         };
