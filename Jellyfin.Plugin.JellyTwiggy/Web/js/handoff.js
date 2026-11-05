@@ -12,7 +12,8 @@
             moveTo: 'Move to another device',
             sendTo: 'Send to',
             noTargets: 'No other devices with Swiftly',
-            continueHereHint: 'Stop it on that device and continue in this browser from the same position',
+            continueHereConfirm: 'Stop playback on “{device}” and continue in this browser from the same position?',
+            continueAction: 'Continue',
             continuingHere: 'Continuing here from “{device}”',
             sourceGone: 'Nothing to take over: playback on that device has ended',
             noOwnSession: 'This browser can’t receive playback right now, reload the page',
@@ -31,7 +32,8 @@
             moveTo: 'Перенести на другое устройство',
             sendTo: 'Отправить на',
             noTargets: 'Нет других устройств со Swiftly',
-            continueHereHint: 'Остановить на том устройстве и продолжить в этом браузере с того же места',
+            continueHereConfirm: 'Остановить воспроизведение на «{device}» и продолжить в этом браузере с того же места?',
+            continueAction: 'Продолжить',
             continuingHere: 'Продолжаем здесь с «{device}»',
             sourceGone: 'Забирать нечего: на том устройстве воспроизведение закончилось',
             noOwnSession: 'Этот браузер сейчас не может принять воспроизведение, обновите страницу',
@@ -50,7 +52,8 @@
             moveTo: 'Auf ein anderes Gerät verschieben',
             sendTo: 'Senden an',
             noTargets: 'Keine anderen Geräte mit Swiftly',
-            continueHereHint: 'Auf dem anderen Gerät stoppen und in diesem Browser an derselben Stelle fortsetzen',
+            continueHereConfirm: 'Wiedergabe auf „{device}“ stoppen und in diesem Browser an derselben Stelle fortsetzen?',
+            continueAction: 'Fortsetzen',
             continuingHere: 'Hier fortgesetzt von „{device}“',
             sourceGone: 'Nichts zu übernehmen: Die Wiedergabe auf dem Gerät ist beendet',
             noOwnSession: 'Dieser Browser kann gerade keine Wiedergabe empfangen, Seite neu laden',
@@ -85,6 +88,24 @@
             console.error('[JellyTwiggy] takeover', e);
             JT.toast(failureText(e));
         }
+    };
+
+    // Taking over stops playback on the other device, so the user confirms it first.
+    JT.confirmTakeOver = function (session) {
+        const dialog = JT.dialog(JT.t('continueHere'));
+        dialog.body.appendChild(JT.el('p', { text: JT.t('continueHereConfirm', { device: session.DeviceName || session.Client || '' }) }));
+        dialog.footer.append(
+            JT.el('button', { type: 'button', className: 'jt-button', text: JT.t('cancel'), onClick: () => dialog.close() }),
+            JT.el('button', {
+                type: 'button',
+                className: 'jt-button jt-button-primary',
+                text: JT.t('continueAction'),
+                onClick: () => {
+                    dialog.close();
+                    JT.takeOver(session);
+                }
+            }));
+        dialog.footer.lastElementChild.focus();
     };
 
     // ---- Play on ---------------------------------------------------------------------------

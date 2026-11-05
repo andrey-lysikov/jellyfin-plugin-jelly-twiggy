@@ -17,7 +17,7 @@ Jelly Twiggy extends the Jellyfin web client with poster badges, playback option
 - Options to hide favorites and the Google Cast button, corner radius of cards and of the interface
 - Option to keep watched items out of Continue Watching, in every client
 - Sync of Jellyfin's browser-only settings across browsers and devices
-- Active streams button with progress, device and transcoding details
+- Active streams button with progress, device and transcoding details; running scheduled tasks for admins
 - "Continue in browser", "Play on…" and moving playback between your devices with Swiftly Player
 - Dashboard: move, resize, show and hide blocks, and more
 - "Watched" row on item pages with who watched, how many times and when
