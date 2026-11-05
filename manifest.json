@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "0.4.1.0",
+        "changelog": "- Stream cards (header panel and dashboard): simpler layout — poster on the full card height, the transcoding details row is gone, the bitrate sits in the play method chip as \"Transcode · 26.4 Mbit\"",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/andrey-lysikov/jellyfin-plugin-jelly-twiggy/releases/download/v0.4.1.0/jelly-twiggy_0.4.1.0.zip",
+        "checksum": "fd6200a62786ea93a032b4a4cb3f97d5",
+        "timestamp": "2026-11-05T15:58:01Z"
+      },
+      {
         "version": "0.4.0.0",
         "changelog": "- Profile settings → Interface: \"Hide watched items from Continue Watching\" — a rewatched item that is already marked watched no longer shows there, in every client\n- Plugin settings: \"Show the active sessions button\" and a separate \"Animate the active sessions button\" option for the spinning ring; the \"Animations\" option is gone, the watched circle pop comes with the \"Add media info to posters\" option\n- Active sessions: with nothing playing the button opens a panel saying \"No active sessions\" instead of doing nothing\n- Plugin settings: the item page option is now called \"Refresh the media details design\", the player option \"Remove the extra volume control\", the cards option \"Add media info to posters\", the \"Watched\" row option \"Show who watched in the media details\"",
         "targetAbi": "12.0.0.0",
