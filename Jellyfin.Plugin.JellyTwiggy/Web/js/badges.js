@@ -2,7 +2,9 @@
 (function (JT) {
     'use strict';
 
-    const TYPES = new Set(['Movie', 'Episode', 'Series', 'Season', 'Video', 'MusicVideo', 'Trailer', 'Audio', 'MusicAlbum']);
+    const TYPES = new Set(['Movie', 'Episode', 'Series', 'Season', 'Video', 'MusicVideo', 'Trailer', 'Audio', 'MusicAlbum', 'BoxSet']);
+    // Collections have no media badges of their own, but still get the watched circle and buttons.
+    const ALWAYS_BUTTONS = new Set(['BoxSet']);
     const BATCH_SIZE = 100;
     const cache = new Map(); // normalized id -> badges | null; the same for every user
     const userData = new Map(); // normalized id -> { played, favorite, unplayed } of the current user
@@ -211,7 +213,7 @@
             host.appendChild(ratings);
         }
 
-        if ((video.length || badges.Audio || ratings) && JT.config?.StyleCards) {
+        if ((video.length || badges.Audio || ratings || ALWAYS_BUTTONS.has(card.dataset.type)) && JT.config?.StyleCards) {
             card.classList.add('jt-has-badges');
             host.append(...cardButtons(card.dataset.jtBadges));
         }
