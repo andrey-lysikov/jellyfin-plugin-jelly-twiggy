@@ -175,7 +175,7 @@
 }
 
 .jt-recent-device { font-size: 0.85em; color: var(--jt-muted, rgba(255, 255, 255, 0.6)); }
-.jt-recent-row .jt-chip { justify-self: start; }
+.jt-recent-row .jt-chip { justify-self: start; max-width: 100%; font-size: 0.72em; }
 
 .jt-recent-length,
 .jt-recent-time {

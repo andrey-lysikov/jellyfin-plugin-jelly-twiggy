@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.5.0
+
+- Dashboard recent plays: the play method chip fits on one line with a smaller font and proper padding
+- Collections show the watched circle on posters again: a check when everything inside is watched, otherwise the number of unwatched items
+- Item page: long audio and subtitle track names end with an ellipsis instead of running under the arrow
+- Active streams: with only tasks running the panel shows just the tasks, without "No active sessions" and the heading; the task icon slowly spins clockwise
+
 ## 0.4.2.0
 
 - Stream cards: play state and time sit left of the progress bar; "Continue in browser" and "Send to" are icon buttons on the play method row, on the right

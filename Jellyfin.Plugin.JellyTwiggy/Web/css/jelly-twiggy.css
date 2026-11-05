@@ -449,7 +449,17 @@ html.jt-anim-streams :is(.jt-streams-active, .jt-streams-busy) .jt-streams-ring 
 }
 
 a.jt-task:hover { border-color: rgba(255, 255, 255, 0.3); }
-.jt-task-icon { color: var(--jt-muted); }
+/* Mirrored so the arrows point clockwise, then spun clockwise. */
+.jt-task-icon { color: var(--jt-muted); transform: scaleX(-1); animation: jt-task-spin 3s linear infinite; }
+
+@keyframes jt-task-spin {
+    from { transform: rotate(0deg) scaleX(-1); }
+    to { transform: rotate(360deg) scaleX(-1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .jt-task-icon { animation: none; }
+}
 .jt-task-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.35em; }
 .jt-task-top { display: flex; gap: 0.6em; align-items: baseline; }
 .jt-task-name { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
@@ -610,10 +620,15 @@ a.jt-session:hover { border-color: rgba(255, 255, 255, 0.3); }
 .jt-session-meta:empty { display: none; }
 
 .jt-chip {
-    padding: 0.05em 0.5em;
+    min-width: 0;
+    padding: 0.2em 0.7em;
     border-radius: 1em;
     font-size: 0.85em;
     font-weight: 600;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .jt-chip-ok { color: #a5d6a7; background: rgba(76, 175, 80, 0.18); }
@@ -1088,8 +1103,15 @@ html.jt-tweak-item .mediaInfoOfficialRating {
     padding-right: 0 !important;
 }
 
-/* Audio and subtitle selects: jellyfin-web leaves no gap between the frame and the text. */
-.trackSelections .selectContainer .detailTrackSelect { padding-left: 0.5em; }
+/* Audio and subtitle selects: jellyfin-web leaves no gap between the frame and the text,
+   and long track names run under the arrow; cut them with an ellipsis before it. */
+.trackSelections .selectContainer .detailTrackSelect {
+    padding-left: 0.5em;
+    padding-right: 2.2em;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
 
 /* Video track as badges, without an arrow; the transparent select still covers the line for picking a track. */
 .trackSelections .selectVideoContainer.jt-has-video-badges {

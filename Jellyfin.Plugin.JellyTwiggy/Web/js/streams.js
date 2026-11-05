@@ -301,7 +301,7 @@
 
     function taskRow(task) {
         const percent = Math.round(task.CurrentProgressPercentage || 0);
-        return JT.el('a', { className: 'jt-task', href: '#/dashboard/tasks' }, [
+        return JT.el('a', { className: 'jt-task', href: '#/dashboard/tasks', 'data-jt-key': task.Id }, [
             JT.icon('sync', 'jt-task-icon'),
             JT.el('div', { className: 'jt-task-info' }, [
                 JT.el('div', { className: 'jt-task-top' }, [
@@ -313,17 +313,50 @@
         ]);
     }
 
-    // Sessions first, then running tasks (admins only) under their own heading.
+    // Sessions first, then running tasks (admins only); the heading only separates them from sessions,
+    // and "no sessions" shows only when there are no tasks either.
     function renderPanel() {
         if (!panel) {
             return;
         }
 
         const [list, taskList] = panel.children;
-        JT.renderSessions(list, sessions, JT.el('div', { className: 'jt-empty', text: JT.t('noSessions') }), { takeover: true });
-        taskList.replaceChildren(...(tasks.length
-            ? [JT.el('div', { className: 'jt-streams-heading', text: JT.t('runningTasks') }), ...tasks.map(taskRow)]
-            : []));
+        if (!sessions.length && tasks.length) {
+            list.replaceChildren();
+        } else {
+            JT.renderSessions(list, sessions, JT.el('div', { className: 'jt-empty', text: JT.t('noSessions') }), { takeover: true });
+        }
+        renderTasks(taskList);
+    }
+
+    // Rows are updated in place so the spinning icon keeps turning smoothly across refreshes.
+    function renderTasks(container) {
+        const existing = new Map(Array.from(container.querySelectorAll('.jt-task')).map((el) => [el.dataset.jtKey, el]));
+        const rows = tasks.map((task) => {
+            const fresh = taskRow(task);
+            const old = existing.get(fresh.dataset.jtKey);
+            if (!old) {
+                return fresh;
+            }
+            old.querySelector('.jt-task-top').replaceWith(fresh.querySelector('.jt-task-top'));
+            old.querySelector('.jt-session-progress-bar').style.width = fresh.querySelector('.jt-session-progress-bar').style.width;
+            return old;
+        });
+        let heading = container.querySelector('.jt-streams-heading');
+        if (sessions.length && tasks.length) {
+            heading ??= JT.el('div', { className: 'jt-streams-heading', text: JT.t('runningTasks') });
+        } else {
+            heading = null;
+        }
+        const wanted = [heading, ...rows].filter(Boolean);
+        wanted.forEach((el, index) => {
+            if (container.children[index] !== el) {
+                container.insertBefore(el, container.children[index] || null);
+            }
+        });
+        while (container.children.length > wanted.length) {
+            container.lastElementChild.remove();
+        }
     }
 
     function closePanel() {
