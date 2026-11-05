@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.2.0
+
+- Stream cards: play state and time sit left of the progress bar; "Continue in browser" and "Send to" are icon buttons on the play method row, on the right
+- "Continue in browser" asks for confirmation before stopping playback on the other device
+- Active streams (admins): running scheduled tasks are listed in the panel with progress; with only tasks running the button spins without the accent colour
+
 ## 0.4.1.0
 
 - Stream cards (header panel and dashboard): simpler layout — poster on the full card height, the transcoding details row is gone, the bitrate sits in the play method chip as "Transcode · 26.4 Mbit"

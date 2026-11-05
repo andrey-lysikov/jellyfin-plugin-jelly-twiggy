@@ -7,6 +7,7 @@
     const PANEL_REFRESH_MS = 3000;
 
     let sessions = [];
+    let tasks = [];
     let panel = null;
     let panelTimer = null;
 
@@ -68,21 +69,22 @@
         + '<path class="jt-streams-ring" stroke-linecap="round" d="M105 500 A395 395 0 1 1 154 690"/>'
         + '<path stroke-linejoin="round" d="M396 360 L632 500 L396 640 Z"/></svg>';
 
-    // "Continue in browser" and "Move to…" on the viewer's own playback elsewhere (panel only); handoff.js does the work.
+    // Icon-only "Continue in browser" and "Move to…" on the viewer's own playback elsewhere; handoff.js does the work.
     function takeoverButtons(session) {
         return JT.el('span', { className: 'jt-session-handoff' }, [
             JT.el('button', {
                 type: 'button',
-                className: 'jt-chip jt-session-takeover',
-                title: JT.t('continueHereHint'),
+                className: 'jt-session-takeover',
+                title: JT.t('continueHere'),
+                'aria-label': JT.t('continueHere'),
                 onClick: (e) => {
                     e.preventDefault();
-                    JT.takeOver?.(session);
+                    JT.confirmTakeOver?.(session);
                 }
-            }, [JT.icon('input'), JT.t('continueHere')]),
+            }, JT.icon('open_in_browser')),
             JT.el('button', {
                 type: 'button',
-                className: 'jt-chip jt-session-takeover jt-session-move',
+                className: 'jt-session-takeover jt-session-move',
                 title: JT.t('moveTo'),
                 'aria-label': JT.t('moveTo'),
                 onClick: (e) => {
@@ -91,7 +93,7 @@
                     e.stopPropagation();
                     JT.openMoveMenu?.(session, e.currentTarget);
                 }
-            }, [JT.t('sendTo'), JT.icon('tv'), JT.icon('arrow_drop_down')])
+            }, [JT.icon('tv'), JT.icon('arrow_drop_down')])
         ]);
     }
 
@@ -140,11 +142,14 @@
                 ]),
                 JT.el('div', { className: 'jt-session-badges' }),
                 deviceLine(session),
+                // State and time left of the progress bar; play method left and handoff buttons right below.
                 JT.el('div', { className: 'jt-session-bottom' }, [
-                    JT.el('div', { className: 'jt-session-progress' }, JT.el('div', { className: 'jt-session-progress-bar', style: `width:${progress}%` })),
                     JT.el('div', { className: 'jt-session-status' }, [
                         JT.icon(nowPlaying.IsPaused ? 'pause' : 'play_arrow'),
-                        JT.el('span', { text: `${JT.formatTicks(nowPlaying.PositionTicks)} / ${JT.formatTicks(nowPlaying.RunTimeTicks)}` }),
+                        JT.el('span', { className: 'jt-session-time', text: `${JT.formatTicks(nowPlaying.PositionTicks)} / ${JT.formatTicks(nowPlaying.RunTimeTicks)}` }),
+                        JT.el('div', { className: 'jt-session-progress' }, JT.el('div', { className: 'jt-session-progress-bar', style: `width:${progress}%` }))
+                    ]),
+                    JT.el('div', { className: 'jt-session-meta' }, [
                         methodChip(nowPlaying),
                         options?.takeover && session.CanTakeOver ? takeoverButtons(session) : null
                     ])
@@ -251,20 +256,42 @@
         });
     }
 
+    // Playback lights the icon in the accent colour; running tasks alone only spin it.
     function updateCount() {
         const playing = sessions.filter((s) => s.NowPlaying).length;
+        const title = [
+            playing > 0 ? `${JT.t('activeStreams')}: ${playing}` : JT.t('activeStreams'),
+            tasks.length ? `${JT.t('runningTasks')}: ${tasks.length}` : null
+        ].filter(Boolean).join(' · ');
         document.querySelectorAll('.jt-streams-button').forEach((el) => {
             el.classList.toggle('jt-streams-active', playing > 0);
-            el.title = playing > 0 ? `${JT.t('activeStreams')}: ${playing}` : JT.t('activeStreams');
+            el.classList.toggle('jt-streams-busy', playing === 0 && tasks.length > 0);
+            el.title = title;
         });
     }
 
-    async function refresh() {
+    // Running scheduled tasks; the endpoint is admin-only, so others get none.
+    async function loadTasks() {
         try {
-            sessions = await JT.get('JellyTwiggy/Sessions');
+            const user = await window.ApiClient.getCurrentUser();
+            if (!user?.Policy?.IsAdministrator) {
+                return [];
+            }
+            const list = await JT.get('ScheduledTasks?isHidden=false');
+            return (list || []).filter((task) => task.State === 'Running');
         } catch (e) {
-            console.error('[JellyTwiggy] sessions', e);
-            return;
+            console.error('[JellyTwiggy] tasks', e);
+            return [];
+        }
+    }
+
+    async function refresh() {
+        const [list, running] = await Promise.all([JT.get('JellyTwiggy/Sessions').catch((e) => e), loadTasks()]);
+        tasks = running;
+        if (list instanceof Error) {
+            console.error('[JellyTwiggy] sessions', list);
+        } else {
+            sessions = list;
         }
         updateCount();
         renderPanel();
@@ -272,12 +299,31 @@
 
     // ---- Panel -----------------------------------------------------------------------------
 
+    function taskRow(task) {
+        const percent = Math.round(task.CurrentProgressPercentage || 0);
+        return JT.el('a', { className: 'jt-task', href: '#/dashboard/tasks' }, [
+            JT.icon('sync', 'jt-task-icon'),
+            JT.el('div', { className: 'jt-task-info' }, [
+                JT.el('div', { className: 'jt-task-top' }, [
+                    JT.el('span', { className: 'jt-task-name', text: task.Name || '' }),
+                    JT.el('span', { className: 'jt-task-percent', text: `${percent}%` })
+                ]),
+                JT.el('div', { className: 'jt-session-progress' }, JT.el('div', { className: 'jt-session-progress-bar', style: `width:${percent}%` }))
+            ])
+        ]);
+    }
+
+    // Sessions first, then running tasks (admins only) under their own heading.
     function renderPanel() {
         if (!panel) {
             return;
         }
 
-        JT.renderSessions(panel, sessions, JT.el('div', { className: 'jt-empty', text: JT.t('noSessions') }), { takeover: true });
+        const [list, taskList] = panel.children;
+        JT.renderSessions(list, sessions, JT.el('div', { className: 'jt-empty', text: JT.t('noSessions') }), { takeover: true });
+        taskList.replaceChildren(...(tasks.length
+            ? [JT.el('div', { className: 'jt-streams-heading', text: JT.t('runningTasks') }), ...tasks.map(taskRow)]
+            : []));
     }
 
     function closePanel() {
@@ -304,12 +350,15 @@
             return;
         }
 
-        panel = JT.el('div', { className: 'jt-streams-panel' });
+        panel = JT.el('div', { className: 'jt-streams-panel' }, [
+            JT.el('div', { className: 'jt-streams-list' }),
+            JT.el('div', { className: 'jt-streams-list' })
+        ]);
         const rect = button.getBoundingClientRect();
         panel.style.top = `${rect.bottom + 6}px`;
         panel.style.right = `${Math.max(8, window.innerWidth - rect.right)}px`;
         panel.addEventListener('click', (e) => {
-            if (e.target.closest('a.jt-session')) {
+            if (e.target.closest('a.jt-session, a.jt-task')) {
                 closePanel();
             }
         });
