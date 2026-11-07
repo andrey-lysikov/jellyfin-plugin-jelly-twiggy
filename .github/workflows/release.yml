@@ -1,7 +1,7 @@
 name: Release
 
-# vX.Y.Z.W: release for everyone (manifest.json and manifest-beta.json).
-# vX.Y.Z.W-beta: GitHub pre-release, only in manifest-beta.json; notes from the topmost Changelog section.
+# vX.Y.Z.W: release for everyone, added to manifest.json.
+# vX.Y.Z.W-beta: GitHub pre-release for manual install, manifest untouched; notes from the topmost Changelog section.
 on:
   push:
     tags: ['v*.*.*.*']
@@ -91,32 +91,22 @@ jobs:
           fi
 
       - uses: actions/checkout@v7
+        if: steps.version.outputs.beta != 'true'
         with:
           ref: manifest
           path: manifest-branch
 
-      - name: Update manifests
-        env:
-          BETA: ${{ steps.version.outputs.beta }}
+      - name: Update manifest.json
+        if: steps.version.outputs.beta != 'true'
         run: |
-          # The beta repository starts as a copy of the stable one and then gets every release and beta.
-          if [ ! -f manifest-branch/manifest-beta.json ]; then
-            cp manifest-branch/manifest.json manifest-branch/manifest-beta.json
-          fi
-          files="manifest-beta.json"
-          if [ "$BETA" != "true" ]; then
-            files="manifest.json manifest-beta.json"
-          fi
-          for file in $files; do
-            python3 .github/scripts/update_manifest.py "manifest-branch/$file" \
-              --version "${{ steps.version.outputs.version }}" \
-              --url "https://github.com/${{ github.repository }}/releases/download/${GITHUB_REF_NAME}/${{ steps.package.outputs.zip }}" \
-              --checksum "${{ steps.package.outputs.checksum }}" \
-              --changelog "$(cat changes.md)"
-          done
+          python3 .github/scripts/update_manifest.py manifest-branch/manifest.json \
+            --version "${{ steps.version.outputs.version }}" \
+            --url "https://github.com/${{ github.repository }}/releases/download/${GITHUB_REF_NAME}/${{ steps.package.outputs.zip }}" \
+            --checksum "${{ steps.package.outputs.checksum }}" \
+            --changelog "$(cat changes.md)"
           cd manifest-branch
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add manifest.json manifest-beta.json
-          git commit -m "Update manifests for ${GITHUB_REF_NAME}"
+          git add manifest.json
+          git commit -m "Update manifest for ${GITHUB_REF_NAME}"
           git push origin HEAD:manifest
