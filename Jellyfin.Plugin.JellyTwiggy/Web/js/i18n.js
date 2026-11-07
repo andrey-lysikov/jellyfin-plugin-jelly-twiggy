@@ -110,7 +110,7 @@
             cfgMovedFirst: 'Done',
             cfgMoveFirst: 'Put first',
             cfgTabMain: 'General',
-            cfgTabChannels: 'Themed channel'
+            cfgTabChannels: 'Themed channels'
         },
         ru: {
             settingsTitle: 'Jelly Twiggy',
@@ -219,7 +219,7 @@
             cfgMovedFirst: 'Готово',
             cfgMoveFirst: 'Поставить первым',
             cfgTabMain: 'Основные',
-            cfgTabChannels: 'Тематический канал'
+            cfgTabChannels: 'Тематические каналы'
         },
         de: {
             settingsTitle: 'Jelly Twiggy',
@@ -328,7 +328,7 @@
             cfgMovedFirst: 'Erledigt',
             cfgMoveFirst: 'An erste Stelle setzen',
             cfgTabMain: 'Allgemein',
-            cfgTabChannels: 'Themenkanal'
+            cfgTabChannels: 'Themenkanäle'
         },
         ar: {
             settingsTitle: 'Jelly Twiggy',
@@ -437,7 +437,7 @@
             cfgMovedFirst: 'تم',
             cfgMoveFirst: 'وضعها أولًا',
             cfgTabMain: 'عام',
-            cfgTabChannels: 'القناة الموضوعية'
+            cfgTabChannels: 'القنوات الموضوعية'
         },
         be: {
             settingsTitle: 'Jelly Twiggy',
@@ -546,7 +546,7 @@
             cfgMovedFirst: 'Гатова',
             cfgMoveFirst: 'Паставіць першым',
             cfgTabMain: 'Асноўныя',
-            cfgTabChannels: 'Тэматычны канал'
+            cfgTabChannels: 'Тэматычныя каналы'
         },
         cs: {
             settingsTitle: 'Jelly Twiggy',
@@ -655,7 +655,7 @@
             cfgMovedFirst: 'Hotovo',
             cfgMoveFirst: 'Dát na první místo',
             cfgTabMain: 'Obecné',
-            cfgTabChannels: 'Tematický kanál'
+            cfgTabChannels: 'Tematické kanály'
         },
         fr: {
             settingsTitle: 'Jelly Twiggy',
@@ -764,7 +764,7 @@
             cfgMovedFirst: 'Terminé',
             cfgMoveFirst: 'Mettre en premier',
             cfgTabMain: 'Général',
-            cfgTabChannels: 'Chaîne thématique'
+            cfgTabChannels: 'Chaînes thématiques'
         },
         it: {
             settingsTitle: 'Jelly Twiggy',
@@ -873,7 +873,7 @@
             cfgMovedFirst: 'Fatto',
             cfgMoveFirst: 'Metti per primo',
             cfgTabMain: 'Generale',
-            cfgTabChannels: 'Canale tematico'
+            cfgTabChannels: 'Canali tematici'
         },
         ja: {
             settingsTitle: 'Jelly Twiggy',
@@ -1091,7 +1091,7 @@
             cfgMovedFirst: 'Daiyn',
             cfgMoveFirst: 'Bırınşı orynğa qoiu',
             cfgTabMain: 'Negızgı',
-            cfgTabChannels: 'Taqyryptyq arna'
+            cfgTabChannels: 'Taqyryptyq arnalar'
         },
         pl: {
             settingsTitle: 'Jelly Twiggy',
@@ -1200,7 +1200,7 @@
             cfgMovedFirst: 'Gotowe',
             cfgMoveFirst: 'Ustaw jako pierwszy',
             cfgTabMain: 'Ogólne',
-            cfgTabChannels: 'Kanał tematyczny'
+            cfgTabChannels: 'Kanały tematyczne'
         },
         sr: {
             settingsTitle: 'Jelly Twiggy',
@@ -1309,7 +1309,7 @@
             cfgMovedFirst: 'Готово',
             cfgMoveFirst: 'Постави на прво место',
             cfgTabMain: 'Опште',
-            cfgTabChannels: 'Тематски канал'
+            cfgTabChannels: 'Тематски канали'
         },
         zh: {
             settingsTitle: 'Jelly Twiggy',

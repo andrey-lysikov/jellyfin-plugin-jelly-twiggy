@@ -32,8 +32,8 @@ public abstract class PickChannel : IChannel, ISupportsLatestMedia
     public string Description => "Jelly Twiggy";
 
     /// <inheritdoc />
-    // Part of Jellyfin's cache key: a new pick must not be served from the 3-hour channel cache.
-    public string DataVersion => Current?.GeneratedUtc.Ticks.ToString(CultureInfo.InvariantCulture) ?? "0";
+    // Part of Jellyfin's 3-hour channel cache key: a new pick or a plugin update must not be served from it.
+    public string DataVersion => Plugin.ClientVersion + "-" + (Current?.GeneratedUtc.Ticks ?? 0).ToString(CultureInfo.InvariantCulture);
 
     /// <inheritdoc />
     public string HomePageUrl => "https://github.com/andrey-lysikov/jellyfin-plugin-jelly-twiggy";

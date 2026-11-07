@@ -81,7 +81,8 @@ public class PickService
         }
     }
 
-    /// <summary>Catches up after downtime: today's theme, and a first top if there is none yet.</summary>
+    /// <summary>Catches up after downtime (today's theme, a first top if there is none yet) and syncs both channels.</summary>
+    // The sync also applies changes in how the plugin builds its channels after an update.
     public async Task EnsureFreshAsync(CancellationToken cancellationToken)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -92,10 +93,18 @@ public class PickService
             {
                 await RefreshThemedCoreAsync(cancellationToken).ConfigureAwait(false);
             }
+            else
+            {
+                await SyncChannelAsync(_copies.ThemedName, state.Themed, cancellationToken).ConfigureAwait(false);
+            }
 
             if (state.Best is null || state.Best.Groups.Count == 0)
             {
                 await UpdateBestCoreAsync(rotate: state.BestIndex < 0, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                await SyncChannelAsync(_copies.BestName, state.Best, cancellationToken).ConfigureAwait(false);
             }
         }
         finally
