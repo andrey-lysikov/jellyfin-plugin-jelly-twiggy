@@ -85,9 +85,8 @@
   обновляется только release-workflow, `main` бот не трогает.
 - `Jellyfin.Plugin.JellyTwiggy.Tests/` — xUnit-тесты (handoff, календарь и отбор подборок), гоняются в CI.
 - `.github/workflows/build.yml` — сборка, `dotnet test`, `node --check` JS на push/PR;
-  `release.yml` — по тегу `vX.Y.Z.W`: сборка, zip с dll, GitHub release, обновление `manifest.json` и
-  `manifest-beta.json` в ветке `manifest`; по тегу `vX.Y.Z.W-beta` — pre-release и только `manifest-beta.json`
-  (заметки — из верхнего раздела Changelog).
+  `release.yml` — по тегу `vX.Y.Z.W`: сборка, zip с dll, GitHub release, обновление manifest в ветке `manifest`;
+  по тегу `vX.Y.Z.W-beta` — только pre-release с zip, manifest не трогается (заметки — из верхнего раздела Changelog).
 
 ## Ограничения и заметки
 
@@ -139,8 +138,9 @@
 - **Версионирование:** 4 компонента везде (сборка, `manifest.json`, тег) — текущая **0.5.0.0**,
   тег релиза `vX.Y.Z.W`.
 - **Бета:** номер — последний релиз с +1 в последнем компоненте (после 0.4.5.0 — 0.4.5.1, 0.4.5.2…),
-  тег `vX.Y.Z.W-beta`; следующий релиз (Z и выше) старше любой беты, и бета-серверы обновятся сами.
-  Бета-репозиторий: `…/manifest/manifest-beta.json`, в нём и беты, и релизы. Перед тегом — зелёный `build.yml` на main.
+  тег `vX.Y.Z.W-beta`; отдельного репозитория нет — dll из pre-release вручную кладётся поверх установленной
+  (`<jellyfin>/plugins/Jelly Twiggy_<версия>/`) и сервер перезапускается. Jellyfin по `meta.json` считает плагин
+  прежней версией, поэтому следующий релиз придёт обычным обновлением. Перед тегом — зелёный `build.yml` на main.
 - **Лицензия:** GPL-3.0. Код JE (тоже GPL-3.0) заимствовать можно — с указанием источника
   в комментарии у заимствованного фрагмента и в разделе Credits README.
 - **Git:** пушит только пользователь. Не делать `git push`; когда для проверки нужен CI —
