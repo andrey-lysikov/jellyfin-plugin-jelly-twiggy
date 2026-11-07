@@ -1,8 +1,10 @@
 using Jellyfin.Plugin.JellyTwiggy.History;
 using Jellyfin.Plugin.JellyTwiggy.Media;
+using Jellyfin.Plugin.JellyTwiggy.Picks;
 using Jellyfin.Plugin.JellyTwiggy.Storage;
 using Jellyfin.Plugin.JellyTwiggy.WebInjection;
 using MediaBrowser.Controller;
+using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.Plugins;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,6 +18,13 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
     public void RegisterServices(IServiceCollection serviceCollection, IServerApplicationHost applicationHost)
     {
         serviceCollection.AddSingleton<UserSettingsStore>();
+        serviceCollection.AddSingleton<PickStore>();
+        serviceCollection.AddSingleton<PickCopies>();
+        serviceCollection.AddSingleton<PickWatchedTransfer>();
+        serviceCollection.AddSingleton<PickService>();
+        // Jellyfin's channel manager takes channels from DI; scheduled tasks are found on their own.
+        serviceCollection.AddSingleton<IChannel, ThemedPickChannel>();
+        serviceCollection.AddSingleton<IChannel, BestPickChannel>();
         serviceCollection.AddSingleton<PlaybackHistoryStore>();
         serviceCollection.AddSingleton<MediaBadgeService>();
         serviceCollection.AddSingleton<WatchersService>();
@@ -29,5 +38,6 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
         serviceCollection.Configure<MvcOptions>(options => options.Filters.Add<ResumeFilter>());
         serviceCollection.AddHostedService<PlaybackTracker>();
         serviceCollection.AddHostedService<FileTransformationRegistrar>();
+        serviceCollection.AddHostedService<PicksStartup>();
     }
 }

@@ -73,6 +73,35 @@
                         </div>
                     </div>
 
+                    <div class="verticalSection">
+                        <h3 class="sectionTitle" data-jt-i18n="cfgPicks">Picks: «Themed» and «Best» channels</h3>
+                        <div class="checkboxContainer">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="EnablePicks" />
+                                <span data-jt-i18n="cfgEnablePicks">Show the «Themed» and «Best» channels</span>
+                            </label>
+                        </div>
+                        <p><span data-jt-i18n="cfgPicksNow">Now</span>: <span id="jtPicksNow">…</span></p>
+                        <p class="fieldDescription" data-jt-i18n="cfgPicksTasksHint">The themed pick is updated daily and the «Best» top changes every Monday at 3:00. Change the schedule in Dashboard → Scheduled tasks.</p>
+
+                        <h4 data-jt-i18n="cfgPickSources">Libraries for picks</h4>
+                        <div id="jtPickSources"></div>
+                        <p class="fieldDescription" data-jt-i18n="cfgPickSourcesHint">Films from these libraries appear in the channels for everyone with channel access, even without access to the library. Close the channels for children in the user's channel access settings.</p>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="ThemedChannelName" data-jt-i18n="cfgThemedChannel">«Themed» channel name</label>
+                            <input is="emby-input" type="text" id="ThemedChannelName" />
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="BestChannelName" data-jt-i18n="cfgBestChannel">«Best» channel name</label>
+                            <input is="emby-input" type="text" id="BestChannelName" />
+                            <div class="fieldDescription" data-jt-i18n="cfgChannelNamesHint">The name identifies the channel: after renaming, Jellyfin creates a new channel and users lose its place and settings.</div>
+                        </div>
+
+                        <h4 data-jt-i18n="cfgPickList">Themes and tops</h4>
+                        <div id="jtPickList"></div>
+                    </div>
+
                     <div>
                         <button is="emby-button" type="submit" class="raised button-submit block emby-button">
                             <span data-jt-i18n="save">Save</span>
@@ -84,10 +113,39 @@
         <script type="text/javascript">
             (function () {
                 const pluginId = '71c422cd-3468-4d47-aad3-19d3d0c5be48';
-                const flags = ['EnablePosterBadges', 'EnableActiveStreams', 'AnimateActiveStreams', 'EnableWatchedBy', 'EnableDashboard', 'TweakItemPage', 'TweakPlayer', 'StyleCards'];
+                const flags = ['EnablePosterBadges', 'EnableActiveStreams', 'AnimateActiveStreams', 'EnableWatchedBy', 'EnableDashboard', 'TweakItemPage', 'TweakPlayer', 'StyleCards', 'EnablePicks'];
                 const page = document.querySelector('#JellyTwiggyConfigPage');
                 // The client script provides translations; without it the English text stays.
                 const t = (key, fallback) => (window.JellyTwiggy && window.JellyTwiggy.t ? window.JellyTwiggy.t(key) : fallback);
+                const escapeHtml = (text) => String(text).replace(/[&<>"']/g, (c) => '&#' + c.charCodeAt(0) + ';');
+                const normalize = (id) => String(id || '').replace(/-/g, '').toLowerCase();
+                let picksConfig = null;
+
+                function checkbox(attributes, checked, label) {
+                    return '<div class="checkboxContainer"><label><input is="emby-checkbox" type="checkbox" ' + attributes + (checked ? ' checked' : '')
+                        + ' /><span>' + escapeHtml(label) + '</span></label></div>';
+                }
+
+                // Movie and mixed libraries; the plugin takes only films from them.
+                function renderPicks(config, folders, picks) {
+                    const sources = (config.PickSourceLibraries || []).map(normalize);
+                    page.querySelector('#jtPickSources').innerHTML = folders
+                        .filter((folder) => !folder.CollectionType || folder.CollectionType === 'movies')
+                        .map((folder) => checkbox('data-library="' + escapeHtml(folder.ItemId) + '"', sources.includes(normalize(folder.ItemId)), folder.Name))
+                        .join('');
+
+                    const disabled = config.DisabledPicks || [];
+                    const group = (kinds) => picks.Catalog.filter((pick) => kinds.includes(pick.Kind))
+                        .map((pick) => checkbox('data-pick="' + escapeHtml(pick.Id) + '"', !disabled.includes(pick.Id), pick.Name))
+                        .join('');
+                    page.querySelector('#jtPickList').innerHTML = '<p><b>' + escapeHtml(picks.ThemedChannel) + '</b></p>' + group(['Holiday', 'Franchise'])
+                        + '<p><b>' + escapeHtml(picks.BestChannel) + '</b></p>' + group(['Top']);
+
+                    const describe = (channel, current) => channel + ' — ' + (current ? current.Name + ' (' + current.Count + ')' : t('cfgPickNone', 'nothing fits'));
+                    page.querySelector('#jtPicksNow').textContent = describe(picks.ThemedChannel, picks.Themed) + '; ' + describe(picks.BestChannel, picks.Best);
+                    page.querySelector('#ThemedChannelName').value = config.ThemedChannelName || picks.ThemedChannel;
+                    page.querySelector('#BestChannelName').value = config.BestChannelName || picks.BestChannel;
+                }
 
                 page.addEventListener('pageshow', function () {
                     page.querySelectorAll('[data-jt-i18n]').forEach(function (element) {
@@ -96,10 +154,18 @@
                     page.querySelector('#jtIcon').src = ApiClient.getUrl('JellyTwiggy/client/img/wordmark.png');
 
                     Dashboard.showLoadingMsg();
-                    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                    Promise.all([
+                        ApiClient.getPluginConfiguration(pluginId),
+                        ApiClient.getVirtualFolders(),
+                        ApiClient.getJSON(ApiClient.getUrl('JellyTwiggy/Picks'))
+                    ]).then(function ([config, folders, picks]) {
                         flags.forEach(function (flag) {
                             page.querySelector('#' + flag).checked = config[flag];
                         });
+                        picksConfig = picks;
+                        renderPicks(config, folders || [], picks);
+                        Dashboard.hideLoadingMsg();
+                    }, function () {
                         Dashboard.hideLoadingMsg();
                     });
 
@@ -117,6 +183,17 @@
                     ApiClient.getPluginConfiguration(pluginId).then(function (config) {
                         flags.forEach(function (flag) {
                             config[flag] = page.querySelector('#' + flag).checked;
+                        });
+                        config.PickSourceLibraries = Array.from(page.querySelectorAll('[data-library]:checked')).map((input) => input.dataset.library);
+                        if (picksConfig) {
+                            config.DisabledPicks = Array.from(page.querySelectorAll('[data-pick]')).filter((input) => !input.checked).map((input) => input.dataset.pick);
+                        }
+                        // An empty name keeps the current one: the name is the channel's identity.
+                        ['ThemedChannelName', 'BestChannelName'].forEach(function (key) {
+                            const value = page.querySelector('#' + key).value.trim();
+                            if (value) {
+                                config[key] = value;
+                            }
                         });
                         ApiClient.updatePluginConfiguration(pluginId, config).then(function (result) {
                             Dashboard.processPluginConfigurationUpdateResult(result);

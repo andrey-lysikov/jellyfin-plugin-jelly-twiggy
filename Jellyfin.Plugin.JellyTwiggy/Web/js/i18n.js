@@ -104,7 +104,18 @@
             cfgTweaks: 'Page tweaks',
             cfgTweakItemPage: 'Refresh the media details design',
             cfgTweakPlayer: 'Remove the extra volume control',
-            cfgStyleCards: 'Add media info to posters'
+            cfgStyleCards: 'Add media info to posters',
+            cfgPicks: 'Picks: «Themed» and «Best» channels',
+            cfgEnablePicks: 'Show the «Themed» and «Best» channels',
+            cfgPicksNow: 'Now',
+            cfgPickNone: 'nothing fits',
+            cfgPicksTasksHint: 'The themed pick is updated daily and the «Best» top changes every Monday at 3:00. Change the schedule in Dashboard → Scheduled tasks.',
+            cfgPickSources: 'Libraries for picks',
+            cfgPickSourcesHint: 'Films from these libraries appear in the channels for everyone with channel access, even without access to the library. Close the channels for children in the user\'s channel access settings.',
+            cfgThemedChannel: '«Themed» channel name',
+            cfgBestChannel: '«Best» channel name',
+            cfgChannelNamesHint: 'The name identifies the channel: after renaming, Jellyfin creates a new channel and users lose its place and settings.',
+            cfgPickList: 'Themes and tops'
         },
         ru: {
             settingsTitle: 'Jelly Twiggy',
@@ -207,7 +218,18 @@
             cfgTweaks: 'Доработка страниц',
             cfgTweakItemPage: 'Обновить оформление детальной информации о медиа',
             cfgTweakPlayer: 'Убрать лишний регулятор громкости',
-            cfgStyleCards: 'Добавить на постеры информацию о медиа'
+            cfgStyleCards: 'Добавить на постеры информацию о медиа',
+            cfgPicks: 'Подборки: каналы «Тематический» и «Лучшие»',
+            cfgEnablePicks: 'Показывать каналы «Тематический» и «Лучшие»',
+            cfgPicksNow: 'Сейчас',
+            cfgPickNone: 'ничего не подошло',
+            cfgPicksTasksHint: 'Тематическая подборка обновляется ежедневно, топ «Лучших» меняется по понедельникам в 3:00. Расписание меняется в Панели управления → Запланированные задачи.',
+            cfgPickSources: 'Медиатеки для подборок',
+            cfgPickSourcesHint: 'Фильмы из этих медиатек попадают в каналы для всех, у кого есть доступ к каналам, даже без доступа к самой медиатеке. Детям закройте каналы в настройках доступа пользователя.',
+            cfgThemedChannel: 'Название канала «Тематический»',
+            cfgBestChannel: 'Название канала «Лучшие»',
+            cfgChannelNamesHint: 'Название — это идентификатор канала: после переименования Jellyfin создаст новый канал, а у пользователей сбросятся его место и настройки.',
+            cfgPickList: 'Темы и топы'
         },
         de: {
             settingsTitle: 'Jelly Twiggy',
@@ -310,7 +332,18 @@
             cfgTweaks: 'Seitenanpassungen',
             cfgTweakItemPage: 'Gestaltung der Mediendetails auffrischen',
             cfgTweakPlayer: 'Überflüssigen Lautstärkeregler entfernen',
-            cfgStyleCards: 'Medieninfos auf Postern hinzufügen'
+            cfgStyleCards: 'Medieninfos auf Postern hinzufügen',
+            cfgPicks: 'Auswahlen: Kanäle „Thematisch“ und „Das Beste“',
+            cfgEnablePicks: 'Kanäle „Thematisch“ und „Das Beste“ anzeigen',
+            cfgPicksNow: 'Jetzt',
+            cfgPickNone: 'nichts passt',
+            cfgPicksTasksHint: 'Die Themenauswahl wird täglich aktualisiert, die Bestenliste wechselt montags um 3:00. Den Zeitplan ändern Sie unter Dashboard → Geplante Aufgaben.',
+            cfgPickSources: 'Mediatheken für Auswahlen',
+            cfgPickSourcesHint: 'Filme aus diesen Mediatheken erscheinen in den Kanälen für alle mit Kanalzugriff, auch ohne Zugriff auf die Mediathek. Sperren Sie die Kanäle für Kinder in den Zugriffseinstellungen des Benutzers.',
+            cfgThemedChannel: 'Name des Kanals „Thematisch“',
+            cfgBestChannel: 'Name des Kanals „Das Beste“',
+            cfgChannelNamesHint: 'Der Name ist die Kennung des Kanals: Nach dem Umbenennen legt Jellyfin einen neuen Kanal an, und Benutzer verlieren dessen Position und Einstellungen.',
+            cfgPickList: 'Themen und Bestenlisten'
         },
         ar: {
             settingsTitle: 'Jelly Twiggy',
@@ -413,7 +446,18 @@
             cfgTweaks: 'تحسينات الصفحات',
             cfgTweakItemPage: 'تحديث تصميم تفاصيل الوسائط',
             cfgTweakPlayer: 'إزالة عنصر التحكم الزائد في مستوى الصوت',
-            cfgStyleCards: 'إضافة معلومات الوسائط إلى الملصقات'
+            cfgStyleCards: 'إضافة معلومات الوسائط إلى الملصقات',
+            cfgPicks: 'المختارات: قناتا «مختارات موضوعية» و«الأفضل»',
+            cfgEnablePicks: 'إظهار قناتي «مختارات موضوعية» و«الأفضل»',
+            cfgPicksNow: 'الآن',
+            cfgPickNone: 'لا شيء مناسب',
+            cfgPicksTasksHint: 'تُحدَّث المختارات الموضوعية يوميًا، وتتغيّر قائمة «الأفضل» كل يوم اثنين الساعة 3:00. غيّر الجدول من لوحة التحكم ← المهام المجدولة.',
+            cfgPickSources: 'المكتبات المستخدمة للمختارات',
+            cfgPickSourcesHint: 'تظهر أفلام هذه المكتبات في القنوات لكل من لديه وصول إلى القنوات، حتى دون وصول إلى المكتبة. أغلق القنوات أمام الأطفال من إعدادات وصول المستخدم إلى القنوات.',
+            cfgThemedChannel: 'اسم قناة «مختارات موضوعية»',
+            cfgBestChannel: 'اسم قناة «الأفضل»',
+            cfgChannelNamesHint: 'الاسم هو معرّف القناة: بعد تغييره ينشئ Jellyfin قناة جديدة ويفقد المستخدمون موضعها وإعداداتها.',
+            cfgPickList: 'المواضيع والقوائم'
         },
         be: {
             settingsTitle: 'Jelly Twiggy',
@@ -516,7 +560,18 @@
             cfgTweaks: 'Дапрацоўка старонак',
             cfgTweakItemPage: 'Абнавіць афармленне падрабязнасцей медыя',
             cfgTweakPlayer: 'Прыбраць лішні рэгулятар гучнасці',
-            cfgStyleCards: 'Дадаць на постэры звесткі пра медыя'
+            cfgStyleCards: 'Дадаць на постэры звесткі пра медыя',
+            cfgPicks: 'Падборкі: каналы «Тэматычны» і «Лепшыя»',
+            cfgEnablePicks: 'Паказваць каналы «Тэматычны» і «Лепшыя»',
+            cfgPicksNow: 'Цяпер',
+            cfgPickNone: 'нічога не падышло',
+            cfgPicksTasksHint: 'Тэматычная падборка абнаўляецца штодня, топ «Лепшых» мяняецца па панядзелках у 3:00. Расклад мяняецца ў Панэлі кіравання → Запланаваныя заданні.',
+            cfgPickSources: 'Медыятэкі для падборак',
+            cfgPickSourcesHint: 'Фільмы з гэтых медыятэк трапляюць у каналы для ўсіх, у каго ёсць доступ да каналаў, нават без доступу да самой медыятэкі. Дзецям закрыйце каналы ў наладах доступу карыстальніка.',
+            cfgThemedChannel: 'Назва канала «Тэматычны»',
+            cfgBestChannel: 'Назва канала «Лепшыя»',
+            cfgChannelNamesHint: 'Назва — гэта ідэнтыфікатар канала: пасля перайменавання Jellyfin створыць новы канал, а ў карыстальнікаў скінуцца яго месца і налады.',
+            cfgPickList: 'Тэмы і топы'
         },
         cs: {
             settingsTitle: 'Jelly Twiggy',
@@ -619,7 +674,18 @@
             cfgTweaks: 'Úpravy stránek',
             cfgTweakItemPage: 'Osvěžit vzhled detailu média',
             cfgTweakPlayer: 'Odebrat nadbytečný ovladač hlasitosti',
-            cfgStyleCards: 'Přidat na plakáty informace o médiu'
+            cfgStyleCards: 'Přidat na plakáty informace o médiu',
+            cfgPicks: 'Výběry: kanály „Tematické“ a „Nejlepší“',
+            cfgEnablePicks: 'Zobrazit kanály „Tematické“ a „Nejlepší“',
+            cfgPicksNow: 'Nyní',
+            cfgPickNone: 'nic nevyhovuje',
+            cfgPicksTasksHint: 'Tematický výběr se aktualizuje denně, žebříček „Nejlepší“ se mění každé pondělí ve 3:00. Plán změníte v Nástěnka → Naplánované úlohy.',
+            cfgPickSources: 'Knihovny pro výběry',
+            cfgPickSourcesHint: 'Filmy z těchto knihoven se v kanálech zobrazí všem s přístupem ke kanálům, i bez přístupu ke knihovně. Dětem kanály zavřete v nastavení přístupu uživatele ke kanálům.',
+            cfgThemedChannel: 'Název kanálu „Tematické“',
+            cfgBestChannel: 'Název kanálu „Nejlepší“',
+            cfgChannelNamesHint: 'Název je identifikátorem kanálu: po přejmenování Jellyfin vytvoří nový kanál a uživatelé přijdou o jeho umístění a nastavení.',
+            cfgPickList: 'Témata a žebříčky'
         },
         fr: {
             settingsTitle: 'Jelly Twiggy',
@@ -722,7 +788,18 @@
             cfgTweaks: 'Retouches des pages',
             cfgTweakItemPage: 'Rafraîchir la présentation des détails du média',
             cfgTweakPlayer: 'Supprimer le réglage de volume superflu',
-            cfgStyleCards: 'Ajouter des infos sur le média aux affiches'
+            cfgStyleCards: 'Ajouter des infos sur le média aux affiches',
+            cfgPicks: 'Sélections : chaînes « Thématique » et « Le meilleur »',
+            cfgEnablePicks: 'Afficher les chaînes « Thématique » et « Le meilleur »',
+            cfgPicksNow: 'Actuellement',
+            cfgPickNone: 'rien ne convient',
+            cfgPicksTasksHint: 'La sélection thématique est mise à jour chaque jour, le classement « Le meilleur » change chaque lundi à 3:00. Modifiez la planification dans Tableau de bord → Tâches planifiées.',
+            cfgPickSources: 'Médiathèques des sélections',
+            cfgPickSourcesHint: 'Les films de ces médiathèques apparaissent dans les chaînes pour toute personne ayant accès aux chaînes, même sans accès à la médiathèque. Fermez les chaînes aux enfants dans les réglages d’accès de l’utilisateur.',
+            cfgThemedChannel: 'Nom de la chaîne « Thématique »',
+            cfgBestChannel: 'Nom de la chaîne « Le meilleur »',
+            cfgChannelNamesHint: 'Le nom identifie la chaîne : après un renommage, Jellyfin crée une nouvelle chaîne et les utilisateurs perdent sa place et ses réglages.',
+            cfgPickList: 'Thèmes et classements'
         },
         it: {
             settingsTitle: 'Jelly Twiggy',
@@ -825,7 +902,18 @@
             cfgTweaks: 'Ritocchi alle pagine',
             cfgTweakItemPage: 'Rinnova l’aspetto dei dettagli del contenuto',
             cfgTweakPlayer: 'Rimuovi il controllo del volume superfluo',
-            cfgStyleCards: 'Aggiungi informazioni sul contenuto alle locandine'
+            cfgStyleCards: 'Aggiungi informazioni sul contenuto alle locandine',
+            cfgPicks: 'Selezioni: canali «Tematico» e «Il meglio»',
+            cfgEnablePicks: 'Mostra i canali «Tematico» e «Il meglio»',
+            cfgPicksNow: 'Ora',
+            cfgPickNone: 'niente di adatto',
+            cfgPicksTasksHint: 'La selezione a tema si aggiorna ogni giorno, la classifica «Il meglio» cambia ogni lunedì alle 3:00. Modifica la pianificazione in Pannello di controllo → Operazioni pianificate.',
+            cfgPickSources: 'Librerie per le selezioni',
+            cfgPickSourcesHint: 'I film di queste librerie compaiono nei canali per chiunque abbia accesso ai canali, anche senza accesso alla libreria. Chiudi i canali ai bambini nelle impostazioni di accesso dell’utente.',
+            cfgThemedChannel: 'Nome del canale «Tematico»',
+            cfgBestChannel: 'Nome del canale «Il meglio»',
+            cfgChannelNamesHint: 'Il nome identifica il canale: dopo averlo rinominato, Jellyfin crea un nuovo canale e gli utenti perdono posizione e impostazioni.',
+            cfgPickList: 'Temi e classifiche'
         },
         ja: {
             settingsTitle: 'Jelly Twiggy',
@@ -928,7 +1016,18 @@
             cfgTweaks: 'ページの調整',
             cfgTweakItemPage: 'メディア詳細のデザインを刷新',
             cfgTweakPlayer: '余分な音量調整を削除',
-            cfgStyleCards: 'ポスターにメディア情報を追加'
+            cfgStyleCards: 'ポスターにメディア情報を追加',
+            cfgPicks: 'セレクション：「テーマ別」と「ベスト」チャンネル',
+            cfgEnablePicks: '「テーマ別」と「ベスト」チャンネルを表示',
+            cfgPicksNow: '現在',
+            cfgPickNone: '該当なし',
+            cfgPicksTasksHint: 'テーマ別セレクションは毎日更新され、「ベスト」のランキングは毎週月曜 3:00 に切り替わります。スケジュールはダッシュボード → スケジュールタスクで変更できます。',
+            cfgPickSources: 'セレクションに使うライブラリー',
+            cfgPickSourcesHint: 'これらのライブラリーの映画は、ライブラリーへのアクセス権がなくても、チャンネルにアクセスできる全員に表示されます。子どもにはユーザーのチャンネルアクセス設定でチャンネルを閉じてください。',
+            cfgThemedChannel: '「テーマ別」チャンネル名',
+            cfgBestChannel: '「ベスト」チャンネル名',
+            cfgChannelNamesHint: '名前はチャンネルの識別子です。名前を変えると Jellyfin は新しいチャンネルを作成し、ユーザーの並び順や設定はリセットされます。',
+            cfgPickList: 'テーマとランキング'
         },
         kk: {
             settingsTitle: 'Jelly Twiggy',
@@ -1031,7 +1130,18 @@
             cfgTweaks: 'Betterdı jetıldıru',
             cfgTweakItemPage: 'Media mälımetterınıñ bezendırıluın jañartu',
             cfgTweakPlayer: 'Artyq dybys deñgeiı rettegışın alyp tastau',
-            cfgStyleCards: 'Posterlerge media turaly aqparat qosu'
+            cfgStyleCards: 'Posterlerge media turaly aqparat qosu',
+            cfgPicks: 'Irıktemeler: «Taqyryptyq» jäne «Üzdıkter» arnalary',
+            cfgEnablePicks: '«Taqyryptyq» jäne «Üzdıkter» arnalaryn körsetu',
+            cfgPicksNow: 'Qazır',
+            cfgPickNone: 'eşteñe säikes kelmedı',
+            cfgPicksTasksHint: 'Taqyryptyq irıkteme kün saiyn jañartylady, «Üzdıkter» topy düisenbı saiyn 3:00-de auysady. Kestenı Basqaru taqtasy → Josparlanğan tapsyrmalar bölımınde özgertıñız.',
+            cfgPickSources: 'Irıktemelerge arnalğan tasyğyşhanalar',
+            cfgPickSourcesHint: 'Osy tasyğyşhanalardağy filmder tasyğyşhanağa qatynauy bolmasa da, arnalarğa qatynauy bar barlyq adamğa arnalarda körınedı. Balalarğa arnalardy paidalanuşynyñ arnağa qatynau parametrlerınde jabyñyz.',
+            cfgThemedChannel: '«Taqyryptyq» arnasynyñ atauy',
+            cfgBestChannel: '«Üzdıkter» arnasynyñ atauy',
+            cfgChannelNamesHint: 'Atau — arnanyñ identifikatory: atyn özgertkennen keiın Jellyfin jaña arna jasaidy, al paidalanuşylardyñ onyñ orny men parametrlerı tastalady.',
+            cfgPickList: 'Taqyryptar men toptar'
         },
         pl: {
             settingsTitle: 'Jelly Twiggy',
@@ -1134,7 +1244,18 @@
             cfgTweaks: 'Poprawki stron',
             cfgTweakItemPage: 'Odśwież wygląd szczegółów mediów',
             cfgTweakPlayer: 'Usuń zbędną regulację głośności',
-            cfgStyleCards: 'Dodaj informacje o mediach do plakatów'
+            cfgStyleCards: 'Dodaj informacje o mediach do plakatów',
+            cfgPicks: 'Wybory: kanały „Tematyczne” i „Najlepsze”',
+            cfgEnablePicks: 'Pokaż kanały „Tematyczne” i „Najlepsze”',
+            cfgPicksNow: 'Teraz',
+            cfgPickNone: 'nic nie pasuje',
+            cfgPicksTasksHint: 'Wybór tematyczny aktualizuje się codziennie, ranking „Najlepsze” zmienia się w każdy poniedziałek o 3:00. Harmonogram zmienisz w Kokpit → Zaplanowane zadania.',
+            cfgPickSources: 'Biblioteki dla wyborów',
+            cfgPickSourcesHint: 'Filmy z tych bibliotek pojawiają się w kanałach dla wszystkich z dostępem do kanałów, nawet bez dostępu do biblioteki. Dzieciom zamknij kanały w ustawieniach dostępu użytkownika.',
+            cfgThemedChannel: 'Nazwa kanału „Tematyczne”',
+            cfgBestChannel: 'Nazwa kanału „Najlepsze”',
+            cfgChannelNamesHint: 'Nazwa identyfikuje kanał: po zmianie nazwy Jellyfin utworzy nowy kanał, a użytkownicy stracą jego pozycję i ustawienia.',
+            cfgPickList: 'Tematy i rankingi'
         },
         sr: {
             settingsTitle: 'Jelly Twiggy',
@@ -1237,7 +1358,18 @@
             cfgTweaks: 'Дораде страница',
             cfgTweakItemPage: 'Освежи изглед детаља медија',
             cfgTweakPlayer: 'Уклони сувишну контролу јачине звука',
-            cfgStyleCards: 'Додај информације о медијима на постере'
+            cfgStyleCards: 'Додај информације о медијима на постере',
+            cfgPicks: 'Избори: канали „Тематски“ и „Најбоље“',
+            cfgEnablePicks: 'Прикажи канале „Тематски“ и „Најбоље“',
+            cfgPicksNow: 'Сада',
+            cfgPickNone: 'ништа не одговара',
+            cfgPicksTasksHint: 'Тематски избор се ажурира свакодневно, листа „Најбоље“ се мења понедељком у 3:00. Распоред мењате у Командна табла → Заказани задаци.',
+            cfgPickSources: 'Библиотеке за изборе',
+            cfgPickSourcesHint: 'Филмови из ових библиотека појављују се у каналима свима који имају приступ каналима, чак и без приступа библиотеци. Деци затворите канале у подешавањима приступа корисника.',
+            cfgThemedChannel: 'Назив канала „Тематски“',
+            cfgBestChannel: 'Назив канала „Најбоље“',
+            cfgChannelNamesHint: 'Назив је идентификатор канала: после преименовања Jellyfin прави нови канал, а корисници губе његово место и подешавања.',
+            cfgPickList: 'Теме и листе'
         },
         zh: {
             settingsTitle: 'Jelly Twiggy',
@@ -1340,7 +1472,18 @@
             cfgTweaks: '页面调整',
             cfgTweakItemPage: '更新媒体详情的外观',
             cfgTweakPlayer: '移除多余的音量控制',
-            cfgStyleCards: '在海报上添加媒体信息'
+            cfgStyleCards: '在海报上添加媒体信息',
+            cfgPicks: '精选：“主题精选”和“最佳”频道',
+            cfgEnablePicks: '显示“主题精选”和“最佳”频道',
+            cfgPicksNow: '当前',
+            cfgPickNone: '没有合适的内容',
+            cfgPicksTasksHint: '主题精选每天更新，“最佳”榜单每周一 3:00 更换。可在控制台 → 计划任务中修改计划。',
+            cfgPickSources: '用于精选的媒体库',
+            cfgPickSourcesHint: '这些媒体库中的电影会出现在频道中，所有有频道访问权限的人都能看到，即使他们无权访问该媒体库。请在用户的频道访问设置中为儿童关闭这些频道。',
+            cfgThemedChannel: '“主题精选”频道名称',
+            cfgBestChannel: '“最佳”频道名称',
+            cfgChannelNamesHint: '名称即频道的标识：重命名后 Jellyfin 会创建新频道，用户的位置和设置将被重置。',
+            cfgPickList: '主题与榜单'
         }
     };
 

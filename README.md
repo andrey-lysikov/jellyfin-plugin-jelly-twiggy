@@ -21,6 +21,7 @@ Jelly Twiggy extends the Jellyfin web client with poster badges, playback option
 - "Continue in browser", "Play on…" and moving playback between your devices with Swiftly Player
 - Dashboard: move, resize, show and hide blocks, and more
 - "Watched" row on item pages with who watched, how many times and when
+- «Themed» and «Best» channels: films for the nearest holiday or a film series, and a server-wide top that changes weekly, in every client
 - Localization: Arabic, Belarusian, Chinese (Simplified), Czech, English, French, German, Italian, Japanese, Kazakh, Polish, Russian, Serbian
 
 ## Recommended player
@@ -53,6 +54,8 @@ Add the repository in **Dashboard → Plugins → Repositories**:
     https://raw.githubusercontent.com/andrey-lysikov/jellyfin-plugin-jelly-twiggy/manifest/manifest.json
 
 Install **Jelly Twiggy** from the catalog and restart the server.
+
+To fill the «Themed» and «Best» channels, pick the film libraries in the plugin settings. Everyone with channel access sees these films, so close the channels for children in their user settings.
 
 ## Tech
 
