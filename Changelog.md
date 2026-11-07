@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.0.0
+
+- New interface languages: Arabic, Belarusian, Chinese (Simplified), Czech, French, Italian, Japanese, Kazakh, Polish and Serbian; terms follow Jellyfin's own translations
+- Active streams: running tasks are listed as plain tiles after the sessions, without the "Scheduled tasks" heading
+- Item page: the video track is plain text again instead of quality badges
+
 ## 0.4.5.0
 
 - Dashboard recent plays: the play method chip fits on one line with a smaller font and proper padding

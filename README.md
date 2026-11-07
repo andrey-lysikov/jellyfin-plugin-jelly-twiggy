@@ -21,7 +21,7 @@ Jelly Twiggy extends the Jellyfin web client with poster badges, playback option
 - "Continue in browser", "Play on…" and moving playback between your devices with Swiftly Player
 - Dashboard: move, resize, show and hide blocks, and more
 - "Watched" row on item pages with who watched, how many times and when
-- Localization (English, German, Russian)
+- Localization: Arabic, Belarusian, Chinese (Simplified), Czech, English, French, German, Italian, Japanese, Kazakh, Polish, Russian, Serbian
 
 ## Recommended player
 
