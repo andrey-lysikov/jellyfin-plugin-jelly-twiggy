@@ -8,15 +8,27 @@
     <div id="JellyTwiggyConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox">
         <div data-role="content">
             <div class="content-primary">
+                <style>
+                    #JellyTwiggyConfigPage [hidden] { display: none !important; }
+                    #JellyTwiggyConfigPage .jtTabs { display: flex; gap: 0.5em; margin: 0 0 1.5em; border-bottom: 1px solid rgba(128, 128, 128, 0.3); }
+                    #JellyTwiggyConfigPage .jtTab { margin: 0 0 -1px; padding: 0.6em 1.1em; border-radius: 0; border-bottom: 2px solid transparent; opacity: 0.7; }
+                    #JellyTwiggyConfigPage .jtTab.jtTabActive { border-bottom-color: #00a4dc; opacity: 1; font-weight: 600; }
+                    #JellyTwiggyConfigPage .jtPickColumns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2em; }
+                    #JellyTwiggyConfigPage .jtPickColumns .checkboxContainer { margin-bottom: 0.6em; }
+                    @media (max-width: 40em) { #JellyTwiggyConfigPage .jtPickColumns { grid-template-columns: minmax(0, 1fr); } }
+                </style>
                 <form id="JellyTwiggyConfigForm">
-                    <h2 class="sectionTitle"><img id="jtIcon" alt="Jelly Twiggy" height="56" style="display:block;height:56px;width:auto"></h2>
+                    <h2 class="sectionTitle" style="display:flex;align-items:center;gap:0.75em">
+                        <img id="jtIcon" alt="Jelly Twiggy" height="56" style="display:block;height:56px;width:auto">
+                        <span id="jtVersion" style="font-size:0.6em;font-weight:normal;opacity:0.7"></span>
+                    </h2>
 
-                    <div class="verticalSection">
-                        <h3 class="sectionTitle" data-jt-i18n="cfgStatus">Status</h3>
-                        <p><span data-jt-i18n="cfgVersion">Version</span>: <span id="jtVersion">…</span></p>
-                        <p>File Transformation: <span id="jtFileTransformation">…</span></p>
+                    <div class="jtTabs" role="tablist">
+                        <button is="emby-button" type="button" class="button-flat jtTab jtTabActive" role="tab" data-tab="main" data-jt-i18n="cfgTabMain">General</button>
+                        <button is="emby-button" type="button" class="button-flat jtTab" role="tab" data-tab="channels" data-jt-i18n="cfgTabChannels">Channels</button>
                     </div>
 
+                    <div data-tab-panel="main">
                     <div class="verticalSection">
                         <h3 class="sectionTitle" data-jt-i18n="cfgFeatures">Features</h3>
                         <div class="checkboxContainer">
@@ -72,7 +84,9 @@
                             </label>
                         </div>
                     </div>
+                    </div>
 
+                    <div data-tab-panel="channels" hidden>
                     <div class="verticalSection">
                         <h3 class="sectionTitle" data-jt-i18n="cfgPicks">Picks: «Themed» and «Best» channels</h3>
                         <div class="checkboxContainer">
@@ -101,9 +115,11 @@
                         <h4 data-jt-i18n="cfgPickList">Themes and tops</h4>
                         <div id="jtPickList"></div>
                     </div>
+                    </div>
 
-                    <div>
-                        <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1em">
+                        <span style="flex:1 1 15em;opacity:0.7">File Transformation: <span id="jtFileTransformation">…</span></span>
+                        <button is="emby-button" type="submit" class="raised button-submit emby-button" style="margin:0;flex:0 0 auto;min-width:10em">
                             <span data-jt-i18n="save">Save</span>
                         </button>
                     </div>
@@ -126,6 +142,8 @@
                         + ' /><span>' + escapeHtml(label) + '</span></label></div>';
                 }
 
+                const franchiseIds = (picks) => picks.Catalog.filter((pick) => pick.Kind === 'Franchise').map((pick) => pick.Id);
+
                 // Movie and mixed libraries; the plugin takes only films from them.
                 function renderPicks(config, folders, picks) {
                     const sources = (config.PickSourceLibraries || []).map(normalize);
@@ -135,17 +153,34 @@
                         .join('');
 
                     const disabled = config.DisabledPicks || [];
-                    const group = (kinds) => picks.Catalog.filter((pick) => kinds.includes(pick.Kind))
+                    // A column per channel; franchises are switched together by one checkbox under the holidays.
+                    const list = (kind) => picks.Catalog.filter((pick) => pick.Kind === kind)
                         .map((pick) => checkbox('data-pick="' + escapeHtml(pick.Id) + '"', !disabled.includes(pick.Id), pick.Name))
                         .join('');
-                    page.querySelector('#jtPickList').innerHTML = '<p><b>' + escapeHtml(picks.ThemedChannel) + '</b></p>' + group(['Holiday', 'Franchise'])
-                        + '<p><b>' + escapeHtml(picks.BestChannel) + '</b></p>' + group(['Top']);
+                    const franchises = checkbox('data-franchises', franchiseIds(picks).some((id) => !disabled.includes(id)), t('cfgFranchises', 'Favourite franchises'));
+                    const column = (title, content) => '<div><p><b>' + escapeHtml(title) + '</b></p>' + content + '</div>';
+                    page.querySelector('#jtPickList').innerHTML = '<div class="jtPickColumns">'
+                        + column(picks.ThemedChannel, list('Holiday') + franchises)
+                        + column(picks.BestChannel, list('Top'))
+                        + '</div>';
 
                     const describe = (channel, current) => channel + ' — ' + (current ? current.Name + ' (' + current.Count + ')' : t('cfgPickNone', 'nothing fits'));
                     page.querySelector('#jtPicksNow').textContent = describe(picks.ThemedChannel, picks.Themed) + '; ' + describe(picks.BestChannel, picks.Best);
                     page.querySelector('#ThemedChannelName').value = config.ThemedChannelName || picks.ThemedChannel;
                     page.querySelector('#BestChannelName').value = config.BestChannelName || picks.BestChannel;
                 }
+
+                page.querySelectorAll('[data-tab]').forEach(function (tab) {
+                    tab.addEventListener('click', function () {
+                        page.querySelectorAll('[data-tab]').forEach((other) => {
+                            other.classList.toggle('jtTabActive', other === tab);
+                            other.setAttribute('aria-selected', String(other === tab));
+                        });
+                        page.querySelectorAll('[data-tab-panel]').forEach((panel) => {
+                            panel.hidden = panel.dataset.tabPanel !== tab.dataset.tab;
+                        });
+                    });
+                });
 
                 page.addEventListener('pageshow', function () {
                     page.querySelectorAll('[data-jt-i18n]').forEach(function (element) {
@@ -170,7 +205,7 @@
                     });
 
                     ApiClient.getJSON(ApiClient.getUrl('JellyTwiggy/Status')).then(function (status) {
-                        page.querySelector('#jtVersion').textContent = status.Version;
+                        page.querySelector('#jtVersion').textContent = 'v' + status.Version;
                         page.querySelector('#jtFileTransformation').textContent = status.FileTransformationRegistered
                             ? t('cfgRegistered', 'registered')
                             : t('cfgNotRegistered', 'not registered — install the File Transformation plugin and restart the server');
@@ -187,6 +222,9 @@
                         config.PickSourceLibraries = Array.from(page.querySelectorAll('[data-library]:checked')).map((input) => input.dataset.library);
                         if (picksConfig) {
                             config.DisabledPicks = Array.from(page.querySelectorAll('[data-pick]')).filter((input) => !input.checked).map((input) => input.dataset.pick);
+                            if (!page.querySelector('[data-franchises]').checked) {
+                                config.DisabledPicks.push(...franchiseIds(picksConfig));
+                            }
                         }
                         // An empty name keeps the current one: the name is the channel's identity.
                         ['ThemedChannelName', 'BestChannelName'].forEach(function (key) {

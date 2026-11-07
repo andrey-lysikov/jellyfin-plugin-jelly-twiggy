@@ -9,6 +9,7 @@ public sealed record MovieFacts(
     IReadOnlySet<string> Tags,
     IReadOnlySet<string> Genres,
     IReadOnlySet<string> Studios,
+    IReadOnlySet<string> Countries,
     int? Year,
     float? CommunityRating,
     float? CriticRating,

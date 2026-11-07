@@ -225,6 +225,7 @@ public class PickService
                 Set(item.Tags),
                 Set(item.Genres),
                 Set(item.Studios),
+                Set(item.ProductionLocations),
                 item.ProductionYear,
                 item.CommunityRating,
                 item.CriticRating,

@@ -91,8 +91,6 @@
             minutes: '{m} min',
             loading: 'Loading…',
             loadFailed: 'Could not load data',
-            cfgStatus: 'Status',
-            cfgVersion: 'Version',
             cfgRegistered: 'registered',
             cfgNotRegistered: 'not registered — install the File Transformation plugin and restart the server',
             cfgFeatures: 'Features',
@@ -115,7 +113,10 @@
             cfgThemedChannel: '«Themed» channel name',
             cfgBestChannel: '«Best» channel name',
             cfgChannelNamesHint: 'The name identifies the channel: after renaming, Jellyfin creates a new channel and users lose its place and settings.',
-            cfgPickList: 'Themes and tops'
+            cfgPickList: 'Themes and tops',
+            cfgFranchises: 'Favourite franchises',
+            cfgTabMain: 'General',
+            cfgTabChannels: 'Channels'
         },
         ru: {
             settingsTitle: 'Jelly Twiggy',
@@ -205,8 +206,6 @@
             minutes: '{m} мин',
             loading: 'Загрузка…',
             loadFailed: 'Не удалось загрузить данные',
-            cfgStatus: 'Состояние',
-            cfgVersion: 'Версия',
             cfgRegistered: 'подключён',
             cfgNotRegistered: 'не подключён — установите плагин File Transformation и перезапустите сервер',
             cfgFeatures: 'Функции',
@@ -229,7 +228,10 @@
             cfgThemedChannel: 'Название канала «Тематический»',
             cfgBestChannel: 'Название канала «Лучшие»',
             cfgChannelNamesHint: 'Название — это идентификатор канала: после переименования Jellyfin создаст новый канал, а у пользователей сбросятся его место и настройки.',
-            cfgPickList: 'Темы и топы'
+            cfgPickList: 'Темы и топы',
+            cfgFranchises: 'Любимые франшизы',
+            cfgTabMain: 'Основные',
+            cfgTabChannels: 'Каналы'
         },
         de: {
             settingsTitle: 'Jelly Twiggy',
@@ -319,8 +321,6 @@
             minutes: '{m} Min.',
             loading: 'Wird geladen…',
             loadFailed: 'Daten konnten nicht geladen werden',
-            cfgStatus: 'Status',
-            cfgVersion: 'Version',
             cfgRegistered: 'registriert',
             cfgNotRegistered: 'nicht registriert — installieren Sie das Plugin File Transformation und starten Sie den Server neu',
             cfgFeatures: 'Funktionen',
@@ -343,7 +343,10 @@
             cfgThemedChannel: 'Name des Kanals „Thematisch“',
             cfgBestChannel: 'Name des Kanals „Das Beste“',
             cfgChannelNamesHint: 'Der Name ist die Kennung des Kanals: Nach dem Umbenennen legt Jellyfin einen neuen Kanal an, und Benutzer verlieren dessen Position und Einstellungen.',
-            cfgPickList: 'Themen und Bestenlisten'
+            cfgPickList: 'Themen und Bestenlisten',
+            cfgFranchises: 'Lieblingsfilmreihen',
+            cfgTabMain: 'Allgemein',
+            cfgTabChannels: 'Kanäle'
         },
         ar: {
             settingsTitle: 'Jelly Twiggy',
@@ -433,8 +436,6 @@
             minutes: '{m} د',
             loading: 'جارٍ التحميل…',
             loadFailed: 'تعذّر تحميل البيانات',
-            cfgStatus: 'الحالة',
-            cfgVersion: 'الإصدار',
             cfgRegistered: 'مسجّل',
             cfgNotRegistered: 'غير مسجّل — ثبّت ملحق File Transformation وأعد تشغيل الخادم',
             cfgFeatures: 'الميزات',
@@ -457,7 +458,10 @@
             cfgThemedChannel: 'اسم قناة «مختارات موضوعية»',
             cfgBestChannel: 'اسم قناة «الأفضل»',
             cfgChannelNamesHint: 'الاسم هو معرّف القناة: بعد تغييره ينشئ Jellyfin قناة جديدة ويفقد المستخدمون موضعها وإعداداتها.',
-            cfgPickList: 'المواضيع والقوائم'
+            cfgPickList: 'المواضيع والقوائم',
+            cfgFranchises: 'السلاسل المفضلة',
+            cfgTabMain: 'عام',
+            cfgTabChannels: 'القنوات'
         },
         be: {
             settingsTitle: 'Jelly Twiggy',
@@ -547,8 +551,6 @@
             minutes: '{m} хв',
             loading: 'Загрузка…',
             loadFailed: 'Не ўдалося загрузіць даныя',
-            cfgStatus: 'Статус',
-            cfgVersion: 'Версія',
             cfgRegistered: 'падключаны',
             cfgNotRegistered: 'не падключаны — усталюйце плагін File Transformation і перазапусціце сервер',
             cfgFeatures: 'Функцыі',
@@ -571,7 +573,10 @@
             cfgThemedChannel: 'Назва канала «Тэматычны»',
             cfgBestChannel: 'Назва канала «Лепшыя»',
             cfgChannelNamesHint: 'Назва — гэта ідэнтыфікатар канала: пасля перайменавання Jellyfin створыць новы канал, а ў карыстальнікаў скінуцца яго месца і налады.',
-            cfgPickList: 'Тэмы і топы'
+            cfgPickList: 'Тэмы і топы',
+            cfgFranchises: 'Любімыя франшызы',
+            cfgTabMain: 'Асноўныя',
+            cfgTabChannels: 'Каналы'
         },
         cs: {
             settingsTitle: 'Jelly Twiggy',
@@ -661,8 +666,6 @@
             minutes: '{m} min',
             loading: 'Načítání…',
             loadFailed: 'Data se nepodařilo načíst',
-            cfgStatus: 'Stav',
-            cfgVersion: 'Verze',
             cfgRegistered: 'registrováno',
             cfgNotRegistered: 'neregistrováno — nainstalujte plugin File Transformation a restartujte server',
             cfgFeatures: 'Funkce',
@@ -685,7 +688,10 @@
             cfgThemedChannel: 'Název kanálu „Tematické“',
             cfgBestChannel: 'Název kanálu „Nejlepší“',
             cfgChannelNamesHint: 'Název je identifikátorem kanálu: po přejmenování Jellyfin vytvoří nový kanál a uživatelé přijdou o jeho umístění a nastavení.',
-            cfgPickList: 'Témata a žebříčky'
+            cfgPickList: 'Témata a žebříčky',
+            cfgFranchises: 'Oblíbené filmové série',
+            cfgTabMain: 'Obecné',
+            cfgTabChannels: 'Kanály'
         },
         fr: {
             settingsTitle: 'Jelly Twiggy',
@@ -775,8 +781,6 @@
             minutes: '{m} min',
             loading: 'Chargement…',
             loadFailed: 'Impossible de charger les données',
-            cfgStatus: 'État',
-            cfgVersion: 'Version',
             cfgRegistered: 'enregistré',
             cfgNotRegistered: 'non enregistré — installez l’extension File Transformation et redémarrez le serveur',
             cfgFeatures: 'Fonctionnalités',
@@ -799,7 +803,10 @@
             cfgThemedChannel: 'Nom de la chaîne « Thématique »',
             cfgBestChannel: 'Nom de la chaîne « Le meilleur »',
             cfgChannelNamesHint: 'Le nom identifie la chaîne : après un renommage, Jellyfin crée une nouvelle chaîne et les utilisateurs perdent sa place et ses réglages.',
-            cfgPickList: 'Thèmes et classements'
+            cfgPickList: 'Thèmes et classements',
+            cfgFranchises: 'Sagas préférées',
+            cfgTabMain: 'Général',
+            cfgTabChannels: 'Chaînes'
         },
         it: {
             settingsTitle: 'Jelly Twiggy',
@@ -889,8 +896,6 @@
             minutes: '{m} min',
             loading: 'Caricamento…',
             loadFailed: 'Impossibile caricare i dati',
-            cfgStatus: 'Stato',
-            cfgVersion: 'Versione',
             cfgRegistered: 'registrato',
             cfgNotRegistered: 'non registrato — installa il plugin File Transformation e riavvia il server',
             cfgFeatures: 'Funzionalità',
@@ -913,7 +918,10 @@
             cfgThemedChannel: 'Nome del canale «Tematico»',
             cfgBestChannel: 'Nome del canale «Il meglio»',
             cfgChannelNamesHint: 'Il nome identifica il canale: dopo averlo rinominato, Jellyfin crea un nuovo canale e gli utenti perdono posizione e impostazioni.',
-            cfgPickList: 'Temi e classifiche'
+            cfgPickList: 'Temi e classifiche',
+            cfgFranchises: 'Saghe preferite',
+            cfgTabMain: 'Generale',
+            cfgTabChannels: 'Canali'
         },
         ja: {
             settingsTitle: 'Jelly Twiggy',
@@ -1003,8 +1011,6 @@
             minutes: '{m} 分',
             loading: '読み込み中…',
             loadFailed: 'データを読み込めませんでした',
-            cfgStatus: '状態',
-            cfgVersion: 'バージョン',
             cfgRegistered: '登録済み',
             cfgNotRegistered: '未登録 — File Transformation プラグインをインストールしてサーバーを再起動してください',
             cfgFeatures: '機能',
@@ -1027,7 +1033,10 @@
             cfgThemedChannel: '「テーマ別」チャンネル名',
             cfgBestChannel: '「ベスト」チャンネル名',
             cfgChannelNamesHint: '名前はチャンネルの識別子です。名前を変えると Jellyfin は新しいチャンネルを作成し、ユーザーの並び順や設定はリセットされます。',
-            cfgPickList: 'テーマとランキング'
+            cfgPickList: 'テーマとランキング',
+            cfgFranchises: 'お気に入りのシリーズ',
+            cfgTabMain: '全般',
+            cfgTabChannels: 'チャンネル'
         },
         kk: {
             settingsTitle: 'Jelly Twiggy',
@@ -1117,8 +1126,6 @@
             minutes: '{m} min',
             loading: 'Jüktelude…',
             loadFailed: 'Derekterdı jükteu mümkın bolmady',
-            cfgStatus: 'Küiı',
-            cfgVersion: 'Nūsqasy',
             cfgRegistered: 'tırkelgen',
             cfgNotRegistered: 'tırkelmegen — File Transformation plaginın ornatyp, serverdı qaita ıske qosyñyz',
             cfgFeatures: 'Mümkındıkter',
@@ -1141,7 +1148,10 @@
             cfgThemedChannel: '«Taqyryptyq» arnasynyñ atauy',
             cfgBestChannel: '«Üzdıkter» arnasynyñ atauy',
             cfgChannelNamesHint: 'Atau — arnanyñ identifikatory: atyn özgertkennen keiın Jellyfin jaña arna jasaidy, al paidalanuşylardyñ onyñ orny men parametrlerı tastalady.',
-            cfgPickList: 'Taqyryptar men toptar'
+            cfgPickList: 'Taqyryptar men toptar',
+            cfgFranchises: 'Süiıktı franşizalar',
+            cfgTabMain: 'Negızgı',
+            cfgTabChannels: 'Arnalar'
         },
         pl: {
             settingsTitle: 'Jelly Twiggy',
@@ -1231,8 +1241,6 @@
             minutes: '{m} min',
             loading: 'Wczytywanie…',
             loadFailed: 'Nie udało się wczytać danych',
-            cfgStatus: 'Stan',
-            cfgVersion: 'Wersja',
             cfgRegistered: 'zarejestrowano',
             cfgNotRegistered: 'nie zarejestrowano — zainstaluj wtyczkę File Transformation i uruchom ponownie serwer',
             cfgFeatures: 'Funkcje',
@@ -1255,7 +1263,10 @@
             cfgThemedChannel: 'Nazwa kanału „Tematyczne”',
             cfgBestChannel: 'Nazwa kanału „Najlepsze”',
             cfgChannelNamesHint: 'Nazwa identyfikuje kanał: po zmianie nazwy Jellyfin utworzy nowy kanał, a użytkownicy stracą jego pozycję i ustawienia.',
-            cfgPickList: 'Tematy i rankingi'
+            cfgPickList: 'Tematy i rankingi',
+            cfgFranchises: 'Ulubione serie filmowe',
+            cfgTabMain: 'Ogólne',
+            cfgTabChannels: 'Kanały'
         },
         sr: {
             settingsTitle: 'Jelly Twiggy',
@@ -1345,8 +1356,6 @@
             minutes: '{m} мин',
             loading: 'Учитавање…',
             loadFailed: 'Није могуће учитати податке',
-            cfgStatus: 'Статус',
-            cfgVersion: 'Верзија',
             cfgRegistered: 'регистрован',
             cfgNotRegistered: 'није регистрован — инсталирајте додатак File Transformation и поново покрените сервер',
             cfgFeatures: 'Функције',
@@ -1369,7 +1378,10 @@
             cfgThemedChannel: 'Назив канала „Тематски“',
             cfgBestChannel: 'Назив канала „Најбоље“',
             cfgChannelNamesHint: 'Назив је идентификатор канала: после преименовања Jellyfin прави нови канал, а корисници губе његово место и подешавања.',
-            cfgPickList: 'Теме и листе'
+            cfgPickList: 'Теме и листе',
+            cfgFranchises: 'Омиљене франшизе',
+            cfgTabMain: 'Опште',
+            cfgTabChannels: 'Канали'
         },
         zh: {
             settingsTitle: 'Jelly Twiggy',
@@ -1459,8 +1471,6 @@
             minutes: '{m} 分钟',
             loading: '加载中…',
             loadFailed: '无法加载数据',
-            cfgStatus: '状态',
-            cfgVersion: '版本',
             cfgRegistered: '已注册',
             cfgNotRegistered: '未注册 — 请安装 File Transformation 插件并重启服务器',
             cfgFeatures: '功能',
@@ -1483,7 +1493,10 @@
             cfgThemedChannel: '“主题精选”频道名称',
             cfgBestChannel: '“最佳”频道名称',
             cfgChannelNamesHint: '名称即频道的标识：重命名后 Jellyfin 会创建新频道，用户的位置和设置将被重置。',
-            cfgPickList: '主题与榜单'
+            cfgPickList: '主题与榜单',
+            cfgFranchises: '喜爱的系列',
+            cfgTabMain: '常规',
+            cfgTabChannels: '频道'
         }
     };
 
