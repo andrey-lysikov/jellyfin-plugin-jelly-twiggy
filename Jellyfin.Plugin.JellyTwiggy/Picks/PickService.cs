@@ -149,7 +149,7 @@ public class PickService
     private static string Describe(PickResult? pick) =>
         pick is null ? "none" : string.Join(", ", pick.Groups.Select(g => $"{g.PickId} ({g.ItemIds.Count})"));
 
-    // An unchanged pick keeps its timestamp and posters: the channel cache, folders and copies stay as they are.
+    // An unchanged pick keeps its timestamp: the channel cache and the copies stay as they are.
     private PickResult MakeResult(IReadOnlyList<(string PickId, IReadOnlyList<Guid> Items)> groups, PickResult? previous)
     {
         if (previous is not null
@@ -167,8 +167,7 @@ public class PickService
             {
                 PickId = g.PickId,
                 Name = PickNames.Get(g.PickId, culture),
-                ItemIds = [.. g.Items],
-                PosterId = g.Items.Count > 0 ? g.Items[Random.Shared.Next(g.Items.Count)] : null
+                ItemIds = [.. g.Items]
             }).ToList(),
             GeneratedUtc = new DateTime(now.Ticks - (now.Ticks % TimeSpan.TicksPerSecond), DateTimeKind.Utc),
             Date = Today

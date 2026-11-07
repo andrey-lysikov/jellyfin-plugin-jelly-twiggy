@@ -8,9 +8,9 @@ using MediaBrowser.Model.Entities;
 
 namespace Jellyfin.Plugin.JellyTwiggy.Picks;
 
-/// <summary>A channel with a folder per pick (holiday, film series or top); its films are copies of library films.</summary>
+/// <summary>A channel listing the films of its picks without folders; the films are copies of library films.</summary>
 // Content is the same for every user: Jellyfin builds the "Latest" row of a channel without a user.
-// Folders that left the pick are deleted by Jellyfin with their copies.
+// Films that left the pick are deleted by Jellyfin; the others keep their copies and the channel's watched marks.
 public abstract class PickChannel : IChannel, ISupportsLatestMedia
 {
     private readonly ILibraryManager _libraryManager;
@@ -50,7 +50,7 @@ public abstract class PickChannel : IChannel, ISupportsLatestMedia
     /// <summary>Gets the current content, or null when nothing fits.</summary>
     protected abstract PickResult? Current { get; }
 
-    /// <summary>Gets the creation date of a copy by its rank over all folders: the first gets the latest, as the "Latest" row sorts by it.</summary>
+    /// <summary>Gets the creation date of a copy by its rank over all picks: the first gets the latest, as the "Latest" row sorts by it.</summary>
     public static DateTime CreatedAt(PickResult pick, int rank) => pick.GeneratedUtc.AddSeconds(-rank);
 
     /// <inheritdoc />
@@ -68,18 +68,14 @@ public abstract class PickChannel : IChannel, ISupportsLatestMedia
     public Task<ChannelItemResult> GetChannelItems(InternalChannelItemQuery query, CancellationToken cancellationToken)
     {
         var current = Current;
-        IReadOnlyList<ChannelItemInfo> items = current is null
-            ? []
-            : string.IsNullOrEmpty(query.FolderId)
-                ? current.Groups.Select(g => Folder(current, g)).ToList()
-                : Films(current, current.Groups.FirstOrDefault(g => current.FolderId(g) == query.FolderId));
+        IReadOnlyList<ChannelItemInfo> items = current is null || !string.IsNullOrEmpty(query.FolderId) ? [] : Films(current);
         return Task.FromResult(new ChannelItemResult { Items = items, TotalRecordCount = items.Count });
     }
 
     /// <inheritdoc />
     public Task<IEnumerable<ChannelItemInfo>> GetLatestMedia(ChannelLatestMediaSearch request, CancellationToken cancellationToken)
     {
-        IEnumerable<ChannelItemInfo> items = Current is { } current ? current.Groups.SelectMany(g => Films(current, g)) : [];
+        IEnumerable<ChannelItemInfo> items = Current is { } current ? Films(current) : [];
         return Task.FromResult(items);
     }
 
@@ -90,31 +86,12 @@ public abstract class PickChannel : IChannel, ISupportsLatestMedia
     /// <inheritdoc />
     public IEnumerable<ImageType> GetSupportedChannelImages() => [];
 
-    // The folder shows the poster of a film picked at random, or of the first one that has a poster.
-    private ChannelItemInfo Folder(PickResult pick, PickGroup group) => new()
-    {
-        Id = pick.FolderId(group),
-        Name = group.Name,
-        Type = ChannelItemType.Folder,
-        FolderType = ChannelFolderType.Container,
-        ImageUrl = (group.PosterId is { } posterId ? [posterId, .. group.ItemIds] : group.ItemIds)
-            .Select(id => _libraryManager.GetItemById(id)?.PrimaryImagePath)
-            .FirstOrDefault(path => !string.IsNullOrEmpty(path)),
-        DateCreated = pick.GeneratedUtc,
-        DateModified = pick.GeneratedUtc
-    };
-
-    private List<ChannelItemInfo> Films(PickResult pick, PickGroup? group)
+    private List<ChannelItemInfo> Films(PickResult pick)
     {
         var films = new List<ChannelItemInfo>();
-        if (group is null)
-        {
-            return films;
-        }
-
-        // Ranks continue from folder to folder, so the row shows the nearest holiday first.
-        var rank = pick.Groups.TakeWhile(g => g != group).Sum(g => g.ItemIds.Count);
-        foreach (var id in group.ItemIds)
+        var rank = 0;
+        // Ranks run over all picks in order, so the row shows the nearest holiday first.
+        foreach (var id in pick.AllItemIds())
         {
             // A film deleted from the library since the pick was made is skipped.
             if (_libraryManager.GetItemById(id) is { IsFolder: false } film)
