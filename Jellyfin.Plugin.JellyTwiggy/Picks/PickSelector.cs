@@ -12,17 +12,46 @@ public static class PickSelector
     // One franchise must not take over a list of the best.
     private const int MaxPerCollection = 2;
 
-    /// <summary>Gets today's theme and its films: the nearest holiday with enough films, else a franchise of the week.</summary>
-    public static (PickDefinition Pick, IReadOnlyList<Guid> Items)? ChooseTheme(DateOnly date, IReadOnlyList<MovieFacts> movies, IReadOnlySet<string> disabled)
+    /// <summary>How close holidays must be to the nearest one to get their own folders next to it.</summary>
+    public const int NearbyDays = 7;
+
+    /// <summary>The most holidays the «Coming soon!» channel shows at once.</summary>
+    public const int MaxThemes = 3;
+
+    /// <summary>Gets today's themes, one folder each: the nearest holiday with enough films and up to two more due within a week of it, else a franchise of the week.</summary>
+    // A film goes to the first folder it fits: a channel copy can be in one folder only.
+    public static IReadOnlyList<(PickDefinition Pick, IReadOnlyList<Guid> Items)> ChooseThemes(DateOnly date, IReadOnlyList<MovieFacts> movies, IReadOnlySet<string> disabled)
     {
         var themes = PickCatalog.Themes.Where(t => !disabled.Contains(t.Id)).ToList();
-        foreach (var theme in PickCalendar.ActiveThemes(date, themes))
+        var chosen = new List<(PickDefinition Pick, IReadOnlyList<Guid> Items)>();
+        var used = new HashSet<Guid>();
+        int? firstDays = null;
+        foreach (var (theme, occurrence) in PickCalendar.ActiveOccurrences(date, themes))
         {
-            var items = SelectTheme(theme, movies);
-            if (items.Count >= theme.Minimum)
+            var days = PickCalendar.DaysUntil(occurrence, date);
+            if (firstDays is { } first && (theme.Season || days - first > NearbyDays))
             {
-                return (theme, items);
+                break;
             }
+
+            var items = SelectTheme(theme, movies).Where(id => !used.Contains(id)).ToList();
+            if (items.Count < theme.Minimum)
+            {
+                continue;
+            }
+
+            chosen.Add((theme, items));
+            used.UnionWith(items);
+            firstDays ??= days;
+            if (chosen.Count == MaxThemes || theme.Season)
+            {
+                break;
+            }
+        }
+
+        if (chosen.Count > 0)
+        {
+            return chosen;
         }
 
         var franchises = themes
@@ -32,11 +61,11 @@ public static class PickSelector
             .ToList();
         if (franchises.Count == 0)
         {
-            return null;
+            return [];
         }
 
-        var chosen = franchises[PickCalendar.WeekIndex(date) % franchises.Count];
-        return (chosen.Pick, chosen.Items);
+        var franchise = franchises[PickCalendar.WeekIndex(date) % franchises.Count];
+        return [(franchise.Pick, franchise.Items)];
     }
 
     /// <summary>Gets the next top with enough films after <paramref name="previous"/>, wrapping around; null when none has.</summary>

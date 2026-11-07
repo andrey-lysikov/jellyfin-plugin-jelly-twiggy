@@ -5,23 +5,40 @@ using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.JellyTwiggy.Picks;
 
-/// <summary>The current content of one channel.</summary>
-public sealed class PickResult
+/// <summary>One folder of a channel: a holiday, film series or top.</summary>
+public sealed class PickGroup
 {
     /// <summary>Gets or sets the pick id from <see cref="PickCatalog"/>.</summary>
     public string PickId { get; set; } = string.Empty;
 
-    /// <summary>Gets or sets the pick name in the server language; it names the channel folder.</summary>
+    /// <summary>Gets or sets the pick name in the server language; it names the folder.</summary>
     public string Name { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the original library items, best first.</summary>
     public List<Guid> ItemIds { get; set; } = [];
+
+    /// <summary>Gets or sets the film whose poster the folder shows, picked at random.</summary>
+    public Guid? PosterId { get; set; }
+}
+
+/// <summary>The current content of one channel: its folders in display order.</summary>
+public sealed class PickResult
+{
+    /// <summary>Gets or sets the folders; the «Best» channel has one, «Coming soon!» one per nearby holiday.</summary>
+    public List<PickGroup> Groups { get; set; } = [];
 
     /// <summary>Gets or sets when the pick was computed (UTC); copies get creation dates just before it.</summary>
     public DateTime GeneratedUtc { get; set; }
 
     /// <summary>Gets or sets the server-local day it was computed for.</summary>
     public DateOnly Date { get; set; }
+
+    /// <summary>Gets every film of all folders in display order; the rank in it sets the copy's creation date.</summary>
+    public IEnumerable<Guid> AllItemIds() => Groups.SelectMany(g => g.ItemIds);
+
+    /// <summary>Gets the channel folder id of a group: it changes with every new pick, so the folder gets a fresh poster.</summary>
+    public string FolderId(PickGroup group) =>
+        $"{group.PickId}-{GeneratedUtc.ToString("yyyyMMddHHmmss", System.Globalization.CultureInfo.InvariantCulture)}";
 }
 
 /// <summary>Saved state of both channels.</summary>

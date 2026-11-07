@@ -8,6 +8,7 @@
 - New «Coming soon!» and «Best» channels: films for the nearest holiday or a film series, and a server-wide top that changes weekly; they show up in "Latest" on the home screen in every client
 - «Coming soon!» holidays: New Year, Epiphany, Valentine's Day, Defender of the Fatherland Day, Chinese New Year, Maslenitsa, Women's Day, St. Patrick's Day, April Fools' Day, Easter, Cosmonautics Day, Earth Day, Spring and Labour Day, Victory Day, Children's Day, Russia Day, Music Day, Friendship Day, Russian Cinema Day, World Animal Day, Halloween, National Unity Day, Thanksgiving and every Friday the 13th, plus summer and back to school; between them, film series and studios
 - Every theme shows from a month before its date; the nearest one not yet past wins, and on the same day religious holidays (Epiphany, Maslenitsa, Easter) give way to the others
+- «Coming soon!» shows a folder for each holiday due within a week of the nearest one, up to three; every folder has the poster of one of its films
 - Watching a film from a channel marks the library film as watched and counts the view
 - Plugin settings are split into the "General" and "Themed channel" tabs; the second one shows or hides the channels, puts them first for every user, and has the libraries for the channels and the themes and tops, with film series under one "Favourite franchises" checkbox
 - Home screen (web client): the channel rows are titled just with the channel name, without "Latest"

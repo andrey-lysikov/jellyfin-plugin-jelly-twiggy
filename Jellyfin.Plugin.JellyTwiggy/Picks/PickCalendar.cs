@@ -7,17 +7,24 @@ public static class PickCalendar
     public const int LeadDays = 30;
 
     /// <summary>Gets the themes due on a date: the nearest holiday not yet past first, religious ones after others on the same day, seasons last.</summary>
-    public static IReadOnlyList<PickDefinition> ActiveThemes(DateOnly date, IEnumerable<PickDefinition> themes)
+    public static IReadOnlyList<PickDefinition> ActiveThemes(DateOnly date, IEnumerable<PickDefinition> themes) =>
+        ActiveOccurrences(date, themes).Select(x => x.Theme).ToList();
+
+    /// <summary>Gets the themes due on a date with their occurrences, in the order of <see cref="ActiveThemes"/>.</summary>
+    public static IReadOnlyList<(PickDefinition Theme, PickOccurrence Occurrence)> ActiveOccurrences(DateOnly date, IEnumerable<PickDefinition> themes)
     {
         return themes
             .Select(t => (Theme: t, Occurrence: t.Window is { } window ? Find(window, date) : null))
             .Where(x => x.Occurrence is not null)
+            .Select(x => (x.Theme, Occurrence: x.Occurrence!.Value))
             .OrderBy(x => x.Theme.Season)
-            .ThenBy(x => Math.Max(x.Occurrence!.Value.Anchor.DayNumber - date.DayNumber, 0))
+            .ThenBy(x => DaysUntil(x.Occurrence, date))
             .ThenBy(x => x.Theme.Religious)
-            .Select(x => x.Theme)
             .ToList();
     }
+
+    /// <summary>Gets the days until a holiday; 0 while it lasts (e.g. the New Year holidays after 31 December).</summary>
+    public static int DaysUntil(PickOccurrence occurrence, DateOnly date) => Math.Max(occurrence.Anchor.DayNumber - date.DayNumber, 0);
 
     /// <summary>Gets the week number used to rotate franchises between holidays; weeks start on Monday.</summary>
     public static int WeekIndex(DateOnly date) => date.DayNumber / 7;

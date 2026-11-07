@@ -63,14 +63,14 @@ public class JellyTwiggyPicksController : ControllerBase
         return users.Count;
     }
 
-    private static CurrentPickDto? Current(PickResult? pick) =>
-        pick is null ? null : new CurrentPickDto(pick.PickId, pick.Name, pick.ItemIds.Count, pick.GeneratedUtc);
+    private static List<CurrentPickDto> Current(PickResult? pick) =>
+        pick is null ? [] : pick.Groups.Select(g => new CurrentPickDto(g.PickId, g.Name, g.ItemIds.Count, pick.GeneratedUtc)).ToList();
 }
 
 /// <summary>Picks overview for the admin page.</summary>
-public record PicksDto(string ThemedChannel, string BestChannel, CurrentPickDto? Themed, CurrentPickDto? Best, List<PickInfoDto> Catalog);
+public record PicksDto(string ThemedChannel, string BestChannel, List<CurrentPickDto> Themed, List<CurrentPickDto> Best, List<PickInfoDto> Catalog);
 
-/// <summary>What a channel shows now.</summary>
+/// <summary>One folder a channel shows now.</summary>
 public record CurrentPickDto(string PickId, string Name, int Count, DateTime GeneratedUtc);
 
 /// <summary>One pick of the catalog: Kind is Holiday, Franchise or Top.</summary>
