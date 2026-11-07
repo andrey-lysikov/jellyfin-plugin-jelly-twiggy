@@ -1,5 +1,7 @@
 name: Release
 
+# vX.Y.Z.W: release for everyone (manifest.json and manifest-beta.json).
+# vX.Y.Z.W-beta: GitHub pre-release, only in manifest-beta.json; notes from the topmost Changelog section.
 on:
   push:
     tags: ['v*.*.*.*']
@@ -21,11 +23,17 @@ jobs:
         id: version
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
+          BETA=false
+          if [[ "$VERSION" == *-beta ]]; then
+            VERSION="${VERSION%-beta}"
+            BETA=true
+          fi
           if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Tag must look like vX.Y.Z.W, got $GITHUB_REF_NAME" >&2
+            echo "Tag must look like vX.Y.Z.W or vX.Y.Z.W-beta, got $GITHUB_REF_NAME" >&2
             exit 1
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "beta=$BETA" >> "$GITHUB_OUTPUT"
 
       - name: Build
         run: >
@@ -44,12 +52,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
+          BETA: ${{ steps.version.outputs.beta }}
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}
         run: |
-          # The "## <version>" section of Changelog.md, without leading and trailing blank lines.
-          awk -v v="## $VERSION" '
-            $0 == v { found = 1; next }
-            /^## / { found = 0 }
+          # The "## <version>" section of Changelog.md (a beta takes the topmost one, the upcoming release),
+          # without leading and trailing blank lines.
+          awk -v v="## $VERSION" -v beta="$BETA" '
+            /^## / { if (done) { found = 0; next } if (beta == "true" || $0 == v) { found = 1; done = 1; next } found = 0 }
             found { print }
           ' Changelog.md | awk '
             /^[[:space:]]*$/ { blank = blank $0 "\n"; next }
@@ -70,25 +79,44 @@ jobs:
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
-        run: >
-          gh release create "$GITHUB_REF_NAME" "artifacts/${{ steps.package.outputs.zip }}"
-          --title "Version ${{ steps.version.outputs.version }}" --notes-file notes.md
+          BETA: ${{ steps.version.outputs.beta }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if [ "$BETA" = "true" ]; then
+            gh release create "$GITHUB_REF_NAME" "artifacts/${{ steps.package.outputs.zip }}" \
+              --title "Version $VERSION (beta)" --notes-file notes.md --prerelease
+          else
+            gh release create "$GITHUB_REF_NAME" "artifacts/${{ steps.package.outputs.zip }}" \
+              --title "Version $VERSION" --notes-file notes.md
+          fi
 
       - uses: actions/checkout@v7
         with:
           ref: manifest
           path: manifest-branch
 
-      - name: Update manifest.json
+      - name: Update manifests
+        env:
+          BETA: ${{ steps.version.outputs.beta }}
         run: |
-          python3 .github/scripts/update_manifest.py manifest-branch/manifest.json \
-            --version "${{ steps.version.outputs.version }}" \
-            --url "https://github.com/${{ github.repository }}/releases/download/${GITHUB_REF_NAME}/${{ steps.package.outputs.zip }}" \
-            --checksum "${{ steps.package.outputs.checksum }}" \
-            --changelog "$(cat changes.md)"
+          # The beta repository starts as a copy of the stable one and then gets every release and beta.
+          if [ ! -f manifest-branch/manifest-beta.json ]; then
+            cp manifest-branch/manifest.json manifest-branch/manifest-beta.json
+          fi
+          files="manifest-beta.json"
+          if [ "$BETA" != "true" ]; then
+            files="manifest.json manifest-beta.json"
+          fi
+          for file in $files; do
+            python3 .github/scripts/update_manifest.py "manifest-branch/$file" \
+              --version "${{ steps.version.outputs.version }}" \
+              --url "https://github.com/${{ github.repository }}/releases/download/${GITHUB_REF_NAME}/${{ steps.package.outputs.zip }}" \
+              --checksum "${{ steps.package.outputs.checksum }}" \
+              --changelog "$(cat changes.md)"
+          done
           cd manifest-branch
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add manifest.json
-          git commit -m "Update manifest for ${GITHUB_REF_NAME}"
+          git add manifest.json manifest-beta.json
+          git commit -m "Update manifests for ${GITHUB_REF_NAME}"
           git push origin HEAD:manifest

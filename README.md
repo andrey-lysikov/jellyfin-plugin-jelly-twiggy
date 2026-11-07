@@ -55,6 +55,10 @@ Add the repository in **Dashboard → Plugins → Repositories**:
 
 Install **Jelly Twiggy** from the catalog and restart the server.
 
+Beta versions come from a separate repository; add it instead of (or next to) the one above to test them early:
+
+    https://raw.githubusercontent.com/andrey-lysikov/jellyfin-plugin-jelly-twiggy/manifest/manifest-beta.json
+
 To fill the «Themed» and «Best» channels, pick the film libraries in the plugin settings. Everyone with channel access sees these films, so close the channels for children in their user settings.
 
 ## Tech
