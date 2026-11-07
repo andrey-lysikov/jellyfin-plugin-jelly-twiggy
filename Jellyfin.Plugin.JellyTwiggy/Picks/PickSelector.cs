@@ -69,7 +69,14 @@ public static class PickSelector
     }
 
     /// <summary>Gets the next top with enough films after <paramref name="previous"/>, wrapping around; null when none has.</summary>
-    public static (int Index, IReadOnlyList<Guid> Items)? NextTop(int previous, IReadOnlyList<MovieFacts> movies, UsageFacts usage, IReadOnlySet<string> disabled)
+    // roundOf gives the round a top would be shown in now, which picks the person of a person top.
+    public static (int Index, TopChoice Choice)? NextTop(
+        int previous,
+        IReadOnlyList<MovieFacts> movies,
+        UsageFacts usage,
+        IReadOnlySet<string> disabled,
+        DateOnly today,
+        Func<string, int> roundOf)
     {
         var tops = PickCatalog.Tops;
         for (var step = 1; step <= tops.Count; step++)
@@ -81,10 +88,10 @@ public static class PickSelector
                 continue;
             }
 
-            var items = SelectTop(top, movies, usage);
-            if (items.Count >= top.Minimum)
+            var choice = SelectTop(top, movies, usage, new TopContext(today, roundOf(top.Id)));
+            if (choice.Items.Count >= top.Minimum)
             {
-                return (index, items);
+                return (index, choice);
             }
         }
 
@@ -152,8 +159,18 @@ public static class PickSelector
     }
 
     /// <summary>Gets the films of a top of the «Best» channel.</summary>
-    public static IReadOnlyList<Guid> SelectTop(PickDefinition pick, IReadOnlyList<MovieFacts> movies, UsageFacts usage)
+    public static TopChoice SelectTop(PickDefinition pick, IReadOnlyList<MovieFacts> movies, UsageFacts usage, TopContext context)
     {
+        if (pick.Id == "director")
+        {
+            return SelectPerson(pick, movies, context.Round, m => m.Directors);
+        }
+
+        if (pick.Id == "star")
+        {
+            return SelectPerson(pick, movies, context.Round, m => m.Actors);
+        }
+
         double Popularity(MovieFacts m) => Math.Min(
             1.0,
             (0.25 * usage.Viewers.GetValueOrDefault(m.Id)) + (0.1 * usage.Rewatches.GetValueOrDefault(m.Id)) + (0.25 * usage.Favorites.GetValueOrDefault(m.Id)));
@@ -184,6 +201,9 @@ public static class PickSelector
             "books" => movies
                 .Where(m => m.Tags.Contains("based on novel or book"))
                 .OrderByDescending(m => Quality(m) + Popularity(m)),
+            "recent" => movies
+                .Where(m => m.Year >= context.Today.Year - 1)
+                .OrderByDescending(m => Quality(m) + Popularity(m)),
             "hiddengems" => movies
                 .Where(m => m.CommunityRating >= 7.5 && !usage.Touched.Contains(m.Id))
                 .OrderByDescending(Quality),
@@ -191,10 +211,47 @@ public static class PickSelector
         };
 
         // The weekly chart shows what people watched, franchises included.
-        return pick.Id == "popularweek"
-            ? ranked.Take(pick.Limit).Select(m => m.Id).ToList()
+        IReadOnlyList<Guid> items = pick.Id == "popularweek"
+            ? Distinct(ranked).Take(pick.Limit).Select(m => m.Id).ToList()
             : CapPerCollection(ranked, pick.Limit);
+        return new TopChoice(items, null);
     }
+
+    /// <summary>Gets the people a person top goes through, best first: the average rating of their films, weighted by how many there are.</summary>
+    public static IReadOnlyList<string> PersonCandidates(PickDefinition pick, IReadOnlyList<MovieFacts> movies, Func<MovieFacts, IReadOnlyList<string>> people)
+    {
+        return movies
+            .SelectMany(m => people(m).Distinct(StringComparer.Ordinal).Select(name => (Name: name, Movie: m)))
+            .GroupBy(x => x.Name, StringComparer.Ordinal)
+            .Select(g => (Name: g.Key, Films: Distinct(g.Select(x => x.Movie)).ToList()))
+            .Where(x => x.Films.Count >= pick.Minimum)
+            .OrderByDescending(x => x.Films.Average(Quality) * Math.Log(x.Films.Count + 1))
+            .ThenBy(x => x.Name, StringComparer.Ordinal)
+            .Select(x => x.Name)
+            .ToList();
+    }
+
+    // The round-th person, wrapping around; their best films first.
+    private static TopChoice SelectPerson(PickDefinition pick, IReadOnlyList<MovieFacts> movies, int round, Func<MovieFacts, IReadOnlyList<string>> people)
+    {
+        var candidates = PersonCandidates(pick, movies, people);
+        if (candidates.Count == 0)
+        {
+            return new TopChoice([], null);
+        }
+
+        var person = candidates[((round % candidates.Count) + candidates.Count) % candidates.Count];
+        var films = Distinct(movies.Where(m => people(m).Contains(person, StringComparer.Ordinal)))
+            .OrderByDescending(Quality)
+            .Take(pick.Limit)
+            .Select(m => m.Id)
+            .ToList();
+        return new TopChoice(films, person);
+    }
+
+    // The same film added to the library twice (another file or version) counts once.
+    private static IEnumerable<MovieFacts> Distinct(IEnumerable<MovieFacts> movies) =>
+        movies.DistinctBy(m => (m.Name.ToLowerInvariant(), m.Year));
 
     // How far critics rate a film above its audience, on the 0–10 scale.
     private static double Gap(MovieFacts movie) => ((movie.CriticRating ?? 0) / 10.0) - (movie.CommunityRating ?? 0);
@@ -218,7 +275,7 @@ public static class PickSelector
     {
         var perCollection = new Dictionary<string, int>(StringComparer.Ordinal);
         var result = new List<Guid>();
-        foreach (var movie in ranked)
+        foreach (var movie in Distinct(ranked))
         {
             if (movie.CollectionId is { } collection)
             {

@@ -6,6 +6,8 @@ namespace Jellyfin.Plugin.JellyTwiggy.Tests;
 public class PickSelectorTests
 {
     private static readonly HashSet<string> NoneDisabled = [];
+    private static readonly DateOnly Today = new(2026, 11, 7);
+    private static readonly TopContext Context = new(Today, 0);
 
     private static MovieFacts Film(
         string name,
@@ -215,7 +217,7 @@ public class PickSelectorTests
         var usage = new UsageFacts();
         usage.Viewers[loved.Id] = 4;
 
-        var picked = PickSelector.SelectTop(Top("top50"), [noCritic, good, loved], usage);
+        var picked = PickSelector.SelectTop(Top("top50"), [noCritic, good, loved], usage, Context).Items;
 
         Assert.Equal(new[] { loved.Id, good.Id }, picked);
     }
@@ -227,7 +229,7 @@ public class PickSelectorTests
         var cult = Film("Культовый", rating: 7.0f, critic: 95);
         var popular = Film("Все любят", rating: 8.5f, critic: 90);
 
-        Assert.Equal(new[] { cult.Id }, PickSelector.SelectTop(Top("underrated"), [obscure, cult, popular], new UsageFacts()));
+        Assert.Equal(new[] { cult.Id }, PickSelector.SelectTop(Top("underrated"), [obscure, cult, popular], new UsageFacts(), Context).Items);
     }
 
     [Fact]
@@ -239,7 +241,7 @@ public class PickSelectorTests
         var usage = new UsageFacts();
         usage.Touched.Add(seen.Id);
 
-        Assert.Equal(new[] { unseen.Id }, PickSelector.SelectTop(Top("hiddengems"), [seen, unseen, weak], usage));
+        Assert.Equal(new[] { unseen.Id }, PickSelector.SelectTop(Top("hiddengems"), [seen, unseen, weak], usage, Context).Items);
     }
 
     [Fact]
@@ -253,7 +255,62 @@ public class PickSelectorTests
         usage.Viewers[twice.Id] = 2;
         usage.Favorites[favorite.Id] = 1;
 
-        Assert.Equal(new[] { twice.Id, favorite.Id }, PickSelector.SelectTop(Top("serverfavorites"), [once, twice, favorite], usage));
+        Assert.Equal(new[] { twice.Id, favorite.Id }, PickSelector.SelectTop(Top("serverfavorites"), [once, twice, favorite], usage, Context).Items);
+    }
+
+    [Fact]
+    public void DirectorOfTheWeekGoesRoundTheDirectors()
+    {
+        var spielberg = Enumerable.Range(0, 5).Select(i => Film($"Спилберг {i}", rating: 8, critic: 80) with { Directors = ["Стивен Спилберг"] }).ToList();
+        var bay = Enumerable.Range(0, 5).Select(i => Film($"Бэй {i}", rating: 6, critic: 40) with { Directors = ["Майкл Бэй"] }).ToList();
+        var once = Film("Дебют", rating: 9, critic: 90) with { Directors = ["Новичок"] };
+        List<MovieFacts> films = [.. spielberg, .. bay, once];
+
+        var first = PickSelector.SelectTop(Top("director"), films, new UsageFacts(), Context);
+        var second = PickSelector.SelectTop(Top("director"), films, new UsageFacts(), Context with { Round = 1 });
+        var third = PickSelector.SelectTop(Top("director"), films, new UsageFacts(), Context with { Round = 2 });
+
+        Assert.Equal("Стивен Спилберг", first.Subject);
+        Assert.Equal(5, first.Items.Count);
+        Assert.Equal("Майкл Бэй", second.Subject);
+        Assert.Equal("Стивен Спилберг", third.Subject);
+    }
+
+    [Fact]
+    public void StarOfTheWeekNeedsSixFilms()
+    {
+        var hanks = Enumerable.Range(0, 6).Select(i => Film($"Хэнкс {i}", rating: 7) with { Actors = ["Том Хэнкс"] }).ToList();
+        var newcomer = Enumerable.Range(0, 5).Select(i => Film($"Новичок {i}", rating: 9) with { Actors = ["Новичок"] }).ToList();
+
+        var choice = PickSelector.SelectTop(Top("star"), [.. hanks, .. newcomer], new UsageFacts(), Context);
+
+        Assert.Equal("Том Хэнкс", choice.Subject);
+        Assert.Equal(6, choice.Items.Count);
+        Assert.Equal(new[] { "Том Хэнкс" }, PickSelector.PersonCandidates(Top("star"), [.. hanks, .. newcomer], m => m.Actors));
+    }
+
+    [Fact]
+    public void RecentTakesThisAndLastYear()
+    {
+        var thisYear = Film("Этот год", year: 2026);
+        var lastYear = Film("Прошлый год", year: 2025);
+        var older = Film("Позапрошлый", year: 2024);
+
+        var items = PickSelector.SelectTop(Top("recent"), [thisYear, lastYear, older], new UsageFacts(), Context).Items;
+
+        Assert.Equal(2, items.Count);
+        Assert.DoesNotContain(older.Id, items);
+    }
+
+    [Fact]
+    public void TheSameFilmTwiceCountsOnce()
+    {
+        var copy1 = Film("Тенцинг", rating: 7.7f, critic: 80, year: 2026);
+        var copy2 = Film("Тенцинг", rating: 7.7f, critic: 80, year: 2026);
+
+        var items = PickSelector.SelectTop(Top("top50"), [copy1, copy2], new UsageFacts(), Context).Items;
+
+        Assert.Single(items);
     }
 
     [Fact]
@@ -265,9 +322,9 @@ public class PickSelectorTests
         List<MovieFacts> films = [.. books, .. underrated];
         var tops = PickCatalog.Tops.Select(t => t.Id).ToList();
 
-        var first = PickSelector.NextTop(-1, films, new UsageFacts(), NoneDisabled);
-        var second = PickSelector.NextTop(first!.Value.Index, films, new UsageFacts(), NoneDisabled);
-        var third = PickSelector.NextTop(second!.Value.Index, films, new UsageFacts(), NoneDisabled);
+        var first = PickSelector.NextTop(-1, films, new UsageFacts(), NoneDisabled, Today, _ => 0);
+        var second = PickSelector.NextTop(first!.Value.Index, films, new UsageFacts(), NoneDisabled, Today, _ => 0);
+        var third = PickSelector.NextTop(second!.Value.Index, films, new UsageFacts(), NoneDisabled, Today, _ => 0);
 
         Assert.Equal("top50", tops[first.Value.Index]);
         Assert.Equal("underrated", tops[second.Value.Index]);
@@ -279,7 +336,7 @@ public class PickSelectorTests
     {
         var films = Enumerable.Range(0, 6).Select(i => Film($"Фильм {i}", rating: 8, critic: 80)).ToList();
 
-        var next = PickSelector.NextTop(-1, films, new UsageFacts(), new HashSet<string> { "top50" });
+        var next = PickSelector.NextTop(-1, films, new UsageFacts(), new HashSet<string> { "top50" }, Today, _ => 0);
 
         Assert.NotEqual("top50", PickCatalog.Tops[next!.Value.Index].Id);
     }

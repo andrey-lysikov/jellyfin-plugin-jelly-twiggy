@@ -1,3 +1,4 @@
+using System.Globalization;
 using Jellyfin.Data.Enums;
 using Jellyfin.Plugin.JellyTwiggy.Configuration;
 using Jellyfin.Plugin.JellyTwiggy.History;
@@ -100,7 +101,7 @@ public class PickService
 
             if (state.Best is null || state.Best.Groups.Count == 0)
             {
-                await UpdateBestCoreAsync(rotate: state.BestIndex < 0, cancellationToken).ConfigureAwait(false);
+                await UpdateBestCoreAsync(rotate: CurrentTopIndex(state) < 0, cancellationToken).ConfigureAwait(false);
             }
             else
             {
@@ -134,8 +135,8 @@ public class PickService
         var movies = LoadMovies(config, out _);
         var chosen = PickSelector.ChooseThemes(Today, movies, Disabled(config));
         var state = _store.Get();
-        var themed = chosen.Count > 0 ? MakeResult(chosen.Select(c => (c.Pick.Id, c.Items)).ToList(), state.Themed) : null;
-        _store.Save(new PickState { Themed = themed, Best = state.Best, BestIndex = state.BestIndex });
+        var themed = chosen.Count > 0 ? MakeResult(chosen.Select(c => (c.Pick.Id, c.Items, (string?)null)).ToList(), state.Themed) : null;
+        _store.Save(new PickState { Themed = themed, Best = state.Best, Rounds = state.Rounds });
         _logger.LogInformation("Jelly Twiggy: themed picks are {Picks}", Describe(themed));
         await SyncChannelAsync(_copies.ThemedName, themed, cancellationToken).ConfigureAwait(false);
     }
@@ -143,39 +144,67 @@ public class PickService
     private async Task UpdateBestCoreAsync(bool rotate, CancellationToken cancellationToken)
     {
         var config = Config;
-        var movies = LoadMovies(config, out var libraries);
+        var movies = LoadMovies(config, out var libraries, withPeople: true);
         var usage = LoadUsage(movies, libraries);
         var state = _store.Get();
-        // Without rotation the search starts at the current top, so it stays unless it no longer has enough films.
-        var previous = rotate ? state.BestIndex : Math.Max(state.BestIndex, 0) - 1;
-        var next = PickSelector.NextTop(previous, movies, usage, Disabled(config));
-        var best = next is { } n ? MakeResult([(PickCatalog.Tops[n.Index].Id, n.Items)], state.Best) : null;
-        _store.Save(new PickState { Themed = state.Themed, Best = best, BestIndex = next?.Index ?? state.BestIndex });
+        var current = CurrentTopIndex(state);
+        var currentId = current < 0 ? null : PickCatalog.Tops[current].Id;
+
+        // Without rotation the search starts at the current top, so it stays (with the same person) unless it no longer has enough films.
+        int RoundOf(string id) => !rotate && id == currentId
+            ? state.Rounds.GetValueOrDefault(id)
+            : state.Rounds.TryGetValue(id, out var round) ? round + 1 : 0;
+        var previous = rotate ? current : Math.Max(current, 0) - 1;
+        var next = PickSelector.NextTop(previous, movies, usage, Disabled(config), Today, RoundOf);
+
+        var rounds = new Dictionary<string, int>(state.Rounds);
+        PickResult? best = null;
+        if (next is { } n)
+        {
+            var id = PickCatalog.Tops[n.Index].Id;
+            rounds[id] = RoundOf(id);
+            best = MakeResult([(id, n.Choice.Items, n.Choice.Subject)], state.Best);
+        }
+
+        _store.Save(new PickState { Themed = state.Themed, Best = best, Rounds = rounds });
         _logger.LogInformation("Jelly Twiggy: best pick is {Picks}", Describe(best));
         await SyncChannelAsync(_copies.BestName, best, cancellationToken).ConfigureAwait(false);
+    }
+
+    // The current top is known by id: the list of tops may change between plugin versions.
+    private static int CurrentTopIndex(PickState state)
+    {
+        var id = state.Best?.Groups.FirstOrDefault()?.PickId;
+        return id is null ? -1 : PickCatalog.Tops.ToList().FindIndex(t => t.Id == id);
     }
 
     private static string Describe(PickResult? pick) =>
         pick is null ? "none" : string.Join(", ", pick.Groups.Select(g => $"{g.PickId} ({g.ItemIds.Count})"));
 
     // An unchanged pick keeps its timestamp: the channel cache and the copies stay as they are.
-    private PickResult MakeResult(IReadOnlyList<(string PickId, IReadOnlyList<Guid> Items)> groups, PickResult? previous)
+    // A person top is named after its director or star: "Director of the week — Steven Spielberg".
+    private PickResult MakeResult(IReadOnlyList<(string PickId, IReadOnlyList<Guid> Items, string? Subject)> groups, PickResult? previous)
     {
+        var culture = _serverConfiguration.Configuration.UICulture;
+        string NameOf(string pickId, string? subject) =>
+            subject is null ? PickNames.Get(pickId, culture) : string.Format(CultureInfo.InvariantCulture, PickNames.Get(pickId + "Title", culture), subject);
+
         if (previous is not null
             && previous.Groups.Count == groups.Count
-            && previous.Groups.Zip(groups).All(x => x.First.PickId == x.Second.PickId && x.First.ItemIds.SequenceEqual(x.Second.Items)))
+            && previous.Groups.Zip(groups).All(x => x.First.PickId == x.Second.PickId
+                && x.First.Name == NameOf(x.Second.PickId, x.Second.Subject)
+                && x.First.ItemIds.SequenceEqual(x.Second.Items)))
         {
             return new PickResult { Groups = previous.Groups, GeneratedUtc = previous.GeneratedUtc, Date = Today };
         }
 
         var now = DateTime.UtcNow;
-        var culture = _serverConfiguration.Configuration.UICulture;
         return new PickResult
         {
             Groups = groups.Select(g => new PickGroup
             {
                 PickId = g.PickId,
-                Name = PickNames.Get(g.PickId, culture),
+                Name = NameOf(g.PickId, g.Subject),
                 ItemIds = [.. g.Items]
             }).ToList(),
             GeneratedUtc = new DateTime(now.Ticks - (now.Ticks % TimeSpan.TicksPerSecond), DateTimeKind.Utc),
@@ -217,7 +246,7 @@ public class PickService
     private static HashSet<string> Disabled(PluginConfiguration config) => new(config.DisabledPicks, StringComparer.Ordinal);
 
     // Only the libraries the admin chose: the channels are shared, so a film there is visible to everyone with channel access.
-    private List<MovieFacts> LoadMovies(PluginConfiguration config, out List<BaseItem> libraries)
+    private List<MovieFacts> LoadMovies(PluginConfiguration config, out List<BaseItem> libraries, bool withPeople = false)
     {
         libraries = config.PickSourceLibraries
             .Select(id => _libraryManager.GetItemById(id))
@@ -234,7 +263,9 @@ public class PickService
             Recursive = true,
             IsVirtualItem = false
         };
-        return _libraryManager.GetItemList(query, libraries)
+        var items = _libraryManager.GetItemList(query, libraries);
+        var people = withPeople ? LoadPeople(items) : null;
+        return items
             .Select(item => new MovieFacts(
                 item.Id,
                 item.Name ?? string.Empty,
@@ -247,8 +278,33 @@ public class PickService
                 item.ProductionYear,
                 item.CommunityRating,
                 item.CriticRating,
-                item.GetProviderId(MetadataProvider.TmdbCollection)))
+                item.GetProviderId(MetadataProvider.TmdbCollection))
+            {
+                Directors = people?.GetValueOrDefault(item.Id).Directors ?? [],
+                Actors = people?.GetValueOrDefault(item.Id).Actors ?? []
+            })
             .ToList();
+    }
+
+    // Directors and the first five actors in the credits (later ones are cameos and voices), in batches.
+    private Dictionary<Guid, (IReadOnlyList<string> Directors, IReadOnlyList<string> Actors)> LoadPeople(IReadOnlyList<BaseItem> items)
+    {
+        var result = new Dictionary<Guid, (IReadOnlyList<string> Directors, IReadOnlyList<string> Actors)>();
+        foreach (var batch in items.Select(i => i.Id).Chunk(500))
+        {
+            foreach (var (itemId, people) in _libraryManager.GetPeopleByItems(batch))
+            {
+                var directors = people.Where(p => p.Type == PersonKind.Director).Select(p => p.Name).ToList();
+                var actors = people.Where(p => p.Type == PersonKind.Actor)
+                    .OrderBy(p => p.SortOrder ?? int.MaxValue)
+                    .Take(5)
+                    .Select(p => p.Name)
+                    .ToList();
+                result[itemId] = (directors, actors);
+            }
+        }
+
+        return result;
     }
 
     // Jellyfin's played, favorite and play count marks of every user, merged with our log (the log wins where it has the pair).

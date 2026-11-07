@@ -43,8 +43,8 @@ public sealed class PickState
     /// <summary>Gets or sets the «Best» channel content; null when no top has enough films.</summary>
     public PickResult? Best { get; set; }
 
-    /// <summary>Gets or sets the index of the current top in <see cref="PickCatalog.Tops"/>; -1 before the first.</summary>
-    public int BestIndex { get; set; } = -1;
+    /// <summary>Gets or sets how many times each person top has come round; it picks the next director or star.</summary>
+    public Dictionary<string, int> Rounds { get; set; } = [];
 }
 
 /// <summary>Keeps <see cref="PickState"/> in memory and in picks.json.</summary>
