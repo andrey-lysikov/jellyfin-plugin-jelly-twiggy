@@ -17,7 +17,8 @@ public class PickSelectorTests
         int year = 2000,
         string? original = null,
         string? overview = null,
-        string[]? studios = null) => new(
+        string[]? studios = null,
+        string[]? countries = null) => new(
             Guid.NewGuid(),
             name,
             original,
@@ -25,6 +26,7 @@ public class PickSelectorTests
             new HashSet<string>(tags ?? [], StringComparer.OrdinalIgnoreCase),
             new HashSet<string>(genres ?? [], StringComparer.OrdinalIgnoreCase),
             new HashSet<string>(studios ?? [], StringComparer.OrdinalIgnoreCase),
+            new HashSet<string>(countries ?? [], StringComparer.OrdinalIgnoreCase),
             year,
             rating,
             critic,
@@ -68,6 +70,27 @@ public class PickSelectorTests
         var picked = PickSelector.SelectTheme(Theme("halloween"), [wizards, horror]);
 
         Assert.Equal(new[] { horror.Id }, picked);
+    }
+
+    [Fact]
+    public void RussiaDayTakesOnlyFilmsMadeEntirelyInRussia()
+    {
+        var russian = Film("Мамы", countries: ["Россия", "Russia"], rating: 6.5f);
+        var coProduction = Film("Миссия невыполнима", countries: ["США", "Россия", "United States of America", "Russia"], rating: 7.5f);
+        var soviet = Film("Служебный роман", countries: ["СССР", "Soviet Union"], rating: 8.2f);
+        var unknown = Film("Без страны", rating: 9f);
+
+        Assert.Equal(new[] { russian.Id }, PickSelector.SelectTheme(Theme("russiaday"), [russian, coProduction, soviet, unknown]));
+        Assert.Equal(new[] { soviet.Id }, PickSelector.SelectTheme(Theme("unityday"), [russian, coProduction, soviet, unknown]));
+    }
+
+    [Fact]
+    public void ChildrensDayNeedsAFamilyGenre()
+    {
+        var shawshank = Film("Побег из Шоушенка", ["friendship", "children"], genres: ["драма"], rating: 9.3f);
+        var cartoon = Film("Простоквашино", genres: ["мультфильм"], rating: 8.2f);
+
+        Assert.Equal(new[] { cartoon.Id }, PickSelector.SelectTheme(Theme("childrensday"), [shawshank, cartoon]));
     }
 
     [Fact]

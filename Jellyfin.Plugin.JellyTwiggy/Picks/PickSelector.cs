@@ -82,20 +82,33 @@ public static class PickSelector
         }
 
         var ranked = movies
+            .Where(m => Admits(rule, m))
             .Select(m => (Movie: m, Score: Score(rule, m)))
-            .Where(x => x.Score.Total >= RelevanceThreshold && (!rule.RequireStrong || x.Score.Strong > 0))
+            .Where(x => x.Score.Total >= rule.Threshold && (!rule.RequireStrong || x.Score.Strong > 0))
             .OrderByDescending(x => (x.Movie.CommunityRating ?? 5) + (Math.Min(x.Score.Total, 12) / 4.0))
             .Select(x => x.Movie);
         return CapPerCollection(ranked, pick.Limit);
     }
 
-    /// <summary>Scores a film for a holiday: strong tag 3, weak tag 1, genre 3, title 4, overview 2.</summary>
+    /// <summary>Gets whether a film may belong to a holiday at all: made entirely in its countries, of its genre if required.</summary>
+    public static bool Admits(ThemeRule rule, MovieFacts movie)
+    {
+        if (rule.CountriesOnly && rule.Countries.Count > 0 && (movie.Countries.Count == 0 || !movie.Countries.All(rule.Countries.Contains)))
+        {
+            return false;
+        }
+
+        return !rule.RequireGenre || movie.Genres.Any(rule.Genres.Contains);
+    }
+
+    /// <summary>Scores a film for a holiday: strong tag 3, weak tag 1, genre 3, country 3, title 4, overview 2.</summary>
     public static ThemeScore Score(ThemeRule rule, MovieFacts movie)
     {
         var strong = movie.Tags.Count(rule.StrongTags.Contains);
         var weak = movie.Tags.Count(rule.WeakTags.Contains);
         var genre = movie.Genres.Any(rule.Genres.Contains);
-        var total = (3 * strong) + weak + (genre ? 3 : 0);
+        var country = !rule.CountriesOnly && movie.Countries.Any(rule.Countries.Contains);
+        var total = (3 * strong) + weak + (genre ? 3 : 0) + (country ? 3 : 0);
         if (rule.Title?.IsMatch($"{movie.Name} {movie.OriginalTitle}") == true)
         {
             total += 4;
@@ -106,7 +119,7 @@ public static class PickSelector
             total += 2;
         }
 
-        return new ThemeScore(total, strong + (genre ? 1 : 0));
+        return new ThemeScore(total, strong + (genre ? 1 : 0) + (country ? 1 : 0));
     }
 
     /// <summary>Gets the films of a top of the «Best» channel.</summary>

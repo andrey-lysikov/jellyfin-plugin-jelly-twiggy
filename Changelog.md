@@ -6,8 +6,10 @@
 - Active streams: running tasks are listed as plain tiles after the sessions, without the "Scheduled tasks" heading
 - Item page: the video track is plain text again instead of quality badges
 - New «Themed» and «Best» channels: films for the nearest holiday or a film series, and a server-wide top that changes weekly; they show up in "Latest" on the home screen in every client
+- Themed channel holidays: New Year, Epiphany, Valentine's Day, Defender of the Fatherland Day, Chinese New Year, Maslenitsa, Women's Day, St. Patrick's Day, April Fools' Day, Easter, Cosmonautics Day, Earth Day, Spring and Labour Day, Victory Day, Children's Day, Russia Day, Music Day, Friendship Day, Russian Cinema Day, World Animal Day, Halloween, National Unity Day, Thanksgiving and every Friday the 13th, plus summer and back to school; between them, film series and studios
+- Every theme shows from a month before its date; the nearest one not yet past wins, and on the same day religious holidays (Epiphany, Maslenitsa, Easter) give way to the others
 - Watching a film from a channel marks the library film as watched and counts the view
-- Plugin settings: libraries for the channels, channel names and the list of themes and tops
+- Plugin settings are split into the "General" and "Channels" tabs; the channels tab has the libraries for the channels, channel names, and the themes and tops in two columns, with film series under one "Favourite franchises" checkbox
 
 ## 0.4.5.0
 
