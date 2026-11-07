@@ -87,6 +87,7 @@
 - `.github/workflows/build.yml` — сборка, `dotnet test`, `node --check` JS на push/PR;
   `release.yml` — по тегу `vX.Y.Z.W`: сборка, zip с dll, GitHub release, обновление manifest в ветке `manifest`;
   по тегу `vX.Y.Z.W-beta` — только pre-release с zip, manifest не трогается (заметки — из верхнего раздела Changelog).
+  Обычный релиз удаляет все pre-release вместе с их тегами.
 
 ## Ограничения и заметки
 
