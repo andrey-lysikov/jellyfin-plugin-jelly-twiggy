@@ -2,6 +2,8 @@ name: Release
 
 # vX.Y.Z.W: release for everyone, added to manifest.json.
 # vX.Y.Z.W-beta: GitHub pre-release for manual install, manifest untouched; notes from the topmost Changelog section.
+# Only one beta exists: a new beta tag removes the others. Any tag pushed again (git push -f) rebuilds its release
+# (and its manifest entry for a release).
 on:
   push:
     tags: ['v*.*.*.*']
@@ -71,7 +73,9 @@ jobs:
           fi
 
           cp changes.md notes.md
-          previous=$(gh release view --json tagName -q .tagName 2>/dev/null || true)
+          # The latest release before this one (on a rebuild the tag itself is already a release).
+          previous=$(gh release list --exclude-pre-releases --limit 50 --json tagName --jq '.[].tagName' 2>/dev/null \
+            | grep -vxF "$GITHUB_REF_NAME" | head -n 1 || true)
           if [ -n "$previous" ]; then
             printf '\n**Full list of changes**: %s/compare/%s...%s\n' "$REPO_URL" "$previous" "$GITHUB_REF_NAME" >> notes.md
           fi
@@ -81,13 +85,31 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           BETA: ${{ steps.version.outputs.beta }}
           VERSION: ${{ steps.version.outputs.version }}
+          ZIP: artifacts/${{ steps.package.outputs.zip }}
         run: |
+          title="Version $VERSION"
+          flags=()
           if [ "$BETA" = "true" ]; then
-            gh release create "$GITHUB_REF_NAME" "artifacts/${{ steps.package.outputs.zip }}" \
-              --title "Version $VERSION (beta)" --notes-file notes.md --prerelease
+            title="$title (beta)"
+            flags=(--prerelease)
+
+            # One beta at a time: other pre-releases and their tags go.
+            gh release list --limit 1000 --json tagName,isPrerelease \
+              --jq '.[] | select(.isPrerelease) | .tagName' |
+            while read -r tag; do
+              if [ "$tag" != "$GITHUB_REF_NAME" ]; then
+                echo "Deleting pre-release $tag"
+                gh release delete "$tag" --cleanup-tag --yes
+              fi
+            done
+          fi
+
+          # The same tag pushed again (git push -f): replace the file and the notes with this build.
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$ZIP" --clobber
+            gh release edit "$GITHUB_REF_NAME" --title "$title" --notes-file notes.md "${flags[@]}"
           else
-            gh release create "$GITHUB_REF_NAME" "artifacts/${{ steps.package.outputs.zip }}" \
-              --title "Version $VERSION" --notes-file notes.md
+            gh release create "$GITHUB_REF_NAME" "$ZIP" --title "$title" --notes-file notes.md "${flags[@]}"
           fi
 
       # A release supersedes the betas before it: their pre-releases and tags go.
@@ -121,5 +143,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add manifest.json
+          if git diff --cached --quiet; then
+            echo "manifest.json unchanged"
+            exit 0
+          fi
           git commit -m "Update manifest for ${GITHUB_REF_NAME}"
           git push origin HEAD:manifest
