@@ -12,6 +12,16 @@ public static class PickSelector
     // One franchise must not take over a list of the best.
     private const int MaxPerCollection = 2;
 
+    /// <summary>Films anyone on the server watched within this many days are left out of both channels.</summary>
+    public const int RecentlyWatchedDays = 30;
+
+    /// <summary>Gets the films nobody on the server watched within <see cref="RecentlyWatchedDays"/> days: no point offering them again so soon.</summary>
+    public static List<MovieFacts> NotRecentlyWatched(IReadOnlyList<MovieFacts> movies, UsageFacts usage, DateOnly today)
+    {
+        var since = today.AddDays(-RecentlyWatchedDays);
+        return movies.Where(m => !usage.LastWatched.TryGetValue(m.Id, out var last) || DateOnly.FromDateTime(last) < since).ToList();
+    }
+
     /// <summary>How close holidays must be to the nearest one to be shown along with it.</summary>
     public const int NearbyDays = 7;
 
@@ -188,10 +198,11 @@ public static class PickSelector
                 .Where(m => Love(m) >= 3)
                 .OrderByDescending(Love)
                 .ThenByDescending(Quality),
-            "popularweek" => movies
-                .Where(m => usage.WeekViewers.GetValueOrDefault(m.Id) > 0)
-                .OrderByDescending(m => usage.WeekViewers.GetValueOrDefault(m.Id))
-                .ThenByDescending(m => usage.WeekPlays.GetValueOrDefault(m.Id))
+            // Watched on the server before, but by nobody in the last half year: the most watched first.
+            "longago" => movies
+                .Where(m => usage.LastWatched.TryGetValue(m.Id, out var last) && DateOnly.FromDateTime(last) <= context.Today.AddMonths(-6))
+                .OrderByDescending(m => usage.Viewers.GetValueOrDefault(m.Id))
+                .ThenByDescending(m => usage.Rewatches.GetValueOrDefault(m.Id))
                 .ThenByDescending(Quality),
             // Critics' 100 from a handful of reviews is common, so the audience rating must still be decent.
             "underrated" => movies
@@ -210,11 +221,7 @@ public static class PickSelector
             _ => []
         };
 
-        // The weekly chart shows what people watched, franchises included.
-        IReadOnlyList<Guid> items = pick.Id == "popularweek"
-            ? Distinct(ranked).Take(pick.Limit).Select(m => m.Id).ToList()
-            : CapPerCollection(ranked, pick.Limit);
-        return new TopChoice(items, null);
+        return new TopChoice(CapPerCollection(ranked, pick.Limit), null);
     }
 
     /// <summary>Gets the people a person top goes through, best first: the average rating of their films, weighted by how many there are.</summary>

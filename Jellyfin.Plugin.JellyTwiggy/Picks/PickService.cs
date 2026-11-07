@@ -14,8 +14,6 @@ namespace Jellyfin.Plugin.JellyTwiggy.Picks;
 /// <summary>Computes the picks from the library and the playback log, saves them and syncs the channels.</summary>
 public class PickService
 {
-    private static readonly TimeSpan Week = TimeSpan.FromDays(7);
-
     private readonly ILibraryManager _libraryManager;
     private readonly IUserManager _userManager;
     private readonly IUserDataManager _userDataManager;
@@ -132,7 +130,8 @@ public class PickService
     private async Task RefreshThemedCoreAsync(CancellationToken cancellationToken)
     {
         var config = Config;
-        var movies = LoadMovies(config, out _);
+        var movies = LoadMovies(config, out var libraries);
+        movies = PickSelector.NotRecentlyWatched(movies, LoadUsage(movies, libraries), Today);
         var chosen = PickSelector.ChooseThemes(Today, movies, Disabled(config));
         var state = _store.Get();
         var themed = chosen.Count > 0 ? MakeResult(chosen.Select(c => (c.Pick.Id, c.Items, (string?)null)).ToList(), state.Themed) : null;
@@ -144,8 +143,9 @@ public class PickService
     private async Task UpdateBestCoreAsync(bool rotate, CancellationToken cancellationToken)
     {
         var config = Config;
-        var movies = LoadMovies(config, out var libraries, withPeople: true);
-        var usage = LoadUsage(movies, libraries);
+        var all = LoadMovies(config, out var libraries, withPeople: true);
+        var usage = LoadUsage(all, libraries);
+        var movies = PickSelector.NotRecentlyWatched(all, usage, Today);
         var state = _store.Get();
         var current = CurrentTopIndex(state);
         var currentId = current < 0 ? null : PickCatalog.Tops[current].Id;
@@ -320,8 +320,6 @@ public class PickService
         var viewers = new Dictionary<Guid, HashSet<Guid>>();
         var logged = new HashSet<(Guid UserId, Guid ItemId)>();
 
-        var since = DateTime.UtcNow - Week;
-        var weekUsers = new Dictionary<Guid, HashSet<Guid>>();
         foreach (var group in _history.Find(r => ids.Contains(r.ItemId)).GroupBy(r => (r.UserId, r.ItemId)))
         {
             var (userId, itemId) = group.Key;
@@ -334,12 +332,7 @@ public class PickService
                 usage.Rewatches[itemId] = usage.Rewatches.GetValueOrDefault(itemId) + views - 1;
             }
 
-            var weekPlays = group.Count(r => !r.Manual && r.EndedUtc >= since);
-            if (weekPlays > 0)
-            {
-                Add(weekUsers, itemId, userId);
-                usage.WeekPlays[itemId] = usage.WeekPlays.GetValueOrDefault(itemId) + weekPlays;
-            }
+            Latest(usage.LastWatched, itemId, group.Max(r => r.EndedUtc));
         }
 
         foreach (var user in _userManager.GetUsers())
@@ -347,6 +340,12 @@ public class PickService
             foreach (var item in UserMovies(user, libraries, isPlayed: true))
             {
                 usage.Touched.Add(item.Id);
+                var data = _userDataManager.GetUserData(user, item);
+                if (data?.LastPlayedDate is { } lastPlayed)
+                {
+                    Latest(usage.LastWatched, item.Id, lastPlayed);
+                }
+
                 if (logged.Contains((user.Id, item.Id)))
                 {
                     continue;
@@ -354,8 +353,7 @@ public class PickService
 
                 // History older than the log: PlayCount counts starts, so it adds rewatches only beyond the first.
                 Add(viewers, item.Id, user.Id);
-                var playCount = _userDataManager.GetUserData(user, item)?.PlayCount ?? 1;
-                usage.Rewatches[item.Id] = usage.Rewatches.GetValueOrDefault(item.Id) + Math.Max(playCount - 1, 0);
+                usage.Rewatches[item.Id] = usage.Rewatches.GetValueOrDefault(item.Id) + Math.Max((data?.PlayCount ?? 1) - 1, 0);
             }
 
             foreach (var item in UserMovies(user, libraries, isFavorite: true))
@@ -367,11 +365,6 @@ public class PickService
         foreach (var (itemId, users) in viewers)
         {
             usage.Viewers[itemId] = users.Count;
-        }
-
-        foreach (var (itemId, users) in weekUsers)
-        {
-            usage.WeekViewers[itemId] = users.Count;
         }
 
         return usage;
@@ -388,6 +381,14 @@ public class PickService
             IsFavorite = isFavorite
         };
         return _libraryManager.GetItemList(query, libraries);
+    }
+
+    private static void Latest(Dictionary<Guid, DateTime> map, Guid key, DateTime value)
+    {
+        if (!map.TryGetValue(key, out var current) || value > current)
+        {
+            map[key] = value;
+        }
     }
 
     private static void Add(Dictionary<Guid, HashSet<Guid>> map, Guid key, Guid value)

@@ -298,7 +298,7 @@ public static class PickCatalog
         new("top50", PickKind.Top, Limit: 50),
         new("serverfavorites", PickKind.Top),
         new("director", PickKind.Top, Minimum: 5),
-        new("popularweek", PickKind.Top),
+        new("longago", PickKind.Top),
         new("underrated", PickKind.Top),
         new("star", PickKind.Top),
         new("books", PickKind.Top),

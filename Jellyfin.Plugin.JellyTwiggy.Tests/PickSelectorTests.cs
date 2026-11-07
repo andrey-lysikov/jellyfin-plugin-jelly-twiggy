@@ -314,6 +314,36 @@ public class PickSelectorTests
     }
 
     [Fact]
+    public void LongAgoTakesFilmsNobodyWatchedForHalfAYear()
+    {
+        var old = Film("Давно");
+        var recent = Film("Недавно");
+        var never = Film("Никогда");
+        var usage = new UsageFacts();
+        usage.Viewers[old.Id] = 3;
+        usage.LastWatched[old.Id] = new DateTime(2026, 1, 10, 0, 0, 0, DateTimeKind.Utc);
+        usage.Viewers[recent.Id] = 4;
+        usage.LastWatched[recent.Id] = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        Assert.Equal(new[] { old.Id }, PickSelector.SelectTop(Top("longago"), [old, recent, never], usage, Context).Items);
+    }
+
+    [Fact]
+    public void FilmsWatchedThisMonthAreLeftOut()
+    {
+        var lastWeek = Film("На прошлой неделе");
+        var twoMonths = Film("Два месяца назад");
+        var never = Film("Никогда");
+        var usage = new UsageFacts();
+        usage.LastWatched[lastWeek.Id] = new DateTime(2026, 11, 1, 0, 0, 0, DateTimeKind.Utc);
+        usage.LastWatched[twoMonths.Id] = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        var left = PickSelector.NotRecentlyWatched([lastWeek, twoMonths, never], usage, Today);
+
+        Assert.Equal(new[] { twoMonths.Id, never.Id }, left.Select(m => m.Id));
+    }
+
+    [Fact]
     public void RotationSkipsTopsWithTooFewFilmsAndWraps()
     {
         // "top50" takes every rated film; after it only "underrated" and "books" have enough.

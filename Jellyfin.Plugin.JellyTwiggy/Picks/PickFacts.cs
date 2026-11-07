@@ -41,11 +41,8 @@ public sealed class UsageFacts
     /// <summary>Gets the number of users who marked each film as a favorite.</summary>
     public Dictionary<Guid, int> Favorites { get; } = [];
 
-    /// <summary>Gets the distinct users per film over the last 7 days.</summary>
-    public Dictionary<Guid, int> WeekViewers { get; } = [];
-
-    /// <summary>Gets the plays per film over the last 7 days.</summary>
-    public Dictionary<Guid, int> WeekPlays { get; } = [];
+    /// <summary>Gets when anyone on the server last watched each film (UTC).</summary>
+    public Dictionary<Guid, DateTime> LastWatched { get; } = [];
 
     /// <summary>Gets the films anyone has started, finished or marked.</summary>
     public HashSet<Guid> Touched { get; } = [];
