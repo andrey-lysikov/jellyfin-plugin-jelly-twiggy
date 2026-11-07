@@ -37,7 +37,9 @@ public class JellyTwiggyPicksController : ControllerBase
     {
         var culture = _serverConfiguration.Configuration.UICulture;
         var state = _store.Get();
+        var config = Plugin.Instance?.Configuration;
         return new PicksDto(
+            config is { EnablePicks: true, PickSourceLibraries.Length: > 0 },
             _copies.ThemedName,
             _copies.BestName,
             Current(state.Themed),
@@ -68,7 +70,8 @@ public class JellyTwiggyPicksController : ControllerBase
 }
 
 /// <summary>Picks overview for the admin page.</summary>
-public record PicksDto(string ThemedChannel, string BestChannel, List<CurrentPickDto> Themed, List<CurrentPickDto> Best, List<PickInfoDto> Catalog);
+// Enabled: the channels are on and have source libraries, i.e. users see them.
+public record PicksDto(bool Enabled, string ThemedChannel, string BestChannel, List<CurrentPickDto> Themed, List<CurrentPickDto> Best, List<PickInfoDto> Catalog);
 
 /// <summary>One folder a channel shows now.</summary>
 public record CurrentPickDto(string PickId, string Name, int Count, DateTime GeneratedUtc);

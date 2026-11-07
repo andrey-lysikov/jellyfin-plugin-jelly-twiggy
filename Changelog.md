@@ -10,6 +10,7 @@
 - Every theme shows from a month before its date; the nearest one not yet past wins, and on the same day religious holidays (Epiphany, Maslenitsa, Easter) give way to the others
 - «Coming soon!» also shows the holidays due within a week of the nearest one, up to three, nearest first
 - «Best» tops: "Director of the week" and "Star of the week" go round the best directors and actors of the library, plus the best films of this year and last
+- Dashboard: the library counts block has a card for each channel with its film count and what it shows now
 - Watching a film from a channel marks the library film as watched and counts the view
 - Plugin settings are split into the "General" and "Themed channels" tabs; the second one shows or hides the channels, puts them first for every user, and has the libraries for the channels and the themes and tops, with film series under one "Favourite franchises" checkbox
 - Home screen (web client): the channel rows are titled just with the channel name, without "Latest"
