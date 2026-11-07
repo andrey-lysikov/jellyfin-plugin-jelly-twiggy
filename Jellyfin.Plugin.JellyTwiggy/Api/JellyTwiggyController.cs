@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Jellyfin.Database.Implementations.Entities;
 using Jellyfin.Plugin.JellyTwiggy.History;
 using Jellyfin.Plugin.JellyTwiggy.Media;
+using Jellyfin.Plugin.JellyTwiggy.Picks;
 using Jellyfin.Plugin.JellyTwiggy.Storage;
 using Jellyfin.Plugin.JellyTwiggy.WebInjection;
 using MediaBrowser.Common.Api;
@@ -51,6 +52,7 @@ public class JellyTwiggyController : ControllerBase
     private readonly SessionsService _sessions;
     private readonly StatisticsService _statistics;
     private readonly IUserManager _userManager;
+    private readonly PickCopies _pickCopies;
 
     /// <summary>Initializes a new instance of the <see cref="JellyTwiggyController"/> class.</summary>
     public JellyTwiggyController(
@@ -59,7 +61,8 @@ public class JellyTwiggyController : ControllerBase
         WatchersService watchers,
         SessionsService sessions,
         StatisticsService statistics,
-        IUserManager userManager)
+        IUserManager userManager,
+        PickCopies pickCopies)
     {
         _userSettings = userSettings;
         _badges = badges;
@@ -67,6 +70,7 @@ public class JellyTwiggyController : ControllerBase
         _sessions = sessions;
         _statistics = statistics;
         _userManager = userManager;
+        _pickCopies = pickCopies;
     }
 
     private bool IsAdmin => User.IsInRole(AdministratorRole);
@@ -121,7 +125,10 @@ public class JellyTwiggyController : ControllerBase
             config.EnableDashboard,
             config.TweakItemPage,
             config.TweakPlayer,
-            config.StyleCards);
+            config.StyleCards,
+            config.EnablePicks
+                ? [new PickChannelDto(_pickCopies.ChannelId(_pickCopies.ThemedName), _pickCopies.ThemedName), new PickChannelDto(_pickCopies.ChannelId(_pickCopies.BestName), _pickCopies.BestName)]
+                : []);
     }
 
     /// <summary>Gets the current user's settings.</summary>
@@ -354,7 +361,11 @@ public record ClientConfigDto(
     bool EnableDashboard,
     bool TweakItemPage,
     bool TweakPlayer,
-    bool StyleCards);
+    bool StyleCards,
+    List<PickChannelDto> PickChannels);
+
+/// <summary>A picks channel: its id (the home screen row links to it) and name.</summary>
+public record PickChannelDto(Guid Id, string Name);
 
 /// <summary>Badges request.</summary>
 public class BadgesRequest

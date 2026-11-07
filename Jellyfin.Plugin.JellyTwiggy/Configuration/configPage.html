@@ -13,9 +13,11 @@
                     #JellyTwiggyConfigPage .jtTabs { display: flex; gap: 0.5em; margin: 0 0 1.5em; border-bottom: 1px solid rgba(128, 128, 128, 0.3); }
                     #JellyTwiggyConfigPage .jtTab { margin: 0 0 -1px; padding: 0.6em 1.1em; border-radius: 0; border-bottom: 2px solid transparent; opacity: 0.7; }
                     #JellyTwiggyConfigPage .jtTab.jtTabActive { border-bottom-color: #00a4dc; opacity: 1; font-weight: 600; }
-                    #JellyTwiggyConfigPage .jtPickColumns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2em; }
+                    #JellyTwiggyConfigPage .jtPickColumns { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); column-gap: 2em; }
+                    #JellyTwiggyConfigPage .jtPickTwo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1.5em; }
                     #JellyTwiggyConfigPage .jtPickColumns .checkboxContainer { margin-bottom: 0.6em; }
-                    @media (max-width: 40em) { #JellyTwiggyConfigPage .jtPickColumns { grid-template-columns: minmax(0, 1fr); } }
+                    @media (max-width: 50em) { #JellyTwiggyConfigPage .jtPickColumns { grid-template-columns: minmax(0, 1fr); } }
+                    @media (max-width: 30em) { #JellyTwiggyConfigPage .jtPickTwo { grid-template-columns: minmax(0, 1fr); } }
                 </style>
                 <form id="JellyTwiggyConfigForm">
                     <h2 class="sectionTitle" style="display:flex;align-items:center;gap:0.75em">
@@ -88,29 +90,22 @@
 
                     <div data-tab-panel="channels" hidden>
                     <div class="verticalSection">
-                        <h3 class="sectionTitle" data-jt-i18n="cfgPicks">Picks: «Themed» and «Best» channels</h3>
-                        <div class="checkboxContainer">
-                            <label>
-                                <input is="emby-checkbox" type="checkbox" id="EnablePicks" />
-                                <span data-jt-i18n="cfgEnablePicks">Show the «Themed» and «Best» channels</span>
-                            </label>
+                        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1em">
+                            <div class="checkboxContainer" style="margin:0">
+                                <label>
+                                    <input is="emby-checkbox" type="checkbox" id="EnablePicks" />
+                                    <span data-jt-i18n="cfgEnablePicks">Show</span>
+                                </label>
+                            </div>
+                            <button is="emby-button" type="button" id="jtMoveFirst" class="raised emby-button" style="margin:0">
+                                <span data-jt-i18n="cfgMoveFirst">Put first</span>
+                            </button>
                         </div>
-                        <p><span data-jt-i18n="cfgPicksNow">Now</span>: <span id="jtPicksNow">…</span></p>
-                        <p class="fieldDescription" data-jt-i18n="cfgPicksTasksHint">The themed pick is updated daily and the «Best» top changes every Monday at 3:00. Change the schedule in Dashboard → Scheduled tasks.</p>
+                        <p class="fieldDescription"><span data-jt-i18n="cfgMoveFirstHint">Puts the channels first in every user's library order, so their rows lead the home screen. Press again after adding users.</span> <b id="jtMoveFirstResult"></b></p>
 
                         <h4 data-jt-i18n="cfgPickSources">Libraries for picks</h4>
                         <div id="jtPickSources"></div>
                         <p class="fieldDescription" data-jt-i18n="cfgPickSourcesHint">Films from these libraries appear in the channels for everyone with channel access, even without access to the library. Close the channels for children in the user's channel access settings.</p>
-
-                        <div class="inputContainer">
-                            <label class="inputLabel" for="ThemedChannelName" data-jt-i18n="cfgThemedChannel">«Themed» channel name</label>
-                            <input is="emby-input" type="text" id="ThemedChannelName" />
-                        </div>
-                        <div class="inputContainer">
-                            <label class="inputLabel" for="BestChannelName" data-jt-i18n="cfgBestChannel">«Best» channel name</label>
-                            <input is="emby-input" type="text" id="BestChannelName" />
-                            <div class="fieldDescription" data-jt-i18n="cfgChannelNamesHint">The name identifies the channel: after renaming, Jellyfin creates a new channel and users lose its place and settings.</div>
-                        </div>
 
                         <h4 data-jt-i18n="cfgPickList">Themes and tops</h4>
                         <div id="jtPickList"></div>
@@ -160,14 +155,10 @@
                     const franchises = checkbox('data-franchises', franchiseIds(picks).some((id) => !disabled.includes(id)), t('cfgFranchises', 'Favourite franchises'));
                     const column = (title, content) => '<div><p><b>' + escapeHtml(title) + '</b></p>' + content + '</div>';
                     page.querySelector('#jtPickList').innerHTML = '<div class="jtPickColumns">'
-                        + column(picks.ThemedChannel, list('Holiday') + franchises)
+                        + column(picks.ThemedChannel, '<div class="jtPickTwo">' + list('Holiday') + franchises + '</div>')
                         + column(picks.BestChannel, list('Top'))
                         + '</div>';
 
-                    const describe = (channel, current) => channel + ' — ' + (current ? current.Name + ' (' + current.Count + ')' : t('cfgPickNone', 'nothing fits'));
-                    page.querySelector('#jtPicksNow').textContent = describe(picks.ThemedChannel, picks.Themed) + '; ' + describe(picks.BestChannel, picks.Best);
-                    page.querySelector('#ThemedChannelName').value = config.ThemedChannelName || picks.ThemedChannel;
-                    page.querySelector('#BestChannelName').value = config.BestChannelName || picks.BestChannel;
                 }
 
                 page.querySelectorAll('[data-tab]').forEach(function (tab) {
@@ -179,6 +170,19 @@
                         page.querySelectorAll('[data-tab-panel]').forEach((panel) => {
                             panel.hidden = panel.dataset.tabPanel !== tab.dataset.tab;
                         });
+                    });
+                });
+
+                page.querySelector('#jtMoveFirst').addEventListener('click', function () {
+                    const result = page.querySelector('#jtMoveFirstResult');
+                    result.textContent = '';
+                    fetch(ApiClient.getUrl('JellyTwiggy/Picks/MoveFirst'), {
+                        method: 'POST',
+                        headers: { Authorization: 'MediaBrowser Token="' + ApiClient.accessToken() + '"' }
+                    }).then(function (response) {
+                        result.textContent = response.ok ? t('cfgMovedFirst', 'Done') : t('loadFailed', 'Failed');
+                    }, function () {
+                        result.textContent = t('loadFailed', 'Failed');
                     });
                 });
 
@@ -226,13 +230,6 @@
                                 config.DisabledPicks.push(...franchiseIds(picksConfig));
                             }
                         }
-                        // An empty name keeps the current one: the name is the channel's identity.
-                        ['ThemedChannelName', 'BestChannelName'].forEach(function (key) {
-                            const value = page.querySelector('#' + key).value.trim();
-                            if (value) {
-                                config[key] = value;
-                            }
-                        });
                         ApiClient.updatePluginConfiguration(pluginId, config).then(function (result) {
                             Dashboard.processPluginConfigurationUpdateResult(result);
                         });

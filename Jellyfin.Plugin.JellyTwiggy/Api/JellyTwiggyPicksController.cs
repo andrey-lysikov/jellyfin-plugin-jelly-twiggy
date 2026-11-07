@@ -1,6 +1,9 @@
+using Jellyfin.Data;
+using Jellyfin.Database.Implementations.Enums;
 using Jellyfin.Plugin.JellyTwiggy.Picks;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Controller.Configuration;
+using MediaBrowser.Controller.Library;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -16,13 +19,15 @@ public class JellyTwiggyPicksController : ControllerBase
     private readonly PickStore _store;
     private readonly PickCopies _copies;
     private readonly IServerConfigurationManager _serverConfiguration;
+    private readonly IUserManager _userManager;
 
     /// <summary>Initializes a new instance of the <see cref="JellyTwiggyPicksController"/> class.</summary>
-    public JellyTwiggyPicksController(PickStore store, PickCopies copies, IServerConfigurationManager serverConfiguration)
+    public JellyTwiggyPicksController(PickStore store, PickCopies copies, IServerConfigurationManager serverConfiguration, IUserManager userManager)
     {
         _store = store;
         _copies = copies;
         _serverConfiguration = serverConfiguration;
+        _userManager = userManager;
     }
 
     /// <summary>Gets the channel names, what they show now and every pick with its name in the server language.</summary>
@@ -38,6 +43,24 @@ public class JellyTwiggyPicksController : ControllerBase
             Current(state.Themed),
             Current(state.Best),
             PickCatalog.All.Select(p => new PickInfoDto(p.Id, p.Kind.ToString(), PickNames.Get(p.Id, culture))).ToList());
+    }
+
+    /// <summary>Puts both channels first in every user's library order, so their rows lead the home screen.</summary>
+    // Other views keep their order; users can still reorder them in their home screen settings.
+    [HttpPost("Picks/MoveFirst")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<int>> MoveJellyTwiggyPicksFirst()
+    {
+        var channels = _copies.ChannelIds;
+        var users = _userManager.GetUsers().ToList();
+        foreach (var user in users)
+        {
+            var order = user.GetPreferenceValues<Guid>(PreferenceKind.OrderedViews);
+            user.SetPreference(PreferenceKind.OrderedViews, channels.Concat(order.Where(id => !channels.Contains(id))).ToArray());
+            await _userManager.UpdateUserAsync(user).ConfigureAwait(false);
+        }
+
+        return users.Count;
     }
 
     private static CurrentPickDto? Current(PickResult? pick) =>
