@@ -427,15 +427,6 @@ html.jt-anim-streams :is(.jt-streams-active, .jt-streams-busy) .jt-streams-ring 
 /* Two lists in the panel: sessions, then running tasks; both lay out as panel rows. */
 .jt-streams-list { display: contents; }
 
-.jt-streams-heading {
-    padding: 0.4em 0.2em 0;
-    font-size: 0.8em;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--jt-muted);
-}
-
 .jt-task {
     display: flex;
     align-items: center;
@@ -1112,32 +1103,6 @@ html.jt-tweak-item .mediaInfoOfficialRating {
     white-space: nowrap;
     text-overflow: ellipsis;
 }
-
-/* Video track as badges, without an arrow; the transparent select still covers the line for picking a track. */
-.trackSelections .selectVideoContainer.jt-has-video-badges {
-    position: relative;
-    align-items: center;
-    width: fit-content;
-}
-
-.trackSelections .selectVideoContainer.jt-has-video-badges .detailTrackSelect {
-    position: absolute !important;
-    inset: 0;
-    width: 100% !important;
-    opacity: 0 !important;
-}
-
-.trackSelections .selectVideoContainer.jt-has-video-badges .selectArrowContainer { display: none !important; }
-
-.jt-video-badges {
-    order: 1;
-    display: flex;
-    margin-left: 0.5em; /* in line with the text of the selects below */
-    gap: 4px;
-    pointer-events: none;
-}
-
-.jt-video-badges .jt-badge { font-size: 0.75rem; padding: 1px 7px; }
 
 /* Watched items: no "played" circle on cards (unplayed episode counts stay). */
 html.jt-style-cards .playedIndicator { display: none !important; }

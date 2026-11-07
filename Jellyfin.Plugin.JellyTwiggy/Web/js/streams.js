@@ -313,8 +313,8 @@
         ]);
     }
 
-    // Sessions first, then running tasks (admins only); the heading only separates them from sessions,
-    // and "no sessions" shows only when there are no tasks either.
+    // Sessions first, then running tasks (admins only) as plain tiles, without a heading;
+    // "no sessions" shows only when there are no tasks either.
     function renderPanel() {
         if (!panel) {
             return;
@@ -342,19 +342,12 @@
             old.querySelector('.jt-session-progress-bar').style.width = fresh.querySelector('.jt-session-progress-bar').style.width;
             return old;
         });
-        let heading = container.querySelector('.jt-streams-heading');
-        if (sessions.length && tasks.length) {
-            heading ??= JT.el('div', { className: 'jt-streams-heading', text: JT.t('runningTasks') });
-        } else {
-            heading = null;
-        }
-        const wanted = [heading, ...rows].filter(Boolean);
-        wanted.forEach((el, index) => {
+        rows.forEach((el, index) => {
             if (container.children[index] !== el) {
                 container.insertBefore(el, container.children[index] || null);
             }
         });
-        while (container.children.length > wanted.length) {
+        while (container.children.length > rows.length) {
             container.lastElementChild.remove();
         }
     }

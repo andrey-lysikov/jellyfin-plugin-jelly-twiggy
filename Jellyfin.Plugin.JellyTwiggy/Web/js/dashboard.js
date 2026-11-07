@@ -39,6 +39,126 @@
             disks: 'Festplatten:',
             diskRead: 'Lesen: {value}',
             diskWrite: 'Schreiben: {value}'
+        },
+        ar: {
+            periodAll: 'كل الأوقات',
+            statsRecent: 'آخر عمليات التشغيل',
+            today: 'اليوم',
+            yesterday: 'أمس',
+            watchTimeHint: 'وقت التشغيل الفعلي دون فترات الإيقاف المؤقت؛ لا تُحتسب عمليات التشغيل الأقصر من 30 ثانية.',
+            cpu: 'المعالج',
+            ram: 'الذاكرة',
+            disks: 'الأقراص:',
+            diskRead: 'القراءة: {value}',
+            diskWrite: 'الكتابة: {value}'
+        },
+        be: {
+            periodAll: 'За ўвесь час',
+            statsRecent: 'Апошнія прайграванні',
+            today: 'Сёння',
+            yesterday: 'Учора',
+            watchTimeHint: 'Фактычны час прайгравання без паўз; уключэнні карацейшыя за 30 секунд не ўлічваюцца.',
+            cpu: 'ЦП',
+            ram: 'АЗП',
+            disks: 'Дыскі:',
+            diskRead: 'Чытанне: {value}',
+            diskWrite: 'Запіс: {value}'
+        },
+        cs: {
+            periodAll: 'Celkem',
+            statsRecent: 'Poslední přehrání',
+            today: 'Dnes',
+            yesterday: 'Včera',
+            watchTimeHint: 'Skutečná doba přehrávání bez pauz; přehrání kratší než 30 sekund se nepočítají.',
+            cpu: 'CPU',
+            ram: 'RAM',
+            disks: 'Disky:',
+            diskRead: 'Čtení: {value}',
+            diskWrite: 'Zápis: {value}'
+        },
+        fr: {
+            periodAll: 'Depuis toujours',
+            statsRecent: 'Lectures récentes',
+            today: 'Aujourd’hui',
+            yesterday: 'Hier',
+            watchTimeHint: 'Temps de lecture réel sans les pauses ; les lectures de moins de 30 secondes ne sont pas comptées.',
+            cpu: 'CPU',
+            ram: 'RAM',
+            disks: 'Disques :',
+            diskRead: 'Lecture : {value}',
+            diskWrite: 'Écriture : {value}'
+        },
+        it: {
+            periodAll: 'Sempre',
+            statsRecent: 'Riproduzioni recenti',
+            today: 'Oggi',
+            yesterday: 'Ieri',
+            watchTimeHint: 'Tempo di riproduzione effettivo senza pause; le riproduzioni sotto i 30 secondi non vengono conteggiate.',
+            cpu: 'CPU',
+            ram: 'RAM',
+            disks: 'Dischi:',
+            diskRead: 'Lettura: {value}',
+            diskWrite: 'Scrittura: {value}'
+        },
+        ja: {
+            periodAll: '全期間',
+            statsRecent: '最近の再生',
+            today: '今日',
+            yesterday: '昨日',
+            watchTimeHint: '一時停止を除いた実際の再生時間です。30 秒未満の再生はカウントされません。',
+            cpu: 'CPU',
+            ram: 'RAM',
+            disks: 'ディスク:',
+            diskRead: '読み込み: {value}',
+            diskWrite: '書き込み: {value}'
+        },
+        kk: {
+            periodAll: 'Barlyq uaqyt',
+            statsRecent: 'Soñğy oinatular',
+            today: 'Bügın',
+            yesterday: 'Keşe',
+            watchTimeHint: 'Kıdırıstersız naqty oinatu uaqyty; 30 sekundtan qysqa oinatular eseptelmeidı.',
+            cpu: 'CPU',
+            ram: 'RAM',
+            disks: 'Diskıler:',
+            diskRead: 'Oqu: {value}',
+            diskWrite: 'Jazu: {value}'
+        },
+        pl: {
+            periodAll: 'Cały czas',
+            statsRecent: 'Ostatnie odtworzenia',
+            today: 'Dzisiaj',
+            yesterday: 'Wczoraj',
+            watchTimeHint: 'Rzeczywisty czas odtwarzania bez pauz; odtworzenia krótsze niż 30 sekund nie są liczone.',
+            cpu: 'CPU',
+            ram: 'RAM',
+            disks: 'Dyski:',
+            diskRead: 'Odczyt: {value}',
+            diskWrite: 'Zapis: {value}'
+        },
+        sr: {
+            periodAll: 'Све време',
+            statsRecent: 'Недавне репродукције',
+            today: 'Данас',
+            yesterday: 'Јуче',
+            watchTimeHint: 'Стварно време репродукције без пауза; репродукције краће од 30 секунди се не рачунају.',
+            cpu: 'CPU',
+            ram: 'RAM',
+            disks: 'Дискови:',
+            diskRead: 'Читање: {value}',
+            diskWrite: 'Писање: {value}'
+        },
+        zh: {
+            periodAll: '全部时间',
+            statsRecent: '最近播放',
+            today: '今天',
+            yesterday: '昨天',
+            watchTimeHint: '实际播放时间，不含暂停；短于 30 秒的播放不计入。',
+            cpu: 'CPU',
+            ram: '内存',
+            disks: '磁盘：',
+            diskRead: '读取：{value}',
+            diskWrite: '写入：{value}'
         }
     });
 
