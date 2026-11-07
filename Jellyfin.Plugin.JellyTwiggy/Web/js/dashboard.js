@@ -14,7 +14,8 @@
             ram: 'RAM',
             disks: 'Disks:',
             diskRead: 'Read: {value}',
-            diskWrite: 'Write: {value}'
+            diskWrite: 'Write: {value}',
+            pickNothing: 'nothing fits'
         },
         ru: {
             periodAll: 'За всё время',
@@ -26,7 +27,8 @@
             ram: 'ОЗУ',
             disks: 'Диски:',
             diskRead: 'Чтение: {value}',
-            diskWrite: 'Запись: {value}'
+            diskWrite: 'Запись: {value}',
+            pickNothing: 'ничего не подошло'
         },
         de: {
             periodAll: 'Gesamt',
@@ -38,7 +40,8 @@
             ram: 'RAM',
             disks: 'Festplatten:',
             diskRead: 'Lesen: {value}',
-            diskWrite: 'Schreiben: {value}'
+            diskWrite: 'Schreiben: {value}',
+            pickNothing: 'nichts passt'
         },
         ar: {
             periodAll: 'كل الأوقات',
@@ -50,7 +53,8 @@
             ram: 'الذاكرة',
             disks: 'الأقراص:',
             diskRead: 'القراءة: {value}',
-            diskWrite: 'الكتابة: {value}'
+            diskWrite: 'الكتابة: {value}',
+            pickNothing: 'لا شيء مناسب'
         },
         be: {
             periodAll: 'За ўвесь час',
@@ -62,7 +66,8 @@
             ram: 'АЗП',
             disks: 'Дыскі:',
             diskRead: 'Чытанне: {value}',
-            diskWrite: 'Запіс: {value}'
+            diskWrite: 'Запіс: {value}',
+            pickNothing: 'нічога не падышло'
         },
         cs: {
             periodAll: 'Celkem',
@@ -74,7 +79,8 @@
             ram: 'RAM',
             disks: 'Disky:',
             diskRead: 'Čtení: {value}',
-            diskWrite: 'Zápis: {value}'
+            diskWrite: 'Zápis: {value}',
+            pickNothing: 'nic nevyhovuje'
         },
         fr: {
             periodAll: 'Depuis toujours',
@@ -86,7 +92,8 @@
             ram: 'RAM',
             disks: 'Disques :',
             diskRead: 'Lecture : {value}',
-            diskWrite: 'Écriture : {value}'
+            diskWrite: 'Écriture : {value}',
+            pickNothing: 'rien ne convient'
         },
         it: {
             periodAll: 'Sempre',
@@ -98,7 +105,8 @@
             ram: 'RAM',
             disks: 'Dischi:',
             diskRead: 'Lettura: {value}',
-            diskWrite: 'Scrittura: {value}'
+            diskWrite: 'Scrittura: {value}',
+            pickNothing: 'niente di adatto'
         },
         ja: {
             periodAll: '全期間',
@@ -110,7 +118,8 @@
             ram: 'RAM',
             disks: 'ディスク:',
             diskRead: '読み込み: {value}',
-            diskWrite: '書き込み: {value}'
+            diskWrite: '書き込み: {value}',
+            pickNothing: '該当なし'
         },
         kk: {
             periodAll: 'Barlyq uaqyt',
@@ -122,7 +131,8 @@
             ram: 'RAM',
             disks: 'Diskıler:',
             diskRead: 'Oqu: {value}',
-            diskWrite: 'Jazu: {value}'
+            diskWrite: 'Jazu: {value}',
+            pickNothing: 'eşteñe säikes kelmedı'
         },
         pl: {
             periodAll: 'Cały czas',
@@ -134,7 +144,8 @@
             ram: 'RAM',
             disks: 'Dyski:',
             diskRead: 'Odczyt: {value}',
-            diskWrite: 'Zapis: {value}'
+            diskWrite: 'Zapis: {value}',
+            pickNothing: 'nic nie pasuje'
         },
         sr: {
             periodAll: 'Све време',
@@ -146,7 +157,8 @@
             ram: 'RAM',
             disks: 'Дискови:',
             diskRead: 'Читање: {value}',
-            diskWrite: 'Писање: {value}'
+            diskWrite: 'Писање: {value}',
+            pickNothing: 'ништа не одговара'
         },
         zh: {
             periodAll: '全部时间',
@@ -158,7 +170,8 @@
             ram: '内存',
             disks: '磁盘：',
             diskRead: '读取：{value}',
-            diskWrite: '写入：{value}'
+            diskWrite: '写入：{value}',
+            pickNothing: '没有合适的内容'
         }
     });
 
@@ -196,6 +209,9 @@
     let metrics = null;
     let resolutions = null;
     let resolutionsLoading = false;
+    let picks = null;
+    let picksLoadedAt = 0;
+    let picksLoading = false;
     let statsDays = 7;
     let lastStats = null;
     let edit = null; // { draft, layer, frame, drag }
@@ -598,6 +614,69 @@
         }
     }
 
+    // ---- Picks channels: two cards next to the library counts --------------------------------
+
+    const PICKS_REFRESH_MS = 60 * 1000;
+
+    // Copies of the "Movies" card, so they look like the native ones; re-added when React re-renders the grid.
+    function decoratePicks() {
+        const widget = picks && document.querySelector(block('itemCounts').sel);
+        const template = widget?.querySelector('svg[data-testid="MovieIcon"]')?.closest('.MuiCard-root')?.parentElement;
+        const grid = template?.parentElement;
+        if (!grid) {
+            return;
+        }
+
+        // Switched off (or no source libraries): users see no channels, so no cards either.
+        const cards = picks.Enabled
+            ? [['themed', picks.ThemedChannel, picks.Themed, 'celebration'], ['best', picks.BestChannel, picks.Best, 'emoji_events']]
+            : [];
+        grid.querySelectorAll(':scope > .jt-pick-item').forEach((element) => {
+            if (!cards.some(([key]) => key === element.dataset.jtPick)) {
+                element.remove();
+            }
+        });
+
+        for (const [key, name, groups, icon] of cards) {
+            const total = groups.reduce((sum, group) => sum + group.Count, 0);
+            const line = groups.length ? groups.map((group) => group.Name).join(' · ') : JT.t('pickNothing');
+            let item = grid.querySelector(`:scope > .jt-pick-item[data-jt-pick="${key}"]`);
+            if (!item) {
+                item = template.cloneNode(true);
+                item.classList.add('jt-pick-item');
+                item.dataset.jtPick = key;
+                item.querySelectorAll('.jt-res-row').forEach((row) => row.remove());
+                item.querySelector('svg')?.replaceWith(JT.icon(icon, 'jt-pick-icon'));
+                const card = item.querySelector('.MuiCard-root');
+                card.classList.add('jt-res-card');
+                card.appendChild(JT.el('div', { className: 'jt-pick-line' }));
+                grid.appendChild(item);
+            }
+
+            const [label, value] = item.querySelectorAll('.MuiTypography-root');
+            label.textContent = name;
+            value.textContent = total.toLocaleString(JT.language());
+            item.querySelector('.jt-pick-line').textContent = line;
+        }
+    }
+
+    async function loadPicks() {
+        if (picksLoading || (picks && Date.now() - picksLoadedAt < PICKS_REFRESH_MS)) {
+            decoratePicks();
+            return;
+        }
+        picksLoading = true;
+        try {
+            picks = await JT.get('JellyTwiggy/Picks');
+            picksLoadedAt = Date.now();
+            decoratePicks();
+        } catch (e) {
+            console.error('[JellyTwiggy] picks', e);
+        } finally {
+            picksLoading = false;
+        }
+    }
+
     const DONUT_R = 40;
     const DONUT_C = 2 * Math.PI * DONUT_R;
 
@@ -956,6 +1035,7 @@
             applyLayout(savedLayout());
         }
         loadResolutions();
+        loadPicks();
         metricsPanel(true);
         scheduleRows();
         if (!devicesTimer) {

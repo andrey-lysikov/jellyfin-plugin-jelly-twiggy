@@ -43,6 +43,17 @@
 
 .jt-res-row .jt-badge { font-variant-numeric: tabular-nums; }
 
+/* Picks channel cards: what each channel shows, names joined by dots. */
+.jt-pick-line {
+    width: 100%;
+    margin-top: -8px;
+    padding: 0 16px 12px;
+    opacity: 0.7;
+    font-size: 0.875rem;
+}
+
+.jt-pick-icon { font-size: 2.1875rem; }
+
 /* ---- Server info: CPU / RAM donuts and disk speed ---------------------------------------- */
 
 .jt-sysmetrics {
