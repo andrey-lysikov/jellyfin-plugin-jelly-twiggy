@@ -35,12 +35,6 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Gets or sets the libraries whose films may appear in the channels; none means the channels stay empty.</summary>
     public Guid[] PickSourceLibraries { get; set; } = [];
 
-    /// <summary>Gets or sets the «Themed» channel name; set from the server language on first use. It is the channel's id.</summary>
-    public string ThemedChannelName { get; set; } = string.Empty;
-
-    /// <summary>Gets or sets the «Best» channel name; set from the server language on first use. It is the channel's id.</summary>
-    public string BestChannelName { get; set; } = string.Empty;
-
     /// <summary>Gets or sets the ids of themes and tops that are never picked.</summary>
     public string[] DisabledPicks { get; set; } = [];
 }

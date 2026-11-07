@@ -9,8 +9,6 @@ namespace Jellyfin.Plugin.JellyTwiggy.Picks;
 /// <summary>Which channel is which, and the way from a channel copy back to the library film.</summary>
 public class PickCopies
 {
-    private static readonly Lock NameLock = new();
-
     private readonly ILibraryManager _libraryManager;
     private readonly IServerConfigurationManager _serverConfiguration;
     private readonly ConcurrentDictionary<string, Guid> _channelIds = new(StringComparer.Ordinal);
@@ -22,11 +20,14 @@ public class PickCopies
         _serverConfiguration = serverConfiguration;
     }
 
-    /// <summary>Gets the «Themed» channel name.</summary>
-    public string ThemedName => ResolveName(true);
+    /// <summary>Gets the «Coming soon!» channel name in the server language; the name is also the channel's id.</summary>
+    public string ThemedName => PickNames.Get("channelThemed", _serverConfiguration.Configuration.UICulture);
 
-    /// <summary>Gets the «Best» channel name.</summary>
-    public string BestName => ResolveName(false);
+    /// <summary>Gets the «Best» channel name in the server language.</summary>
+    public string BestName => PickNames.Get("channelBest", _serverConfiguration.Configuration.UICulture);
+
+    /// <summary>Gets the internal ids of both channels, «Coming soon!» first.</summary>
+    public Guid[] ChannelIds => [ChannelId(ThemedName), ChannelId(BestName)];
 
     /// <summary>Gets the server's internal id of a channel, derived from its name as Jellyfin does.</summary>
     public Guid ChannelId(string name) =>
@@ -47,37 +48,4 @@ public class PickCopies
 
     /// <summary>Gets the library film for a copy, or the item itself.</summary>
     public BaseItem Resolve(BaseItem item) => GetOriginal(item) ?? item;
-
-    // The first name is taken from the server language and kept: renaming would create a new channel.
-    private string ResolveName(bool themed)
-    {
-        var key = themed ? "channelThemed" : "channelBest";
-        if (Plugin.Instance is not { } plugin)
-        {
-            return PickNames.Get(key, _serverConfiguration.Configuration.UICulture);
-        }
-
-        lock (NameLock)
-        {
-            var config = plugin.Configuration;
-            var name = themed ? config.ThemedChannelName : config.BestChannelName;
-            if (!string.IsNullOrWhiteSpace(name))
-            {
-                return name.Trim();
-            }
-
-            name = PickNames.Get(key, _serverConfiguration.Configuration.UICulture);
-            if (themed)
-            {
-                config.ThemedChannelName = name;
-            }
-            else
-            {
-                config.BestChannelName = name;
-            }
-
-            plugin.SaveConfiguration();
-            return name;
-        }
-    }
 }
