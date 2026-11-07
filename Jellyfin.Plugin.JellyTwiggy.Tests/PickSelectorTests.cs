@@ -162,7 +162,7 @@ public class PickSelectorTests
     }
 
     [Fact]
-    public void NearbyHolidaysGetAFolderEach()
+    public void NearbyHolidaysAreShownTogether()
     {
         // 2026: Friday 13 February, Valentine's Day, Chinese New Year on the 17th; 23 February is ten days on.
         var horror = Enumerable.Range(0, 6).Select(i => Film($"Ужасы {i}", ["slasher", "haunted house"], genres: ["ужасы"])).ToList();
@@ -176,7 +176,7 @@ public class PickSelectorTests
     }
 
     [Fact]
-    public void AFilmGoesToTheFirstFolderOnly()
+    public void AFilmGoesToTheFirstThemeOnly()
     {
         // A Christmas horror fits both Friday 13th and Valentine's Day here; the nearer one keeps it.
         var both = Film("Чёрное Рождество", ["slasher", "valentine's day", "romcom"], genres: ["ужасы"]);
