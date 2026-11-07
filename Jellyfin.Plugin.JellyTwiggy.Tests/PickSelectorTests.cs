@@ -116,10 +116,10 @@ public class PickSelectorTests
             Film("Чужой", collection: "8091", year: 1979)
         };
 
-        var chosen = PickSelector.ChooseTheme(new DateOnly(2027, 9, 22), films, NoneDisabled);
+        var chosen = PickSelector.ChooseThemes(new DateOnly(2027, 9, 22), films, NoneDisabled);
 
-        Assert.Equal("tolkien", chosen?.Pick.Id);
-        Assert.Equal(new[] { films[1].Id, films[0].Id, films[2].Id }, chosen?.Items);
+        Assert.Equal("tolkien", chosen[0].Pick.Id);
+        Assert.Equal(new[] { films[1].Id, films[0].Id, films[2].Id }, chosen[0].Items);
     }
 
     [Fact]
@@ -139,26 +139,54 @@ public class PickSelectorTests
     {
         var films = ChristmasFilms(5).Append(Film("Toy Story", studios: ["Pixar"])).Append(Film("Up", studios: ["Pixar"])).ToList();
 
-        var chosen = PickSelector.ChooseTheme(new DateOnly(2026, 12, 20), films, NoneDisabled);
+        var chosen = PickSelector.ChooseThemes(new DateOnly(2026, 12, 20), films, NoneDisabled);
 
-        Assert.Equal("pixar", chosen?.Pick.Id);
+        Assert.Equal("pixar", chosen[0].Pick.Id);
     }
 
     [Fact]
     public void HolidayWithEnoughFilmsIsChosen()
     {
-        var chosen = PickSelector.ChooseTheme(new DateOnly(2026, 12, 20), ChristmasFilms(6), NoneDisabled);
+        var chosen = PickSelector.ChooseThemes(new DateOnly(2026, 12, 20), ChristmasFilms(6), NoneDisabled);
 
-        Assert.Equal("newyear", chosen?.Pick.Id);
-        Assert.Equal(6, chosen?.Items.Count);
+        Assert.Equal("newyear", chosen[0].Pick.Id);
+        Assert.Equal(6, chosen[0].Items.Count);
     }
 
     [Fact]
     public void DisabledHolidayIsSkipped()
     {
-        var chosen = PickSelector.ChooseTheme(new DateOnly(2026, 12, 20), ChristmasFilms(6), new HashSet<string> { "newyear" });
+        var chosen = PickSelector.ChooseThemes(new DateOnly(2026, 12, 20), ChristmasFilms(6), new HashSet<string> { "newyear" });
 
-        Assert.Null(chosen);
+        Assert.Empty(chosen);
+    }
+
+    [Fact]
+    public void NearbyHolidaysGetAFolderEach()
+    {
+        // 2026: Friday 13 February, Valentine's Day, Chinese New Year on the 17th; 23 February is ten days on.
+        var horror = Enumerable.Range(0, 6).Select(i => Film($"Ужасы {i}", ["slasher", "haunted house"], genres: ["ужасы"])).ToList();
+        var romance = Enumerable.Range(0, 6).Select(i => Film($"Любовь {i}", ["valentine's day", "romcom"])).ToList();
+        var china = Enumerable.Range(0, 6).Select(i => Film($"Кунг-фу {i}", ["china", "wuxia"])).ToList();
+        var army = Enumerable.Range(0, 6).Select(i => Film($"Армия {i}", ["military", "army"])).ToList();
+
+        var chosen = PickSelector.ChooseThemes(new DateOnly(2026, 2, 10), [.. horror, .. romance, .. china, .. army], NoneDisabled);
+
+        Assert.Equal(new[] { "friday13", "valentine", "chinesenewyear" }, chosen.Select(c => c.Pick.Id));
+    }
+
+    [Fact]
+    public void AFilmGoesToTheFirstFolderOnly()
+    {
+        // A Christmas horror fits both Friday 13th and Valentine's Day here; the nearer one keeps it.
+        var both = Film("Чёрное Рождество", ["slasher", "valentine's day", "romcom"], genres: ["ужасы"]);
+        var horror = Enumerable.Range(0, 6).Select(i => Film($"Ужасы {i}", ["slasher", "haunted house"], genres: ["ужасы"])).ToList();
+        var romance = Enumerable.Range(0, 6).Select(i => Film($"Любовь {i}", ["valentine's day", "romcom"])).ToList();
+
+        var chosen = PickSelector.ChooseThemes(new DateOnly(2026, 2, 10), [both, .. horror, .. romance], NoneDisabled);
+
+        Assert.Contains(both.Id, chosen[0].Items);
+        Assert.DoesNotContain(both.Id, chosen[1].Items);
     }
 
     [Fact]
@@ -170,9 +198,9 @@ public class PickSelectorTests
             Film("Iron Man", studios: ["Marvel Studios"]), Film("Thor", studios: ["Marvel Studios"])
         };
 
-        var monday = PickSelector.ChooseTheme(new DateOnly(2027, 1, 18), films, NoneDisabled)?.Pick.Id;
-        var sunday = PickSelector.ChooseTheme(new DateOnly(2027, 1, 24), films, NoneDisabled)?.Pick.Id;
-        var nextMonday = PickSelector.ChooseTheme(new DateOnly(2027, 1, 25), films, NoneDisabled)?.Pick.Id;
+        var monday = PickSelector.ChooseThemes(new DateOnly(2027, 1, 18), films, NoneDisabled)[0].Pick.Id;
+        var sunday = PickSelector.ChooseThemes(new DateOnly(2027, 1, 24), films, NoneDisabled)[0].Pick.Id;
+        var nextMonday = PickSelector.ChooseThemes(new DateOnly(2027, 1, 25), films, NoneDisabled)[0].Pick.Id;
 
         Assert.Equal(monday, sunday);
         Assert.NotEqual(monday, nextMonday);

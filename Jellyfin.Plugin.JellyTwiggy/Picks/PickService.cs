@@ -88,12 +88,12 @@ public class PickService
         try
         {
             var state = _store.Get();
-            if (state.Themed is null || state.Themed.Date != Today)
+            if (state.Themed is null || state.Themed.Groups.Count == 0 || state.Themed.Date != Today)
             {
                 await RefreshThemedCoreAsync(cancellationToken).ConfigureAwait(false);
             }
 
-            if (state.Best is null)
+            if (state.Best is null || state.Best.Groups.Count == 0)
             {
                 await UpdateBestCoreAsync(rotate: state.BestIndex < 0, cancellationToken).ConfigureAwait(false);
             }
@@ -123,11 +123,11 @@ public class PickService
     {
         var config = Config;
         var movies = LoadMovies(config, out _);
-        var chosen = PickSelector.ChooseTheme(Today, movies, Disabled(config));
+        var chosen = PickSelector.ChooseThemes(Today, movies, Disabled(config));
         var state = _store.Get();
-        var themed = chosen is { } c ? MakeResult(c.Pick.Id, c.Items, state.Themed) : null;
+        var themed = chosen.Count > 0 ? MakeResult(chosen.Select(c => (c.Pick.Id, c.Items)).ToList(), state.Themed) : null;
         _store.Save(new PickState { Themed = themed, Best = state.Best, BestIndex = state.BestIndex });
-        _logger.LogInformation("Jelly Twiggy: themed pick is {Pick} with {Count} films", themed?.PickId ?? "none", themed?.ItemIds.Count ?? 0);
+        _logger.LogInformation("Jelly Twiggy: themed picks are {Picks}", Describe(themed));
         await SyncChannelAsync(_copies.ThemedName, themed, cancellationToken).ConfigureAwait(false);
     }
 
@@ -140,26 +140,36 @@ public class PickService
         // Without rotation the search starts at the current top, so it stays unless it no longer has enough films.
         var previous = rotate ? state.BestIndex : Math.Max(state.BestIndex, 0) - 1;
         var next = PickSelector.NextTop(previous, movies, usage, Disabled(config));
-        var best = next is { } n ? MakeResult(PickCatalog.Tops[n.Index].Id, n.Items, state.Best) : null;
+        var best = next is { } n ? MakeResult([(PickCatalog.Tops[n.Index].Id, n.Items)], state.Best) : null;
         _store.Save(new PickState { Themed = state.Themed, Best = best, BestIndex = next?.Index ?? state.BestIndex });
-        _logger.LogInformation("Jelly Twiggy: best pick is {Pick} with {Count} films", best?.PickId ?? "none", best?.ItemIds.Count ?? 0);
+        _logger.LogInformation("Jelly Twiggy: best pick is {Picks}", Describe(best));
         await SyncChannelAsync(_copies.BestName, best, cancellationToken).ConfigureAwait(false);
     }
 
-    // An unchanged pick keeps its timestamp: the channel cache and the copies stay as they are.
-    private PickResult MakeResult(string pickId, IReadOnlyList<Guid> items, PickResult? previous)
+    private static string Describe(PickResult? pick) =>
+        pick is null ? "none" : string.Join(", ", pick.Groups.Select(g => $"{g.PickId} ({g.ItemIds.Count})"));
+
+    // An unchanged pick keeps its timestamp and posters: the channel cache, folders and copies stay as they are.
+    private PickResult MakeResult(IReadOnlyList<(string PickId, IReadOnlyList<Guid> Items)> groups, PickResult? previous)
     {
-        if (previous is not null && previous.PickId == pickId && previous.ItemIds.SequenceEqual(items))
+        if (previous is not null
+            && previous.Groups.Count == groups.Count
+            && previous.Groups.Zip(groups).All(x => x.First.PickId == x.Second.PickId && x.First.ItemIds.SequenceEqual(x.Second.Items)))
         {
-            return new PickResult { PickId = pickId, Name = previous.Name, ItemIds = previous.ItemIds, GeneratedUtc = previous.GeneratedUtc, Date = Today };
+            return new PickResult { Groups = previous.Groups, GeneratedUtc = previous.GeneratedUtc, Date = Today };
         }
 
         var now = DateTime.UtcNow;
+        var culture = _serverConfiguration.Configuration.UICulture;
         return new PickResult
         {
-            PickId = pickId,
-            Name = PickNames.Get(pickId, _serverConfiguration.Configuration.UICulture),
-            ItemIds = [.. items],
+            Groups = groups.Select(g => new PickGroup
+            {
+                PickId = g.PickId,
+                Name = PickNames.Get(g.PickId, culture),
+                ItemIds = [.. g.Items],
+                PosterId = g.Items.Count > 0 ? g.Items[Random.Shared.Next(g.Items.Count)] : null
+            }).ToList(),
             GeneratedUtc = new DateTime(now.Ticks - (now.Ticks % TimeSpan.TicksPerSecond), DateTimeKind.Utc),
             Date = Today
         };
@@ -175,7 +185,7 @@ public class PickService
             return;
         }
 
-        var ranks = pick.ItemIds
+        var ranks = pick.AllItemIds()
             .Select((id, rank) => (Key: id.ToString("N"), Rank: rank))
             .ToDictionary(x => x.Key, x => x.Rank, StringComparer.OrdinalIgnoreCase);
         var copies = _libraryManager.GetItemList(new InternalItemsQuery { ChannelIds = [channelId], IsFolder = false, Recursive = true });

@@ -16,8 +16,10 @@
                     #JellyTwiggyConfigPage .jtPickColumns { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); column-gap: 2em; }
                     #JellyTwiggyConfigPage .jtPickTwo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1.5em; }
                     #JellyTwiggyConfigPage .jtPickColumns .checkboxContainer { margin-bottom: 0.6em; }
+                    #JellyTwiggyConfigPage .jtPickSources { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 1.5em; }
+                    @media (max-width: 50em) { #JellyTwiggyConfigPage .jtPickSources { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
                     @media (max-width: 50em) { #JellyTwiggyConfigPage .jtPickColumns { grid-template-columns: minmax(0, 1fr); } }
-                    @media (max-width: 30em) { #JellyTwiggyConfigPage .jtPickTwo { grid-template-columns: minmax(0, 1fr); } }
+                    @media (max-width: 30em) { #JellyTwiggyConfigPage .jtPickTwo, #JellyTwiggyConfigPage .jtPickSources { grid-template-columns: minmax(0, 1fr); } }
                 </style>
                 <form id="JellyTwiggyConfigForm">
                     <h2 class="sectionTitle" style="display:flex;align-items:center;gap:0.75em">
@@ -97,24 +99,25 @@
                                     <span data-jt-i18n="cfgEnablePicks">Show</span>
                                 </label>
                             </div>
-                            <button is="emby-button" type="button" id="jtMoveFirst" class="raised emby-button" style="margin:0">
-                                <span data-jt-i18n="cfgMoveFirst">Put first</span>
-                            </button>
+                            <div style="display:flex;align-items:center;gap:0.75em">
+                                <b id="jtMoveFirstResult"></b>
+                                <button is="emby-button" type="button" id="jtMoveFirst" class="raised emby-button" style="margin:0">
+                                    <span data-jt-i18n="cfgMoveFirst">Put first</span>
+                                </button>
+                            </div>
                         </div>
-                        <p class="fieldDescription"><span data-jt-i18n="cfgMoveFirstHint">Puts the channels first in every user's library order, so their rows lead the home screen. Press again after adding users.</span> <b id="jtMoveFirstResult"></b></p>
 
                         <h4 data-jt-i18n="cfgPickSources">Libraries for picks</h4>
-                        <div id="jtPickSources"></div>
+                        <div id="jtPickSources" class="jtPickSources"></div>
                         <p class="fieldDescription" data-jt-i18n="cfgPickSourcesHint">Films from these libraries appear in the channels for everyone with channel access, even without access to the library. Close the channels for children in the user's channel access settings.</p>
 
-                        <h4 data-jt-i18n="cfgPickList">Themes and tops</h4>
                         <div id="jtPickList"></div>
                     </div>
                     </div>
 
                     <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1em">
                         <span style="flex:1 1 15em;opacity:0.7">File Transformation: <span id="jtFileTransformation">…</span></span>
-                        <button is="emby-button" type="submit" class="raised button-submit emby-button" style="margin:0;flex:0 0 auto;min-width:10em">
+                        <button is="emby-button" type="submit" class="raised button-submit emby-button" style="margin:0;flex:0 0 auto;min-width:10em;justify-content:center;text-align:center">
                             <span data-jt-i18n="save">Save</span>
                         </button>
                     </div>
@@ -173,20 +176,30 @@
                     });
                 });
 
+                // Once done, the button says so and stays disabled until the page is opened again.
                 page.querySelector('#jtMoveFirst').addEventListener('click', function () {
+                    const button = this;
                     const result = page.querySelector('#jtMoveFirstResult');
                     result.textContent = '';
+                    button.disabled = true;
                     fetch(ApiClient.getUrl('JellyTwiggy/Picks/MoveFirst'), {
                         method: 'POST',
                         headers: { Authorization: 'MediaBrowser Token="' + ApiClient.accessToken() + '"' }
                     }).then(function (response) {
-                        result.textContent = response.ok ? t('cfgMovedFirst', 'Done') : t('loadFailed', 'Failed');
-                    }, function () {
+                        if (!response.ok) {
+                            throw new Error(String(response.status));
+                        }
+                        button.querySelector('span').textContent = t('cfgMovedFirst', 'Done');
+                    }).catch(function () {
                         result.textContent = t('loadFailed', 'Failed');
+                        button.disabled = false;
                     });
                 });
 
                 page.addEventListener('pageshow', function () {
+                    const moveFirst = page.querySelector('#jtMoveFirst');
+                    moveFirst.disabled = false;
+                    page.querySelector('#jtMoveFirstResult').textContent = '';
                     page.querySelectorAll('[data-jt-i18n]').forEach(function (element) {
                         element.textContent = t(element.dataset.jtI18n, element.textContent);
                     });
