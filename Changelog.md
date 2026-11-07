@@ -10,7 +10,7 @@
 - Every theme shows from a month before its date; the nearest one not yet past wins, and on the same day religious holidays (Epiphany, Maslenitsa, Easter) give way to the others
 - «Coming soon!» also shows the holidays due within a week of the nearest one, up to three, nearest first
 - Watching a film from a channel marks the library film as watched and counts the view
-- Plugin settings are split into the "General" and "Themed channel" tabs; the second one shows or hides the channels, puts them first for every user, and has the libraries for the channels and the themes and tops, with film series under one "Favourite franchises" checkbox
+- Plugin settings are split into the "General" and "Themed channels" tabs; the second one shows or hides the channels, puts them first for every user, and has the libraries for the channels and the themes and tops, with film series under one "Favourite franchises" checkbox
 - Home screen (web client): the channel rows are titled just with the channel name, without "Latest"
 
 ## 0.4.5.0
