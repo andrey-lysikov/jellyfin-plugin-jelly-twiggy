@@ -1,0 +1,235 @@
+using Jellyfin.Plugin.JellyTwiggy.Picks;
+using Xunit;
+
+namespace Jellyfin.Plugin.JellyTwiggy.Tests;
+
+public class PickSelectorTests
+{
+    private static readonly HashSet<string> NoneDisabled = [];
+
+    private static MovieFacts Film(
+        string name,
+        string[]? tags = null,
+        string[]? genres = null,
+        float? rating = 7,
+        float? critic = null,
+        string? collection = null,
+        int year = 2000,
+        string? original = null,
+        string? overview = null,
+        string[]? studios = null) => new(
+            Guid.NewGuid(),
+            name,
+            original,
+            overview,
+            new HashSet<string>(tags ?? [], StringComparer.OrdinalIgnoreCase),
+            new HashSet<string>(genres ?? [], StringComparer.OrdinalIgnoreCase),
+            new HashSet<string>(studios ?? [], StringComparer.OrdinalIgnoreCase),
+            year,
+            rating,
+            critic,
+            collection);
+
+    private static PickDefinition Theme(string id) => PickCatalog.Themes.Single(t => t.Id == id);
+
+    private static PickDefinition Top(string id) => PickCatalog.Tops.Single(t => t.Id == id);
+
+    private static List<MovieFacts> ChristmasFilms(int count) =>
+        Enumerable.Range(0, count).Select(i => Film($"Рождество {i}", ["christmas", "santa claus"])).ToList();
+
+    [Fact]
+    public void LoneHolidayTagIsNotEnough()
+    {
+        var gump = Film("Форрест Гамп", ["christmas", "vietnam war"], rating: 8.8f);
+        var klaus = Film("Клаус", ["christmas", "santa claus", "elf"], rating: 8.2f);
+
+        var picked = PickSelector.SelectTheme(Theme("newyear"), [gump, klaus]);
+
+        Assert.Equal(new[] { klaus.Id }, picked);
+    }
+
+    [Fact]
+    public void RussianOverviewCountsAndWordsMustStartWithTheStem()
+    {
+        var irony = Film("Ирония судьбы, или С легким паром!", ["new year's eve"], overview: "В новогоднюю ночь…");
+        // "Белка" and "Стрелка" contain "елк" but are not about a fir tree.
+        var squirrel = Film("Белка и Стрелка", ["dog"], overview: "Собаки летят в космос");
+
+        Assert.Equal(3 + 2, PickSelector.Score(Theme("newyear").Rule!, irony).Total);
+        Assert.Equal(new[] { irony.Id }, PickSelector.SelectTheme(Theme("newyear"), [irony, squirrel]));
+    }
+
+    [Fact]
+    public void HalloweenNeedsAStrongSignal()
+    {
+        var wizards = Film("Школа волшебников", ["witch", "ghost", "monster", "supernatural", "curse"]);
+        var horror = Film("Призрак оперы", ["ghost"], genres: ["ужасы"]);
+
+        var picked = PickSelector.SelectTheme(Theme("halloween"), [wizards, horror]);
+
+        Assert.Equal(new[] { horror.Id }, picked);
+    }
+
+    [Fact]
+    public void AtMostTwoFilmsPerFranchiseInAHoliday()
+    {
+        var series = Enumerable.Range(0, 3).Select(i => Film($"Ёлки {i}", ["new year's eve", "christmas"], collection: "107465")).ToList();
+        var other = Film("Гринч", ["christmas", "santa claus"]);
+
+        var picked = PickSelector.SelectTheme(Theme("newyear"), [.. series, other]);
+
+        Assert.Equal(3, picked.Count);
+        Assert.Contains(other.Id, picked);
+    }
+
+    [Fact]
+    public void FranchiseGoesInReleaseOrder()
+    {
+        var films = new[]
+        {
+            Film("Возвращение короля", collection: "119", year: 2003),
+            Film("Братство кольца", collection: "119", year: 2001),
+            Film("Нежданное путешествие", collection: "121938", year: 2012),
+            Film("Чужой", collection: "8091", year: 1979)
+        };
+
+        var chosen = PickSelector.ChooseTheme(new DateOnly(2027, 9, 22), films, NoneDisabled);
+
+        Assert.Equal("tolkien", chosen?.Pick.Id);
+        Assert.Equal(new[] { films[1].Id, films[0].Id, films[2].Id }, chosen?.Items);
+    }
+
+    [Fact]
+    public void StarWarsSpinOffsMatchByOriginalTitle()
+    {
+        var rogue = Film("Изгой-один", original: "Rogue One: A Star Wars Story", year: 2016);
+        var episode = Film("Новая надежда", collection: "10", year: 1977);
+        var solo = Film("Соло", original: "Solo Mio");
+
+        var picked = PickSelector.SelectTheme(Theme("starwars"), [rogue, episode, solo]);
+
+        Assert.Equal(new[] { episode.Id, rogue.Id }, picked);
+    }
+
+    [Fact]
+    public void HolidayWithTooFewFilmsGivesWayToAFranchise()
+    {
+        var films = ChristmasFilms(5).Append(Film("Toy Story", studios: ["Pixar"])).Append(Film("Up", studios: ["Pixar"])).ToList();
+
+        var chosen = PickSelector.ChooseTheme(new DateOnly(2026, 12, 20), films, NoneDisabled);
+
+        Assert.Equal("pixar", chosen?.Pick.Id);
+    }
+
+    [Fact]
+    public void HolidayWithEnoughFilmsIsChosen()
+    {
+        var chosen = PickSelector.ChooseTheme(new DateOnly(2026, 12, 20), ChristmasFilms(6), NoneDisabled);
+
+        Assert.Equal("newyear", chosen?.Pick.Id);
+        Assert.Equal(6, chosen?.Items.Count);
+    }
+
+    [Fact]
+    public void DisabledHolidayIsSkipped()
+    {
+        var chosen = PickSelector.ChooseTheme(new DateOnly(2026, 12, 20), ChristmasFilms(6), new HashSet<string> { "newyear" });
+
+        Assert.Null(chosen);
+    }
+
+    [Fact]
+    public void FranchisesRotateWeekly()
+    {
+        var films = new[]
+        {
+            Film("Toy Story", studios: ["Pixar"]), Film("Up", studios: ["Pixar"]),
+            Film("Iron Man", studios: ["Marvel Studios"]), Film("Thor", studios: ["Marvel Studios"])
+        };
+
+        var monday = PickSelector.ChooseTheme(new DateOnly(2027, 1, 18), films, NoneDisabled)?.Pick.Id;
+        var sunday = PickSelector.ChooseTheme(new DateOnly(2027, 1, 24), films, NoneDisabled)?.Pick.Id;
+        var nextMonday = PickSelector.ChooseTheme(new DateOnly(2027, 1, 25), films, NoneDisabled)?.Pick.Id;
+
+        Assert.Equal(monday, sunday);
+        Assert.NotEqual(monday, nextMonday);
+    }
+
+    [Fact]
+    public void TopFiftyNeedsBothRatingsAndCountsServerViews()
+    {
+        var noCritic = Film("Без критиков", rating: 9.5f);
+        var good = Film("Хороший", rating: 8.0f, critic: 80);
+        var loved = Film("Любимый", rating: 7.8f, critic: 80);
+        var usage = new UsageFacts();
+        usage.Viewers[loved.Id] = 4;
+
+        var picked = PickSelector.SelectTop(Top("top50"), [noCritic, good, loved], usage);
+
+        Assert.Equal(new[] { loved.Id, good.Id }, picked);
+    }
+
+    [Fact]
+    public void UnderratedNeedsADecentAudienceRating()
+    {
+        var obscure = Film("Пара рецензий", rating: 4.5f, critic: 100);
+        var cult = Film("Культовый", rating: 7.0f, critic: 95);
+        var popular = Film("Все любят", rating: 8.5f, critic: 90);
+
+        Assert.Equal(new[] { cult.Id }, PickSelector.SelectTop(Top("underrated"), [obscure, cult, popular], new UsageFacts()));
+    }
+
+    [Fact]
+    public void HiddenGemsSkipAnythingWatched()
+    {
+        var seen = Film("Видели", rating: 8.5f);
+        var unseen = Film("Не видели", rating: 8.0f);
+        var weak = Film("Слабый", rating: 6.0f);
+        var usage = new UsageFacts();
+        usage.Touched.Add(seen.Id);
+
+        Assert.Equal(new[] { unseen.Id }, PickSelector.SelectTop(Top("hiddengems"), [seen, unseen, weak], usage));
+    }
+
+    [Fact]
+    public void ServerFavoritesNeedMoreThanOneViewer()
+    {
+        var once = Film("Раз");
+        var twice = Film("Два");
+        var favorite = Film("Избранное");
+        var usage = new UsageFacts();
+        usage.Viewers[once.Id] = 1;
+        usage.Viewers[twice.Id] = 2;
+        usage.Favorites[favorite.Id] = 1;
+
+        Assert.Equal(new[] { twice.Id, favorite.Id }, PickSelector.SelectTop(Top("serverfavorites"), [once, twice, favorite], usage));
+    }
+
+    [Fact]
+    public void RotationSkipsTopsWithTooFewFilmsAndWraps()
+    {
+        // "top50" takes every rated film; after it only "underrated" and "books" have enough.
+        var books = Enumerable.Range(0, 6).Select(i => Film($"Книга {i}", ["based on novel or book"], rating: 6, critic: 50)).ToList();
+        var underrated = Enumerable.Range(0, 6).Select(i => Film($"Критики {i}", rating: 7, critic: 90)).ToList();
+        List<MovieFacts> films = [.. books, .. underrated];
+        var tops = PickCatalog.Tops.Select(t => t.Id).ToList();
+
+        var first = PickSelector.NextTop(-1, films, new UsageFacts(), NoneDisabled);
+        var second = PickSelector.NextTop(first!.Value.Index, films, new UsageFacts(), NoneDisabled);
+        var third = PickSelector.NextTop(second!.Value.Index, films, new UsageFacts(), NoneDisabled);
+
+        Assert.Equal("top50", tops[first.Value.Index]);
+        Assert.Equal("underrated", tops[second.Value.Index]);
+        Assert.Equal("books", tops[third!.Value.Index]);
+    }
+
+    [Fact]
+    public void RotationSkipsDisabledTops()
+    {
+        var films = Enumerable.Range(0, 6).Select(i => Film($"Фильм {i}", rating: 8, critic: 80)).ToList();
+
+        var next = PickSelector.NextTop(-1, films, new UsageFacts(), new HashSet<string> { "top50" });
+
+        Assert.NotEqual("top50", PickCatalog.Tops[next!.Value.Index].Id);
+    }
+}

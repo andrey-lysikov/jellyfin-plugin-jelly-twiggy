@@ -3,6 +3,7 @@ using System.Globalization;
 using Jellyfin.Data.Enums;
 using Jellyfin.Database.Implementations.Entities;
 using Jellyfin.Database.Implementations.Enums;
+using Jellyfin.Plugin.JellyTwiggy.Picks;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
@@ -22,13 +23,15 @@ public class MediaBadgeService
 
     private readonly ILibraryManager _libraryManager;
     private readonly IMediaSourceManager _mediaSourceManager;
+    private readonly PickCopies _copies;
     private readonly ConcurrentDictionary<Guid, CacheEntry> _cache = new();
 
     /// <summary>Initializes a new instance of the <see cref="MediaBadgeService"/> class.</summary>
-    public MediaBadgeService(ILibraryManager libraryManager, IMediaSourceManager mediaSourceManager)
+    public MediaBadgeService(ILibraryManager libraryManager, IMediaSourceManager mediaSourceManager, PickCopies copies)
     {
         _libraryManager = libraryManager;
         _mediaSourceManager = mediaSourceManager;
+        _copies = copies;
     }
 
     /// <summary>Gets badges for an item; null when it doesn't exist or the viewer can't see it.</summary>
@@ -39,6 +42,9 @@ public class MediaBadgeService
         {
             return null;
         }
+
+        // A channel copy has no streams of its own: it shows the library film's badges.
+        item = _copies.Resolve(item);
 
         var now = DateTime.UtcNow;
         if (_cache.TryGetValue(itemId, out var cached)

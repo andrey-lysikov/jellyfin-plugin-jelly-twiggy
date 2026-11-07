@@ -5,6 +5,9 @@
 - New interface languages: Arabic, Belarusian, Chinese (Simplified), Czech, French, Italian, Japanese, Kazakh, Polish and Serbian; terms follow Jellyfin's own translations
 - Active streams: running tasks are listed as plain tiles after the sessions, without the "Scheduled tasks" heading
 - Item page: the video track is plain text again instead of quality badges
+- New «Themed» and «Best» channels: films for the nearest holiday or a film series, and a server-wide top that changes weekly; they show up in "Latest" on the home screen in every client
+- Watching a film from a channel marks the library film as watched and counts the view
+- Plugin settings: libraries for the channels, channel names and the list of themes and tops
 
 ## 0.4.5.0
 
