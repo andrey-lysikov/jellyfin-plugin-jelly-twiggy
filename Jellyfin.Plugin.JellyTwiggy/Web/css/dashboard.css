@@ -166,7 +166,7 @@
 
 .jt-recent-row {
     display: grid;
-    grid-template-columns: 1.6em minmax(0, 1fr) minmax(0, 11em) 10.5em 5.5em 3.5em 1.4em;
+    grid-template-columns: 1.6em minmax(0, 1fr) minmax(0, 11em) 10.5em 5.5em 5em 1.4em;
     align-items: center;
     gap: 12px;
     padding: 7px 0;
@@ -192,6 +192,7 @@
 .jt-recent-time {
     font-size: 0.85em;
     text-align: right;
+    white-space: nowrap;
     font-variant-numeric: tabular-nums;
     color: var(--jt-muted, rgba(255, 255, 255, 0.6));
 }

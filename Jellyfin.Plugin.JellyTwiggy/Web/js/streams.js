@@ -48,19 +48,18 @@
         return JT.el('span', { className: `jt-chip ${methodClass}`, text: [playMethodLabel(nowPlaying.PlayMethod), rate].filter(Boolean).join(' · ') });
     }
 
-    function userChip(session) {
-        return JT.el('div', { className: 'jt-session-user' }, [
-            JT.avatar(session.UserId, session.UserName, session.UserImageTag, 'jt-avatar-small'),
-            JT.el('span', { text: session.UserName || '' })
-        ]);
-    }
-
-    // Device and client, then the address as one unbreakable piece.
-    function deviceLine(session) {
-        const name = [session.DeviceName, session.Client].filter(Boolean).join(' · ');
+    // "[photo] user · device · address": user and device stay on one line (ellipsis), the address wraps whole.
+    function deviceLine(session, withClient) {
+        const name = [session.DeviceName, withClient ? session.Client : null].filter(Boolean).join(' · ');
         return JT.el('div', { className: 'jt-session-device' }, [
-            name ? JT.el('span', { className: 'jt-session-device-name', text: name }) : null,
-            session.RemoteEndPoint ? JT.el('span', { className: 'jt-session-device-ip', text: (name ? ' · ' : '') + session.RemoteEndPoint }) : null
+            JT.avatar(session.UserId, session.UserName, session.UserImageTag, 'jt-session-device-avatar'),
+            JT.el('span', { className: 'jt-session-device-text' }, [
+                JT.el('span', { className: 'jt-session-device-main', title: [session.UserName, name].filter(Boolean).join(' · ') }, [
+                    session.UserName ? JT.el('span', { className: 'jt-session-device-user', text: session.UserName }) : null,
+                    name ? JT.el('span', { className: 'jt-session-device-name', text: (session.UserName ? ' · ' : '') + name }) : null
+                ]),
+                session.RemoteEndPoint ? JT.el('span', { className: 'jt-session-device-ip', text: session.RemoteEndPoint }) : null
+            ])
         ]);
     }
 
@@ -97,7 +96,7 @@
         ]);
     }
 
-    // Poster left on a blurred copy of itself, user in the top-right corner, progress at the bottom.
+    // Poster left on a blurred copy of itself; title, badges with the client, user and device, progress.
     JT.sessionCard = function (session, options) {
         const nowPlaying = session.NowPlaying;
         const key = `${session.Id || [session.UserId, session.DeviceName, session.Client].join('/')}|${nowPlaying?.ItemId || 'idle'}`;
@@ -106,10 +105,9 @@
                 JT.el('div', { className: 'jt-session-poster jt-session-poster-empty' }, JT.icon('devices')),
                 JT.el('div', { className: 'jt-session-info' }, JT.el('div', { className: 'jt-session-top' }, [
                     JT.el('div', { className: 'jt-session-titles' }, [
-                        deviceLine(session),
+                        deviceLine(session, true),
                         JT.el('div', { className: 'jt-session-status', text: `${JT.t('idle')} · ${JT.t('lastSeen', { time: JT.formatRelative(session.LastActivityDate) })}` })
-                    ]),
-                    userChip(session)
+                    ])
                 ]))
             ]);
         }
@@ -137,11 +135,11 @@
                             note ? JT.el('span', { className: 'jt-session-note', text: note }) : null
                         ]),
                         subtitle ? JT.el('div', { className: 'jt-session-subtitle', text: subtitle }) : null
-                    ]),
-                    userChip(session)
+                    ])
                 ]),
-                JT.el('div', { className: 'jt-session-badges' }),
-                deviceLine(session),
+                JT.el('div', { className: 'jt-session-badges' },
+                    session.Client ? JT.el('span', { className: 'jt-badge jt-session-client', text: session.Client }) : null),
+                deviceLine(session, false),
                 // State and time left of the progress bar; play method left and handoff buttons right below.
                 JT.el('div', { className: 'jt-session-bottom' }, [
                     JT.el('div', { className: 'jt-session-status' }, [
@@ -158,7 +156,7 @@
         ]);
     };
 
-    // Quality and audio of what is playing (the same badges as on posters).
+    // Quality and audio of what is playing (the same badges as on posters), before the client badge.
     async function addBadges(card) {
         const slot = card.querySelector('.jt-session-badges');
         if (!slot || !card.dataset.jtItem || !JT.fetchBadges) {
@@ -167,8 +165,8 @@
         try {
             const badges = await JT.fetchBadges(card.dataset.jtItem);
             const row = [...(badges ? JT.videoBadges(badges) : []), badges?.Audio ? JT.el('span', { className: 'jt-badge', text: badges.Audio }) : null].filter(Boolean);
-            if (row.length && !slot.hasChildNodes()) {
-                slot.replaceChildren(...row);
+            if (row.length && !slot.querySelector('.jt-badge:not(.jt-session-client)')) {
+                slot.prepend(...row);
             }
         } catch (e) {
             console.error('[JellyTwiggy] session badges', e);

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.1.0
+
+- Active streams: the player app is a badge after quality and audio; the user's photo and name start the device line, a long device name ends with an ellipsis and the address moves to the next line; the title uses the full width
+- Active streams: with many sessions the panel scrolls instead of squashing the cards
+- Dashboard recent plays: times with AM / PM fit on one line
+
 ## 0.5.0.0
 
 - New «Coming soon!» and «Best» channels with films from the libraries you choose; they show up in "Latest" on the home screen in every client
