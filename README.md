@@ -38,6 +38,9 @@ We recommend [Swiftly Player](https://swiftlyplayer.com/) ([GitHub](https://gith
   <img src="assets/previews/streams.png" width="34%" alt="Active streams">
 </p>
 <p align="center">
+  <img src="assets/previews/channels.jpg" alt="Coming soon! and Best channels on the home screen">
+</p>
+<p align="center">
   <img src="assets/previews/dashboard.png" alt="Dashboard edit mode">
 </p>
 <p align="center">
@@ -45,7 +48,7 @@ We recommend [Swiftly Player](https://swiftlyplayer.com/) ([GitHub](https://gith
   <img src="assets/previews/settings.png" width="34%" alt="User settings">
 </p>
 
-*Screenshots use posters of the Blender open movies Big Buck Bunny, Sintel, Tears of Steel, Spring and Cosmos Laundromat (© Blender Foundation, CC BY) and Boris Bilinsky's Metropolis poster (public domain); users and statistics are made up.*
+*Screenshots use posters of the Blender open movies Big Buck Bunny, Sintel, Tears of Steel, Spring, Cosmos Laundromat, Elephants Dream, Charge and Sprite Fright (© Blender Foundation, CC BY) and Boris Bilinsky's Metropolis poster (public domain); users and statistics are made up.*
 
 ## Install
 

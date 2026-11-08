@@ -427,6 +427,9 @@ html.jt-anim-streams :is(.jt-streams-active, .jt-streams-busy) .jt-streams-ring 
 /* Two lists in the panel: sessions, then running tasks; both lay out as panel rows. */
 .jt-streams-list { display: contents; }
 
+/* Rows keep their height; a long list scrolls instead of squashing the cards. */
+.jt-streams-panel :is(.jt-session, .jt-task, .jt-empty) { flex-shrink: 0; }
+
 .jt-task {
     display: flex;
     align-items: center;
@@ -544,27 +547,16 @@ a.jt-session:hover { border-color: rgba(255, 255, 255, 0.3); }
     color: var(--jt-muted);
 }
 
-/* The address never breaks inside: if the line is too long, it moves down whole. */
-.jt-session-device-ip { white-space: nowrap; overflow-wrap: normal; }
+/* User photo, then "user · device" on one line with an ellipsis; the address moves down whole if it doesn't fit. */
+.jt-session-device { display: flex; align-items: flex-start; gap: 0.45em; }
+.jt-session-device-avatar { width: 1.5em; height: 1.5em; font-size: 1em; margin-top: -0.05em; }
+.jt-session-device-text { display: flex; flex-wrap: wrap; column-gap: 1em; min-width: 0; overflow: hidden; line-height: 1.4; }
+.jt-session-device-main { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.jt-session-device-user { font-weight: 600; color: var(--jt-text); }
+.jt-session-device-ip { position: relative; flex: 0 0 auto; white-space: nowrap; }
 
-.jt-session-user {
-    flex: 0 0 auto;
-    display: flex;
-    align-items: center;
-    gap: 0.4em;
-    max-width: 45%;
-    padding: 2px 10px 2px 3px;
-    border-radius: 2em;
-    font-size: 0.85em;
-    font-weight: 600;
-    background: rgba(0, 0, 0, 0.45);
-}
-
-.jt-session-user span {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+/* The dot sits in the gap before the address; at the start of a wrapped line it is clipped away. */
+.jt-session-device-ip::before { content: "·"; position: absolute; right: 100%; width: 1em; text-align: center; }
 
 .jt-session-bottom {
     display: flex;
@@ -1237,6 +1229,9 @@ html.jt-ui-radius-large :is(.emby-button, .button-flat, .raised, .emby-input, .e
 }
 
 .jt-session-badges:empty { display: none; }
+
+/* The client app after quality and audio: a quiet badge. */
+.jt-session-client { font-variant-caps: normal; background: rgba(255, 255, 255, 0.08); box-shadow: none; }
 
 /* ---- Play on ----------------------------------------------------------------------------- */
 
