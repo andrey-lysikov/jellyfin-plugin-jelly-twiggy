@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.1.1
+
+- Add stop button for active stream
+
 ## 0.5.1.0
 
 - Active streams: the player app is a badge after quality and audio; the user's photo and name start the device line, a long device name ends with an ellipsis and the address moves to the next line; the title uses the full width
