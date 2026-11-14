@@ -316,6 +316,25 @@ public class JellyTwiggyController : ControllerBase
         return _sessions.GetSessions(userId.Value, User.FindFirstValue(DeviceIdClaim), _userSettings.Get(userId.Value).EnableHandoff, isAdmin, !(includeIdle && isAdmin), TimeSpan.FromHours(1));
     }
 
+    /// <summary>Stops playback on a session: admins may stop any, other users only their own.</summary>
+    [HttpPost("Sessions/{sessionId}/Stop")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> StopJellyTwiggySession([FromRoute, Required] string sessionId, CancellationToken cancellationToken)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        // A session that isn't the viewer's looks the same as one that's gone.
+        var stopped = await _sessions.StopSession(userId.Value, User.FindFirstValue(DeviceIdClaim), IsAdmin, sessionId, cancellationToken).ConfigureAwait(false);
+        return stopped ? NoContent() : NotFound();
+    }
+
     /// <summary>Gets playback statistics.</summary>
     [HttpGet("Statistics")]
     [Authorize(Policy = Policies.RequiresElevation)]

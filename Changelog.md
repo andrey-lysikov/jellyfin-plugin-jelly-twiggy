@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.2.1
+
+- Stop only show when user is admin
+
 ## 0.5.2.0
 
 - Bugfix

@@ -130,6 +130,25 @@ public sealed class SessionsService : IDisposable
             .ToList();
     }
 
+    /// <summary>Stops what a session plays: an admin may stop any session, other users only their own.</summary>
+    /// <returns>True when the stop was sent; false when the session is gone, idle, not remote-controllable or not the viewer's to stop.</returns>
+    public async Task<bool> StopSession(Guid viewerId, string? viewerDeviceId, bool isAdmin, string sessionId, CancellationToken cancellationToken)
+    {
+        var sessions = _sessionManager.Sessions.ToList();
+        var target = sessions.FirstOrDefault(s => string.Equals(s.Id, sessionId, StringComparison.Ordinal));
+        if (target is null || target.NowPlayingItem is null || !target.SupportsRemoteControl || (!isAdmin && target.UserId != viewerId))
+        {
+            return false;
+        }
+
+        // The server wants a controlling session: the viewer's own device, else the target itself (as handoff does).
+        var own = sessions
+            .Where(s => s.UserId == viewerId && string.Equals(s.DeviceId, viewerDeviceId, StringComparison.Ordinal))
+            .MaxBy(s => s.LastActivityDate);
+        await _sessionManager.SendPlaystateCommand(own?.Id ?? target.Id, target.Id, new PlaystateRequest { Command = PlaystateCommand.Stop }, cancellationToken).ConfigureAwait(false);
+        return true;
+    }
+
     // Sessions playing since before the plugin loaded count from the first time they are seen.
     private DateTime StartedAt(string sessionId, Guid itemId, bool paused, DateTime now)
     {
