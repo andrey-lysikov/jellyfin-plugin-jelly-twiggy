@@ -8,6 +8,7 @@
 
     let sessions = [];
     let tasks = [];
+    let currentUser = null;
     let panel = null;
     let panelTimer = null;
 
@@ -63,6 +64,17 @@
         ]);
     }
 
+    const normalizeId = (id) => String(id || '').replace(/-/g, '').toLowerCase();
+
+    // Stopping is for administrators and for the owner of the session.
+    function canStop(session) {
+        if (!currentUser) {
+            return false;
+        }
+        return !!currentUser.Policy?.IsAdministrator
+            || (!!session.UserId && normalizeId(session.UserId) === normalizeId(currentUser.Id));
+    }
+
     // Red pill with a stop icon, shaped like the handoff buttons; stops the session's playback.
     function stopButton(session) {
         return JT.el('button', {
@@ -77,10 +89,8 @@
                 const btn = e.currentTarget;
                 btn.disabled = true;
                 try {
-                    await window.ApiClient.ajax({
-                        type: 'POST',
-                        url: window.ApiClient.getUrl(`Sessions/${session.Id}/Playing/Stop`)
-                    });
+                    // The server checks that the session is the viewer's (or the viewer is an admin).
+                    await JT.post(`JellyTwiggy/Sessions/${encodeURIComponent(session.Id)}/Stop`);
                     await refresh();
                 } catch (err) {
                     console.error('[JellyTwiggy] stop playback', err);
@@ -180,7 +190,7 @@
                         // Stop and handoff buttons share one group pinned to the right edge.
                         JT.el('div', { className: 'jt-session-actions' }, [
                             options?.takeover && session.CanTakeOver ? takeoverButtons(session) : null,
-                            stopButton(session)
+                            canStop(session) ? stopButton(session) : null
                         ])
                     ])
                 ])
@@ -315,7 +325,20 @@
         }
     }
 
+    async function loadCurrentUser() {
+        if (currentUser) {
+            return currentUser;
+        }
+        try {
+            currentUser = await window.ApiClient.getCurrentUser();
+        } catch (e) {
+            console.error('[JellyTwiggy] current user', e);
+        }
+        return currentUser;
+    }
+
     async function refresh() {
+        await loadCurrentUser();
         const [list, running] = await Promise.all([JT.get('JellyTwiggy/Sessions').catch((e) => e), loadTasks()]);
         tasks = running;
         if (list instanceof Error) {
