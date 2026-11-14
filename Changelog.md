@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.2.0
+
+- Bugfix
+
 ## 0.5.1.1
 
 - Add stop button for active stream

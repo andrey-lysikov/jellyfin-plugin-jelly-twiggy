@@ -621,7 +621,6 @@ a.jt-session:hover { border-color: rgba(255, 255, 255, 0.3); }
 .jt-session-handoff {
     display: inline-flex;
     gap: 1px;
-    margin-left: auto;
 }
 
 .jt-session-takeover {
@@ -643,40 +642,37 @@ a.jt-session:hover { border-color: rgba(255, 255, 255, 0.3); }
 .jt-session-move { padding-inline: 0.45em 0.15em; border-radius: 0 1em 1em 0; }
 .jt-session-move .material-icons + .material-icons { margin-left: -0.3em; }
 
-/* Stop playback: red square with a white stop icon */
+/* Stop and handoff buttons: one group pinned to the right edge of the row. */
+.jt-session-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.4em;
+    margin-left: auto;
+}
+
+/* Stop playback: red pill of the same size as the handoff buttons. */
 .jt-session-stop {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     flex: 0 0 auto;
-    width: 22px;
-    height: 22px;
-    margin: 0 8px 0 0;
-    padding: 0;
-    border: none;
-    border-radius: 4px;
-    background: var(--jp-color-red, #ff3b30);
+    min-width: 2.2em;
+    height: 1.7em;
+    padding: 0 0.5em;
+    border: 0;
+    border-radius: 1em;
     color: #fff;
+    background: #e5493a;
     cursor: pointer;
-    transition: background .15s, transform .1s;
+    transition: filter .15s, transform .1s;
 }
+
 .jt-session-stop:hover,
-.jt-session-stop:focus-visible {
-    background: #ff6157;
-    outline: none;
-}
-.jt-session-stop:active {
-    transform: scale(.94);
-}
-.jt-session-stop:disabled {
-    opacity: .6;
-    cursor: default;
-}
-.jt-session-stop-icon svg {
-    display: block;
-    width: 12px;
-    height: 12px;
-}
+.jt-session-stop:focus-visible { filter: brightness(1.15); outline: none; }
+.jt-session-stop:active { transform: scale(0.94); }
+.jt-session-stop:disabled { opacity: 0.6; cursor: default; }
+.jt-session-stop .material-icons { font-size: 1.35em; }
 
 /* ---- Watched by ------------------------------------------------------------------------- */
 
