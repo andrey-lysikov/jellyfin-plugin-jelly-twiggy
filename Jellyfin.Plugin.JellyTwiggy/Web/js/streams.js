@@ -63,33 +63,34 @@
         ]);
     }
 
-    // Red square with a white stop icon; sends StopPlayback to the session.
-    const STOP_SVG = '<svg viewBox="0 0 24 24" fill="currentColor" focusable="false" aria-hidden="true"><path d="M6 6h12v12H6z"/></svg>';
-
+    // Red pill with a stop icon, shaped like the handoff buttons; stops the session's playback.
     function stopButton(session) {
-        const icon = JT.el('span', { className: 'jt-session-stop-icon' });
-        icon.innerHTML = STOP_SVG;
         return JT.el('button', {
             type: 'button',
             className: 'jt-session-stop',
             title: JT.t('stop'),
             'aria-label': JT.t('stop'),
-            onClick: (e) => {
+            onClick: async (e) => {
+                // The card is a link and the panel closes on card clicks: keep both out of it.
                 e.preventDefault();
                 e.stopPropagation();
                 const btn = e.currentTarget;
                 btn.disabled = true;
-                window.ApiClient
-                    .post(`Sessions/${session.Id}/Command/StopPlayback`)
-                    .then(refresh)
-                    .catch((err) => console.error('[JellyTwiggy] stop playback', err))
-                    .finally(() => {
-                        btn.disabled = false;
+                try {
+                    await window.ApiClient.ajax({
+                        type: 'POST',
+                        url: window.ApiClient.getUrl(`Sessions/${session.Id}/Playing/Stop`)
                     });
+                    await refresh();
+                } catch (err) {
+                    console.error('[JellyTwiggy] stop playback', err);
+                } finally {
+                    btn.disabled = false;
+                }
             }
-        }, icon);
+        }, JT.icon('stop'));
     }
-    
+
     // Inline SVG so the ring spins as a vector around its own centre, without pixel snapping.
     const ICON_SVG = '<svg viewBox="0 0 1000 1000" fill="none" stroke="currentColor" stroke-width="80">'
         + '<path class="jt-streams-ring" stroke-linecap="round" d="M105 500 A395 395 0 1 1 154 690"/>'
@@ -176,8 +177,11 @@
                     ]),
                     JT.el('div', { className: 'jt-session-meta' }, [
                         methodChip(nowPlaying),
-                        stopButton(session),
-                        options?.takeover && session.CanTakeOver ? takeoverButtons(session) : null
+                        // Stop and handoff buttons share one group pinned to the right edge.
+                        JT.el('div', { className: 'jt-session-actions' }, [
+                            options?.takeover && session.CanTakeOver ? takeoverButtons(session) : null,
+                            stopButton(session)
+                        ])
                     ])
                 ])
             ])
