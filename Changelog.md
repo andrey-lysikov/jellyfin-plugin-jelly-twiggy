@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.2.2
+
+- Russian text fixes 
+
 ## 0.5.2.1
 
 - Stop only show when user is admin
