@@ -7,6 +7,10 @@
 - Kept the last non-empty pick when no replacement is available; scheduled tasks remove only films deleted from Jellyfin
 - Removed the legacy channels and their copies once during the upgrade
 - Moved Jelly Twiggy user settings from a dialog into an in-page preferences form
+
+## 0.5.2.2
+
+- Russian text fixes
 ## 0.5.2.1
 
 - Stop only show when user is admin
