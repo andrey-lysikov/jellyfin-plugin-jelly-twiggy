@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.6.0.0
 
 - Replaced generated channels and their copies with managed collections containing the original library films
 - Added dynamic collection titles, per-user home row visibility settings and two collection rows after Next Up in the web client
