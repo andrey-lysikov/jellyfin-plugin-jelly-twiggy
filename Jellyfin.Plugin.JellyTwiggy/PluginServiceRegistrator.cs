@@ -19,6 +19,7 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
         serviceCollection.AddSingleton<UserSettingsStore>();
         serviceCollection.AddSingleton<PickStore>();
         serviceCollection.AddSingleton<PickCollections>();
+        serviceCollection.AddSingleton<PickCollectionPosters>();
         serviceCollection.AddSingleton<LegacyChannelCleanup>();
         serviceCollection.AddSingleton<PickService>();
         serviceCollection.AddSingleton<PlaybackHistoryStore>();

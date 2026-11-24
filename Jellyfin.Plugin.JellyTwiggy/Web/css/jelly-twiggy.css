@@ -1231,6 +1231,9 @@ html.jt-ui-radius-large :is(.emby-button, .button-flat, .raised, .emby-input, .e
 
 .jt-handoff-menu-empty { padding: 0.6em 0.8em; color: var(--jt-muted); }
 
+/* ---- Home sections ---------------------------------------------------------------------- */
+.homeSectionsContainer .sectionTitleTextButton > .chevron_right { display: none; }
+
 /* ---- Managed collection rows ------------------------------------------------------------ */
 .jt-pick-section[hidden] { display: none !important; }
 .jt-pick-section .sectionTitleTextButton { text-decoration: none; }

@@ -4,6 +4,7 @@
 
 - Replaced generated channels and their copies with managed collections containing the original library films
 - Added dynamic collection titles, per-user home row visibility settings and two collection rows after Next Up in the web client
+- Added automatic collection posters built from the current films, while preserving custom artwork
 - Kept the last non-empty pick when no replacement is available; scheduled tasks remove only films deleted from Jellyfin
 - Removed the legacy channels and their copies once during the upgrade
 - Moved Jelly Twiggy user settings from a dialog into an in-page preferences form

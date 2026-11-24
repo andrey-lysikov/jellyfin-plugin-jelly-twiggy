@@ -4,6 +4,7 @@ using Jellyfin.Plugin.JellyTwiggy.Configuration;
 using Jellyfin.Plugin.JellyTwiggy.History;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Entities;
 using Microsoft.Extensions.Logging;
@@ -20,6 +21,7 @@ public class PickService
     private readonly PlaybackHistoryStore _history;
     private readonly PickStore _store;
     private readonly PickCollections _collections;
+    private readonly PickCollectionPosters _posters;
     private readonly ILogger<PickService> _logger;
     private readonly SemaphoreSlim _gate = new(1, 1);
 
@@ -32,6 +34,7 @@ public class PickService
         PlaybackHistoryStore history,
         PickStore store,
         PickCollections collections,
+        PickCollectionPosters posters,
         ILogger<PickService> logger)
     {
         _libraryManager = libraryManager;
@@ -41,6 +44,7 @@ public class PickService
         _history = history;
         _store = store;
         _collections = collections;
+        _posters = posters;
         _logger = logger;
     }
 
@@ -248,7 +252,19 @@ public class PickService
         CancellationToken cancellationToken)
     {
         var previousId = kind == PickCollectionKind.Themed ? state.ThemedCollectionId : state.BestCollectionId;
+        var previousPoster = kind == PickCollectionKind.Themed ? state.ThemedPoster : state.BestPoster;
         var collectionId = await _collections.SyncAsync(kind, result, previousId, cancellationToken).ConfigureAwait(false);
+        var poster = collectionId == previousId ? previousPoster : null;
+        if (collectionId.HasValue && result is not null
+            && _libraryManager.GetItemById<BoxSet>(collectionId.Value) is { } collection)
+        {
+            poster = await _posters.SyncAsync(
+                collection,
+                result.AllItemIds().Distinct().ToList(),
+                poster,
+                cancellationToken).ConfigureAwait(false);
+        }
+
         _store.Save(new PickState
         {
             Themed = kind == PickCollectionKind.Themed ? result : state.Themed,
@@ -256,6 +272,8 @@ public class PickService
             Rounds = rounds ?? state.Rounds,
             ThemedCollectionId = kind == PickCollectionKind.Themed ? collectionId : state.ThemedCollectionId,
             BestCollectionId = kind == PickCollectionKind.Best ? collectionId : state.BestCollectionId,
+            ThemedPoster = kind == PickCollectionKind.Themed ? poster : state.ThemedPoster,
+            BestPoster = kind == PickCollectionKind.Best ? poster : state.BestPoster,
             LegacyChannelsRemoved = state.LegacyChannelsRemoved
         });
     }
