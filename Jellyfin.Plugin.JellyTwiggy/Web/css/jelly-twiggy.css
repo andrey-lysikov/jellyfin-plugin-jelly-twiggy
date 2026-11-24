@@ -1240,8 +1240,10 @@ html.jt-ui-radius-large :is(.emby-button, .button-flat, .raised, .emby-input, .e
     overflow-y: hidden;
     padding: 0.6em 3.3em 1.2em;
     scroll-padding-inline: 3.3em;
-    scrollbar-width: thin;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
+.jt-pick-items::-webkit-scrollbar { display: none; }
 .jt-pick-card {
     min-width: 0;
     color: inherit;

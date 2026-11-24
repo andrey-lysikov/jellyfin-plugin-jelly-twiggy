@@ -39,7 +39,7 @@
 
     function choice(key, value) {
         const select = inputElement('select', 'emby-select');
-        select.className = 'emby-select';
+        select.classList.add('emby-select');
         select.id = `jt-setting-${key}`;
         select.setAttribute('aria-label', JT.t(labelKey(key)));
         for (const option of CHOICES[key]) {
@@ -54,7 +54,10 @@
 
     function choiceRow(key, value) {
         const result = choice(key, value);
-        result.row.appendChild(result.input);
+        result.row.append(result.input, JT.el('div', { className: 'selectArrowContainer' }, [
+            JT.el('div', { style: 'visibility:hidden;display:none;', text: '0' }),
+            JT.icon('keyboard_arrow_down', 'selectArrow')
+        ]));
         return result;
     }
 
@@ -98,7 +101,13 @@
         const actions = JT.el('div', { className: 'jt-settings-actions' }, [cancel, save]);
         const form = JT.el('form', { className: 'jt-settings-form' }, [content, actions]);
         const root = JT.el('div', { className: 'jt-settings-page padded-left padded-right padded-bottom-page' }, [
-            JT.el('h2', { className: 'sectionTitle', text: JT.t('settingsTitle') }),
+            JT.el('div', { className: 'sectionTitle' }, JT.el('img', {
+                id: 'jtIcon',
+                alt: JT.t('settingsTitle'),
+                height: 56,
+                style: 'display:block;height:56px;width:auto',
+                src: JT.asset('img/wordmark.png')
+            })),
             form
         ]);
         page.appendChild(root);

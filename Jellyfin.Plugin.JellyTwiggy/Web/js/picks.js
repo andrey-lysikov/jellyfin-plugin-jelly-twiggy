@@ -153,13 +153,15 @@
                     JT.el('div', { className: 'sectionTitleContainer sectionTitleContainer-cards padded-left' },
                         JT.el('a', {
                             is: 'emby-linkbutton',
-                            className: 'more button-flat button-flat-mini sectionTitleTextButton',
-                            href: detailsUrl(collection.Id)
-                        }, [
-                            JT.el('h2', { className: 'sectionTitle sectionTitle-cards', text: collection.Name }),
-                            JT.icon('chevron_right')
-                        ])),
-                    JT.el('div', { className: 'itemsContainer scrollSlider focuscontainer-x jt-pick-items' })
+                            className: 'more button-flat button-flat-mini sectionTitleTextButton itemAction',
+                            href: detailsUrl(collection.Id),
+                            'data-action': 'link',
+                            'data-id': collection.Id,
+                            'data-serverid': window.ApiClient.serverId(),
+                            'data-type': 'BoxSet',
+                            'data-isfolder': 'true'
+                        }, JT.el('h2', { className: 'sectionTitle sectionTitle-cards', text: collection.Name }))),
+                    JT.el('div', { className: 'scrollSlider focuscontainer-x jt-pick-items' })
                 ]);
             }
 
@@ -167,6 +169,8 @@
             const titleLink = section.querySelector('.sectionTitleTextButton');
             titleLink.setAttribute('is', 'emby-linkbutton');
             titleLink.setAttribute('href', detailsUrl(collection.Id));
+            titleLink.setAttribute('data-id', collection.Id);
+            titleLink.setAttribute('data-serverid', window.ApiClient.serverId());
             previous = place(container, section, previous);
             if (section.dataset.jtLoaded !== `${JT.userId}:${collection.Id}`) {
                 section.dataset.jtLoaded = `${JT.userId}:${collection.Id}`;
