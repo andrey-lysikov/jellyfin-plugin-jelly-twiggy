@@ -28,8 +28,11 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// <inheritdoc />
     public override string Description => "Poster badges, playback options, active streams, a customizable dashboard and watch history for the Jellyfin web client.";
 
-    /// <summary>Gets the version string used to cache-bust client files.</summary>
+    /// <summary>Gets the current plugin version.</summary>
     public static string ClientVersion => typeof(Plugin).Assembly.GetName().Version?.ToString() ?? "0.0.0.0";
+
+    /// <summary>Gets a build-specific key used to cache-bust client files.</summary>
+    public static string ClientCacheKey => $"{ClientVersion}-{typeof(Plugin).Assembly.ManifestModule.ModuleVersionId:N}";
 
     /// <inheritdoc />
     public IEnumerable<PluginPageInfo> GetPages()

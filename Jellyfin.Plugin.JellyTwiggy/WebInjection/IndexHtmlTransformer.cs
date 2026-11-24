@@ -28,7 +28,7 @@ public static class IndexHtmlTransformer
         }
 
         // Relative to /web/index.html, so it also works when Jellyfin runs under a base URL.
-        var tag = $"<script {ScriptMarker} src=\"../JellyTwiggy/client/js/jelly-twiggy.js?v={Plugin.ClientVersion}\" defer></script>\n";
+        var tag = $"<script {ScriptMarker} src=\"../JellyTwiggy/client/js/jelly-twiggy.js?v={Plugin.ClientCacheKey}\" defer></script>\n";
         return html.Insert(bodyClose, tag);
     }
 }

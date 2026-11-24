@@ -96,7 +96,7 @@ public class JellyTwiggyController : ControllerBase
             contentType = "application/octet-stream";
         }
 
-        Response.Headers.CacheControl = v == Plugin.ClientVersion
+        Response.Headers.CacheControl = v == Plugin.ClientCacheKey
             ? "public, max-age=31536000, immutable"
             : "no-cache";
         return File(stream, contentType);
