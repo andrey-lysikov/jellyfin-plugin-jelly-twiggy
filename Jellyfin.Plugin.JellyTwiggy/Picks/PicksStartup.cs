@@ -4,20 +4,28 @@ using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.JellyTwiggy.Picks;
 
-/// <summary>Brings the channels up to date after start and after the admin changes the plugin settings.</summary>
+/// <summary>Brings the collections up to date after start and after the admin changes the plugin settings.</summary>
 public sealed class PicksStartup : IHostedService, IDisposable
 {
-    // Give the server time to load libraries and channels before the first pick.
+    // Give the server time to load libraries before the first pick and legacy cleanup.
     private static readonly TimeSpan StartDelay = TimeSpan.FromMinutes(1);
 
     private readonly PickService _service;
+    private readonly PickStore _store;
+    private readonly LegacyChannelCleanup _legacyCleanup;
     private readonly ILogger<PicksStartup> _logger;
     private readonly CancellationTokenSource _stopping = new();
 
     /// <summary>Initializes a new instance of the <see cref="PicksStartup"/> class.</summary>
-    public PicksStartup(PickService service, ILogger<PicksStartup> logger)
+    public PicksStartup(
+        PickService service,
+        PickStore store,
+        LegacyChannelCleanup legacyCleanup,
+        ILogger<PicksStartup> logger)
     {
         _service = service;
+        _store = store;
+        _legacyCleanup = legacyCleanup;
         _logger = logger;
     }
 
@@ -32,6 +40,12 @@ public sealed class PicksStartup : IHostedService, IDisposable
         _ = RunAsync(async token =>
         {
             await Task.Delay(StartDelay, token).ConfigureAwait(false);
+            if (!_store.Get().LegacyChannelsRemoved)
+            {
+                await _legacyCleanup.RemoveAsync(token).ConfigureAwait(false);
+                _store.MarkLegacyChannelsRemoved();
+            }
+
             await _service.EnsureFreshAsync(token).ConfigureAwait(false);
         });
         return Task.CompletedTask;

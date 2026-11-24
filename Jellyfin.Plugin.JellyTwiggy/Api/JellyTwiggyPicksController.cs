@@ -1,36 +1,34 @@
-using Jellyfin.Data;
-using Jellyfin.Database.Implementations.Enums;
 using Jellyfin.Plugin.JellyTwiggy.Picks;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Controller.Configuration;
-using MediaBrowser.Controller.Library;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Jellyfin.Plugin.JellyTwiggy.Api;
 
-/// <summary>Picks for the admin page. Clients get the picks through Jellyfin's standard channel API.</summary>
+/// <summary>Picks for the admin page. Clients get the collections through Jellyfin's standard items API.</summary>
 [ApiController]
 [Route("JellyTwiggy")]
 [Authorize(Policy = Policies.RequiresElevation)]
 public class JellyTwiggyPicksController : ControllerBase
 {
     private readonly PickStore _store;
-    private readonly PickCopies _copies;
+    private readonly PickCollections _collections;
     private readonly IServerConfigurationManager _serverConfiguration;
-    private readonly IUserManager _userManager;
 
     /// <summary>Initializes a new instance of the <see cref="JellyTwiggyPicksController"/> class.</summary>
-    public JellyTwiggyPicksController(PickStore store, PickCopies copies, IServerConfigurationManager serverConfiguration, IUserManager userManager)
+    public JellyTwiggyPicksController(
+        PickStore store,
+        PickCollections collections,
+        IServerConfigurationManager serverConfiguration)
     {
         _store = store;
-        _copies = copies;
+        _collections = collections;
         _serverConfiguration = serverConfiguration;
-        _userManager = userManager;
     }
 
-    /// <summary>Gets the channel names, what they show now and every pick with its name in the server language.</summary>
+    /// <summary>Gets the collection names, what they show now and every pick with its name in the server language.</summary>
     [HttpGet("Picks")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public ActionResult<PicksDto> GetJellyTwiggyPicks()
@@ -40,29 +38,11 @@ public class JellyTwiggyPicksController : ControllerBase
         var config = Plugin.Instance?.Configuration;
         return new PicksDto(
             config is { EnablePicks: true, PickSourceLibraries.Length: > 0 },
-            _copies.ThemedName,
-            _copies.BestName,
+            _collections.Name(PickCollectionKind.Themed, state.Themed),
+            _collections.Name(PickCollectionKind.Best, state.Best),
             Current(state.Themed),
             Current(state.Best),
             PickCatalog.All.Select(p => new PickInfoDto(p.Id, p.Kind.ToString(), PickNames.Get(p.Id, culture))).ToList());
-    }
-
-    /// <summary>Puts both channels first in every user's library order, so their rows lead the home screen.</summary>
-    // Other views keep their order; users can still reorder them in their home screen settings.
-    [HttpPost("Picks/MoveFirst")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult<int>> MoveJellyTwiggyPicksFirst()
-    {
-        var channels = _copies.ChannelIds;
-        var users = _userManager.GetUsers().ToList();
-        foreach (var user in users)
-        {
-            var order = user.GetPreferenceValues<Guid>(PreferenceKind.OrderedViews);
-            user.SetPreference(PreferenceKind.OrderedViews, channels.Concat(order.Where(id => !channels.Contains(id))).ToArray());
-            await _userManager.UpdateUserAsync(user).ConfigureAwait(false);
-        }
-
-        return users.Count;
     }
 
     private static List<CurrentPickDto> Current(PickResult? pick) =>
@@ -70,10 +50,10 @@ public class JellyTwiggyPicksController : ControllerBase
 }
 
 /// <summary>Picks overview for the admin page.</summary>
-// Enabled: the channels are on and have source libraries, i.e. users see them.
-public record PicksDto(bool Enabled, string ThemedChannel, string BestChannel, List<CurrentPickDto> Themed, List<CurrentPickDto> Best, List<PickInfoDto> Catalog);
+// Enabled: the collections are on and have source libraries.
+public record PicksDto(bool Enabled, string ThemedCollection, string BestCollection, List<CurrentPickDto> Themed, List<CurrentPickDto> Best, List<PickInfoDto> Catalog);
 
-/// <summary>One folder a channel shows now.</summary>
+/// <summary>One group a collection shows now.</summary>
 public record CurrentPickDto(string PickId, string Name, int Count, DateTime GeneratedUtc);
 
 /// <summary>One pick of the catalog: Kind is Holiday, Franchise or Top.</summary>

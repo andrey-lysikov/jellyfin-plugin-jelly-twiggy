@@ -4,7 +4,6 @@ using Jellyfin.Plugin.JellyTwiggy.Picks;
 using Jellyfin.Plugin.JellyTwiggy.Storage;
 using Jellyfin.Plugin.JellyTwiggy.WebInjection;
 using MediaBrowser.Controller;
-using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.Plugins;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,12 +18,9 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
     {
         serviceCollection.AddSingleton<UserSettingsStore>();
         serviceCollection.AddSingleton<PickStore>();
-        serviceCollection.AddSingleton<PickCopies>();
-        serviceCollection.AddSingleton<PickWatchedTransfer>();
+        serviceCollection.AddSingleton<PickCollections>();
+        serviceCollection.AddSingleton<LegacyChannelCleanup>();
         serviceCollection.AddSingleton<PickService>();
-        // Jellyfin's channel manager takes channels from DI; scheduled tasks are found on their own.
-        serviceCollection.AddSingleton<IChannel, ThemedPickChannel>();
-        serviceCollection.AddSingleton<IChannel, BestPickChannel>();
         serviceCollection.AddSingleton<PlaybackHistoryStore>();
         serviceCollection.AddSingleton<MediaBadgeService>();
         serviceCollection.AddSingleton<WatchersService>();
