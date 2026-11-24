@@ -3,7 +3,6 @@ using Jellyfin.Data.Enums;
 using Jellyfin.Database.Implementations.Entities;
 using Jellyfin.Database.Implementations.Enums;
 using MediaBrowser.Controller.Entities;
-using Jellyfin.Plugin.JellyTwiggy.Picks;
 using MediaBrowser.Controller.Library;
 
 namespace Jellyfin.Plugin.JellyTwiggy.History;
@@ -44,21 +43,18 @@ public class WatchersService
     private readonly IUserManager _userManager;
     private readonly IUserDataManager _userDataManager;
     private readonly PlaybackHistoryStore _store;
-    private readonly PickCopies _copies;
 
     /// <summary>Initializes a new instance of the <see cref="WatchersService"/> class.</summary>
     public WatchersService(
         ILibraryManager libraryManager,
         IUserManager userManager,
         IUserDataManager userDataManager,
-        PlaybackHistoryStore store,
-        PickCopies copies)
+        PlaybackHistoryStore store)
     {
         _libraryManager = libraryManager;
         _userManager = userManager;
         _userDataManager = userDataManager;
         _store = store;
-        _copies = copies;
     }
 
     /// <summary>Gets everyone who watched an item; null when it doesn't exist or the viewer can't see it.</summary>
@@ -69,9 +65,6 @@ public class WatchersService
         {
             return null;
         }
-
-        // On a channel copy's page, show who watched the library film.
-        item = _copies.Resolve(item);
 
         var childKind = item.GetBaseItemKind() switch
         {

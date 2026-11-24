@@ -1,6 +1,6 @@
 namespace Jellyfin.Plugin.JellyTwiggy.Picks;
 
-/// <summary>Date rules of the «Themed» channel.</summary>
+/// <summary>Date rules of the «Themed» collection.</summary>
 public static class PickCalendar
 {
     /// <summary>How many days before its date a holiday starts to show.</summary>

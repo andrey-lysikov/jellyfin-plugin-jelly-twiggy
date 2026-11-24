@@ -3,7 +3,7 @@ using MediaBrowser.Model.Tasks;
 
 namespace Jellyfin.Plugin.JellyTwiggy.Picks;
 
-/// <summary>Daily: today's holiday or franchise for the «Themed» channel. Holiday windows are short, so it runs every day.</summary>
+/// <summary>Daily: today's holiday or franchise for the «Themed» collection. Holiday windows are short, so it runs every day.</summary>
 public class ThemedPickTask : IScheduledTask
 {
     private readonly PickService _service;
@@ -43,7 +43,7 @@ public class ThemedPickTask : IScheduledTask
     ];
 }
 
-/// <summary>Weekly by default: every run moves the «Best» channel to the next top; admins change the schedule in Jellyfin.</summary>
+/// <summary>Weekly by default: every run moves the «Best» collection to the next top; admins change the schedule in Jellyfin.</summary>
 public class BestPickTask : IScheduledTask
 {
     private readonly PickService _service;

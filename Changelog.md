@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Replaced generated channels and their copies with managed collections containing the original library films
+- Added dynamic collection titles, per-user home row visibility settings and two collection rows after Next Up in the web client
+- Kept the last non-empty pick when no replacement is available; scheduled tasks remove only films deleted from Jellyfin
+- Removed the legacy channels and their copies once during the upgrade
 ## 0.5.2.1
 
 - Stop only show when user is admin

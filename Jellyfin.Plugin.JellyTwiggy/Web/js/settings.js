@@ -7,6 +7,7 @@
         { title: 'settingsPlayerSection', hint: 'autoPipHint', keys: ['AutoPauseOnTabSwitch', 'AutoResumeOnTabSwitch', 'AutoPipOnTabSwitch', 'LongPressSpeedUp'] },
         { title: 'settingsHandoffSection', hint: 'enableHandoffHint', keys: ['EnableHandoff'] },
         { title: 'settingsInterfaceSection', keys: ['HideFavorites', 'HideCast', 'HideWatchedFromResume', 'CardRadius', 'UiRadius'] },
+        { title: 'settingsCollectionsSection', keys: ['ShowPickCollections', 'ShowThemedCollection', 'ShowBestCollection'] },
         { title: 'settingsSyncSection', hint: 'syncHint', keys: ['SyncJellyfinSettings'] }
     ];
 
@@ -17,6 +18,13 @@
         const select = JT.el('select', { className: 'jt-select', 'aria-label': JT.t(labelKey(key)) },
             CHOICES[key].map((option) => JT.el('option', { value: option, selected: option === (value || 'default'), text: JT.t(`radius_${option}`) })));
         return { row: JT.el('label', { className: 'jt-choice' }, [JT.el('span', { text: JT.t(labelKey(key)) }), select]), input: select };
+    }
+
+    function collectionState(inputs) {
+        const enabled = inputs.ShowPickCollections.checked;
+        for (const key of ['ShowThemedCollection', 'ShowBestCollection']) {
+            inputs[key].disabled = !enabled;
+        }
     }
 
     async function openDialog() {
@@ -36,6 +44,8 @@
             }
         }
 
+        inputs.ShowPickCollections.addEventListener('change', () => collectionState(inputs));
+        collectionState(inputs);
         const save = JT.el('button', { type: 'button', className: 'jt-button jt-button-primary', text: JT.t('save') });
         const cancel = JT.el('button', { type: 'button', className: 'jt-button', text: JT.t('cancel'), onClick: () => dialog.close() });
         save.addEventListener('click', async () => {
@@ -50,6 +60,7 @@
                 const syncTurnedOn = updated.SyncJellyfinSettings && !settings.SyncJellyfinSettings;
                 JT.settings = updated;
                 JT.applyClasses();
+                JT.refreshPicks?.();
                 if (syncTurnedOn) {
                     JT.syncSettingsNow?.();
                 }

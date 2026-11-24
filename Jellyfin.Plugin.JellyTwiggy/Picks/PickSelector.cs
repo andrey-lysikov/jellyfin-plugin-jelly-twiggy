@@ -12,7 +12,7 @@ public static class PickSelector
     // One franchise must not take over a list of the best.
     private const int MaxPerCollection = 2;
 
-    /// <summary>Films anyone on the server watched within this many days are left out of both channels.</summary>
+    /// <summary>Films anyone on the server watched within this many days are left out of both collections.</summary>
     public const int RecentlyWatchedDays = 30;
 
     /// <summary>Gets the films nobody on the server watched within <see cref="RecentlyWatchedDays"/> days: no point offering them again so soon.</summary>
@@ -25,11 +25,11 @@ public static class PickSelector
     /// <summary>How close holidays must be to the nearest one to be shown along with it.</summary>
     public const int NearbyDays = 7;
 
-    /// <summary>The most holidays the «Coming soon!» channel shows at once.</summary>
+    /// <summary>The most holidays the «Coming soon!» collection shows at once.</summary>
     public const int MaxThemes = 3;
 
     /// <summary>Gets today's themes: the nearest holiday with enough films and up to two more due within a week of it, else a franchise of the week.</summary>
-    // A film goes to the first theme it fits, so the channel lists it once.
+    // A film goes to the first theme it fits, so the collection lists it once.
     public static IReadOnlyList<(PickDefinition Pick, IReadOnlyList<Guid> Items)> ChooseThemes(DateOnly date, IReadOnlyList<MovieFacts> movies, IReadOnlySet<string> disabled)
     {
         var themes = PickCatalog.Themes.Where(t => !disabled.Contains(t.Id)).ToList();
@@ -168,7 +168,7 @@ public static class PickSelector
         return new ThemeScore(total, strong + (genre ? 1 : 0) + (country ? 1 : 0));
     }
 
-    /// <summary>Gets the films of a top of the «Best» channel.</summary>
+    /// <summary>Gets the films of a top of the «Best» collection.</summary>
     public static TopChoice SelectTop(PickDefinition pick, IReadOnlyList<MovieFacts> movies, UsageFacts usage, TopContext context)
     {
         if (pick.Id == "director")
