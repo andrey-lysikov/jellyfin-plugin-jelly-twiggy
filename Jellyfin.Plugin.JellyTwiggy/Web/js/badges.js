@@ -292,6 +292,8 @@
         }
     }
 
+    JT.scanCards = scan;
+
     // ---- Card context menu -----------------------------------------------------------------
 
     // jellyfin-web centres the menu on the card; after a right click it opens at the pointer, growing right and down.

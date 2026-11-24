@@ -14,6 +14,8 @@
     const CHOICES = { CardRadius: ['none', 'default', 'large'], UiRadius: ['none', 'default', 'large'] };
     const labelKey = (key) => key.charAt(0).toLowerCase() + key.slice(1);
     const isOpen = () => JT.route().startsWith('#/mypreferencesmenu') && JT.routeParam('jellytwiggy') === '1';
+    let pendingPage = null;
+    let renderId = 0;
 
     function inputElement(tag, type) {
         const options = document.registerElement ? type : { is: type };
@@ -131,34 +133,48 @@
     }
 
     function restore(page) {
-        page.querySelector(':scope > .jt-settings-page')?.remove();
+        page.querySelectorAll(':scope > .jt-settings-page').forEach((element) => element.remove());
         Array.from(page.children).forEach((child) => { child.hidden = false; });
     }
 
     function render() {
         const page = JT.visiblePage('.userPreferencesPage');
         if (!page) {
+            renderId++;
+            pendingPage = null;
             return;
         }
 
         if (!isOpen()) {
+            renderId++;
+            pendingPage = null;
             restore(page);
             return;
         }
 
-        if (page.querySelector(':scope > .jt-settings-page')) {
+        if (page.querySelector(':scope > .jt-settings-page') || pendingPage === page) {
             return;
         }
 
+        pendingPage = page;
+        const currentRender = ++renderId;
+        const currentUser = JT.userId;
         Array.from(page.children).forEach((child) => { child.hidden = true; });
-        const currentRun = JT.userId;
         JT.reloadSettings().then((settings) => {
-            if (isOpen() && JT.userId === currentRun && page.isConnected) {
+            if (currentRender !== renderId) {
+                return;
+            }
+            pendingPage = null;
+            if (isOpen() && JT.userId === currentUser && page.isConnected) {
                 build(page, settings);
             } else if (page.isConnected) {
                 restore(page);
             }
         }).catch((error) => {
+            if (currentRender !== renderId) {
+                return;
+            }
+            pendingPage = null;
             console.error('[JellyTwiggy] settings', error);
             restore(page);
         });
@@ -179,7 +195,7 @@
             href: '#/mypreferencesmenu?jellytwiggy=1',
             className: 'listItem-border jt-prefs-link'
         }, JT.el('div', { className: 'listItem' }, [
-            JT.icon('tune', 'listItemIcon listItemIcon-transparent'),
+            JT.el('span', { className: 'listItemIcon listItemIcon-transparent jt-mono-icon', 'aria-hidden': 'true' }),
             JT.el('div', { className: 'listItemBody' }, JT.el('div', { className: 'listItemBodyText', text: JT.t('menuEntry') }))
         ]));
         anchor.insertAdjacentElement('afterend', link);

@@ -43,6 +43,7 @@
             ? JT.el('img', { className: 'cardImage', src: imageUrl(item), alt: '', loading: 'lazy' })
             : JT.el('span', { className: 'material-icons jt-pick-placeholder', 'aria-hidden': 'true' }, 'movie');
         const scalable = JT.el('div', { className: 'cardScalable' }, [
+            JT.el('div', { className: 'cardPadder cardPadder-overflowPortrait' }),
             JT.el('a', {
                 className: 'cardImageContainer cardContent itemAction',
                 href,
@@ -58,21 +59,23 @@
         }
 
         return JT.el('div', {
-            className: 'card portraitCard card-hoverable jt-pick-card',
+            className: 'card overflowPortraitCard card-withuserdata card-hoverable jt-pick-card',
             'data-id': id,
             'data-serverid': serverId,
             'data-type': item.Type || 'Movie',
             'data-mediatype': item.MediaType || 'Video',
             'data-isfolder': 'false'
-        }, [
-            JT.el('div', { className: 'cardBox' }, scalable),
-            JT.el('a', {
-                className: 'cardText cardTextCentered jt-pick-title itemAction textActionButton',
-                href,
-                'data-action': 'link',
-                text: item.Name || ''
-            })
-        ]);
+        }, JT.el('div', { className: 'cardBox cardBox-bottompadded' }, [
+            scalable,
+            JT.el('div', { className: 'cardFooter cardFooter-transparent' },
+                JT.el('div', { className: 'cardText cardTextCentered' },
+                    JT.el('a', {
+                        className: 'jt-pick-title itemAction textActionButton',
+                        href,
+                        'data-action': 'link',
+                        text: item.Name || ''
+                    })))
+        ]));
     }
 
     async function load(section, collection, expectedRun) {
@@ -96,6 +99,7 @@
         const content = section.querySelector('.jt-pick-items');
         content.replaceChildren(...items.map(card));
         section.hidden = false;
+        JT.scanCards?.([content]);
     }
 
     function place(container, section, previous) {
@@ -155,7 +159,7 @@
                             JT.el('h2', { className: 'sectionTitle sectionTitle-cards', text: collection.Name }),
                             JT.icon('chevron_right')
                         ])),
-                    JT.el('div', { className: 'jt-pick-items focuscontainer-x' })
+                    JT.el('div', { className: 'itemsContainer scrollSlider focuscontainer-x jt-pick-items' })
                 ]);
             }
 
