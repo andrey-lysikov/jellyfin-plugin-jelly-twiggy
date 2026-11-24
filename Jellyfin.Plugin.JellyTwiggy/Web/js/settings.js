@@ -16,9 +16,9 @@
     const isOpen = () => JT.route().startsWith('#/mypreferencesmenu') && JT.routeParam('jellytwiggy') === '1';
 
     function inputElement(tag, type) {
-        const input = document.createElement(tag, { is: type });
-        input.setAttribute('is', type);
-        return input;
+        const template = document.createElement('template');
+        template.innerHTML = `<${tag} is="${type}"></${tag}>`;
+        return template.content.firstElementChild;
     }
 
     function checkbox(key, checked) {

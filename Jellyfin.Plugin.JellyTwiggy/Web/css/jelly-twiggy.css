@@ -1233,6 +1233,7 @@ html.jt-ui-radius-large :is(.emby-button, .button-flat, .raised, .emby-input, .e
 
 /* ---- Managed collection rows ------------------------------------------------------------ */
 .jt-pick-section[hidden] { display: none !important; }
+.jt-pick-section .sectionTitleTextButton { text-decoration: none; }
 .jt-pick-items {
     display: flex;
     gap: 1em;
@@ -1271,9 +1272,11 @@ html.jt-ui-radius-large :is(.emby-button, .button-flat, .raised, .emby-input, .e
 }
 .jt-pick-placeholder { font-size: 3em; opacity: 0.35; }
 .jt-pick-title {
+    display: block;
     margin-top: 0.45em;
     overflow: hidden;
     text-overflow: ellipsis;
+    text-decoration: none;
     white-space: nowrap;
 }
 .jt-pick-progress {

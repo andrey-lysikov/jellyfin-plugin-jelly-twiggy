@@ -20,7 +20,11 @@
 
     function nextUp(container) {
         return Array.from(container.querySelectorAll(':scope > .verticalSection')).find((section) =>
-            section.querySelector('a[href*="#/nextup"], a[href*="/nextup"]')) || null;
+            section.querySelector('a[href*="#/nextup"], a[href*="/nextup"], a[href*="type=nextup"]')) || null;
+    }
+
+    function detailsUrl(id, serverId = window.ApiClient.serverId()) {
+        return `#/details?id=${encodeURIComponent(id)}&serverId=${encodeURIComponent(serverId)}`;
     }
 
     function imageUrl(item) {
@@ -32,12 +36,20 @@
     }
 
     function card(item) {
-        const id = JT.normalizeId(item.Id);
+        const id = item.Id;
+        const serverId = item.ServerId || window.ApiClient.serverId();
+        const href = detailsUrl(id, serverId);
         const image = item.ImageTags?.Primary
             ? JT.el('img', { className: 'cardImage', src: imageUrl(item), alt: '', loading: 'lazy' })
             : JT.el('span', { className: 'material-icons jt-pick-placeholder', 'aria-hidden': 'true' }, 'movie');
         const scalable = JT.el('div', { className: 'cardScalable' }, [
-            JT.el('div', { className: 'cardImageContainer' }, image)
+            JT.el('a', {
+                className: 'cardImageContainer cardContent itemAction',
+                href,
+                'data-action': 'link',
+                'aria-label': item.Name || '',
+                role: 'img'
+            }, image)
         ]);
         const percentage = item.UserData?.PlayedPercentage;
         if (percentage > 0) {
@@ -45,14 +57,21 @@
                 JT.el('span', { style: `width:${Math.min(100, Math.max(0, percentage))}%` })));
         }
 
-        return JT.el('a', {
+        return JT.el('div', {
             className: 'card portraitCard card-hoverable jt-pick-card',
-            href: `#/details?id=${id}`,
             'data-id': id,
-            'data-type': item.Type || 'Movie'
+            'data-serverid': serverId,
+            'data-type': item.Type || 'Movie',
+            'data-mediatype': item.MediaType || 'Video',
+            'data-isfolder': 'false'
         }, [
             JT.el('div', { className: 'cardBox' }, scalable),
-            JT.el('div', { className: 'cardText cardTextCentered jt-pick-title', text: item.Name || '' })
+            JT.el('a', {
+                className: 'cardText cardTextCentered jt-pick-title itemAction textActionButton',
+                href,
+                'data-action': 'link',
+                text: item.Name || ''
+            })
         ]);
     }
 
@@ -89,8 +108,9 @@
             return section;
         }
 
-        const latest = Array.from(container.querySelectorAll(':scope > .verticalSection')).find((candidate) =>
-            candidate !== section && candidate.querySelector('a[href*="#/movies"], a[href*="#/shows"]'));
+        const latest = Array.from(container.querySelectorAll('.verticalSection')).find((candidate) =>
+            candidate !== section && !candidate.classList.contains('jt-pick-section')
+            && candidate.querySelector('a[href*="#/movies"], a[href*="#/tv"], a[href*="#/music"], a[href*="#/homevideos"]'));
         if (latest) {
             if (section.nextElementSibling !== latest) {
                 latest.before(section);
@@ -128,8 +148,9 @@
                 }, [
                     JT.el('div', { className: 'sectionTitleContainer sectionTitleContainer-cards padded-left' },
                         JT.el('a', {
-                            className: 'button-flat button-flat-mini sectionTitleTextButton',
-                            href: `#/details?id=${JT.normalizeId(collection.Id)}`
+                            is: 'emby-linkbutton',
+                            className: 'more button-flat button-flat-mini sectionTitleTextButton',
+                            href: detailsUrl(collection.Id)
                         }, [
                             JT.el('h2', { className: 'sectionTitle sectionTitle-cards', text: collection.Name }),
                             JT.icon('chevron_right')
@@ -139,7 +160,9 @@
             }
 
             section.querySelector('h2').textContent = collection.Name;
-            section.querySelector('a').href = `#/details?id=${JT.normalizeId(collection.Id)}`;
+            const titleLink = section.querySelector('.sectionTitleTextButton');
+            titleLink.setAttribute('is', 'emby-linkbutton');
+            titleLink.setAttribute('href', detailsUrl(collection.Id));
             previous = place(container, section, previous);
             if (section.dataset.jtLoaded !== `${JT.userId}:${collection.Id}`) {
                 section.dataset.jtLoaded = `${JT.userId}:${collection.Id}`;
