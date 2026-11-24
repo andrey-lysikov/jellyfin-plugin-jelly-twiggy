@@ -1,4 +1,4 @@
-// User settings: an entry in the profile preferences menu that opens the Jelly Twiggy dialog.
+// User settings: an entry in the profile preferences menu and an in-page settings form.
 (function (JT) {
     'use strict';
 
@@ -11,13 +11,48 @@
         { title: 'settingsSyncSection', hint: 'syncHint', keys: ['SyncJellyfinSettings'] }
     ];
 
-    const labelKey = (key) => key.charAt(0).toLowerCase() + key.slice(1);
     const CHOICES = { CardRadius: ['none', 'default', 'large'], UiRadius: ['none', 'default', 'large'] };
+    const labelKey = (key) => key.charAt(0).toLowerCase() + key.slice(1);
+    const isOpen = () => JT.route().startsWith('#/mypreferencesmenu') && JT.routeParam('jellytwiggy') === '1';
+
+    function inputElement(tag, type) {
+        const input = document.createElement(tag, { is: type });
+        input.setAttribute('is', type);
+        return input;
+    }
+
+    function checkbox(key, checked) {
+        const input = inputElement('input', 'emby-checkbox');
+        input.type = 'checkbox';
+        input.checked = checked;
+        input.id = `jt-setting-${key}`;
+        const row = JT.el('div', { className: 'checkboxContainer' },
+            JT.el('label', { for: input.id }, [
+                input,
+                JT.el('span', { text: JT.t(labelKey(key)) })
+            ]));
+        return { row, input };
+    }
+
+    function choice(key, value) {
+        const select = inputElement('select', 'emby-select');
+        select.className = 'emby-select';
+        select.id = `jt-setting-${key}`;
+        select.setAttribute('aria-label', JT.t(labelKey(key)));
+        for (const option of CHOICES[key]) {
+            select.appendChild(JT.el('option', { value: option, selected: option === (value || 'default'), text: JT.t(`radius_${option}`) }));
+        }
+        return {
+            row: JT.el('div', { className: 'selectContainer jt-setting-choice' },
+                JT.el('label', { className: 'selectLabel', for: select.id, text: JT.t(labelKey(key)) })),
+            input: select
+        };
+    }
 
     function choiceRow(key, value) {
-        const select = JT.el('select', { className: 'jt-select', 'aria-label': JT.t(labelKey(key)) },
-            CHOICES[key].map((option) => JT.el('option', { value: option, selected: option === (value || 'default'), text: JT.t(`radius_${option}`) })));
-        return { row: JT.el('label', { className: 'jt-choice' }, [JT.el('span', { text: JT.t(labelKey(key)) }), select]), input: select };
+        const result = choice(key, value);
+        result.row.appendChild(result.input);
+        return result;
     }
 
     function collectionState(inputs) {
@@ -27,28 +62,48 @@
         }
     }
 
-    async function openDialog() {
-        const settings = await JT.reloadSettings().catch(() => JT.settings || {});
-        const dialog = JT.dialog(JT.t('settingsTitle'));
+    function build(page, settings) {
         const inputs = {};
-
+        const content = JT.el('div', { className: 'readOnlyContent jt-settings-content' });
         for (const section of SECTIONS) {
-            dialog.body.appendChild(JT.el('h3', { className: 'jt-section-title', text: JT.t(section.title) }));
+            const block = JT.el('div', { className: 'verticalSection verticalSection-extrabottompadding' },
+                JT.el('h3', { className: 'sectionTitle', text: JT.t(section.title) }));
             for (const key of section.keys) {
-                const toggle = CHOICES[key] ? choiceRow(key, settings[key]) : JT.toggle(JT.t(labelKey(key)), settings[key]);
-                inputs[key] = toggle.input;
-                dialog.body.appendChild(toggle.row);
+                const field = CHOICES[key]
+                    ? choiceRow(key, settings[key])
+                    : checkbox(key, settings[key]);
+                inputs[key] = field.input;
+                block.appendChild(field.row);
             }
             if (section.hint) {
-                dialog.body.appendChild(JT.el('p', { className: 'jt-hint', text: JT.t(section.hint) }));
+                block.appendChild(JT.el('p', { className: 'fieldDescription', text: JT.t(section.hint) }));
             }
+            content.appendChild(block);
         }
+
+        const cancel = JT.el('button', {
+            type: 'button',
+            className: 'emby-button button-flat',
+            text: JT.t('cancel'),
+            onClick: () => { window.location.hash = '#/mypreferencesmenu'; }
+        });
+        const save = JT.el('button', {
+            type: 'submit',
+            className: 'raised button-submit emby-button',
+            text: JT.t('save')
+        });
+        const actions = JT.el('div', { className: 'jt-settings-actions' }, [cancel, save]);
+        const form = JT.el('form', { className: 'jt-settings-form' }, [content, actions]);
+        const root = JT.el('div', { className: 'jt-settings-page padded-left padded-right padded-bottom-page' }, [
+            JT.el('h2', { className: 'sectionTitle', text: JT.t('settingsTitle') }),
+            form
+        ]);
+        page.appendChild(root);
 
         inputs.ShowPickCollections.addEventListener('change', () => collectionState(inputs));
         collectionState(inputs);
-        const save = JT.el('button', { type: 'button', className: 'jt-button jt-button-primary', text: JT.t('save') });
-        const cancel = JT.el('button', { type: 'button', className: 'jt-button', text: JT.t('cancel'), onClick: () => dialog.close() });
-        save.addEventListener('click', async () => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
             const updated = { ...settings };
             for (const [key, input] of Object.entries(inputs)) {
                 updated[key] = CHOICES[key] ? input.value : input.checked;
@@ -65,14 +120,47 @@
                     JT.syncSettingsNow?.();
                 }
                 JT.toast(JT.t('saved'));
-                dialog.close();
-            } catch (e) {
-                console.error('[JellyTwiggy] settings', e);
+                window.location.hash = '#/mypreferencesmenu';
+            } catch (error) {
+                console.error('[JellyTwiggy] settings', error);
                 JT.toast(JT.t('saveFailed'));
                 save.disabled = false;
             }
         });
-        dialog.footer.append(cancel, save);
+    }
+
+    function restore(page) {
+        page.querySelector(':scope > .jt-settings-page')?.remove();
+        Array.from(page.children).forEach((child) => { child.hidden = false; });
+    }
+
+    function render() {
+        const page = JT.visiblePage('.userPreferencesPage');
+        if (!page) {
+            return;
+        }
+
+        if (!isOpen()) {
+            restore(page);
+            return;
+        }
+
+        if (page.querySelector(':scope > .jt-settings-page')) {
+            return;
+        }
+
+        Array.from(page.children).forEach((child) => { child.hidden = true; });
+        const currentRun = JT.userId;
+        JT.reloadSettings().then((settings) => {
+            if (isOpen() && JT.userId === currentRun && page.isConnected) {
+                build(page, settings);
+            } else if (page.isConnected) {
+                restore(page);
+            }
+        }).catch((error) => {
+            console.error('[JellyTwiggy] settings', error);
+            restore(page);
+        });
     }
 
     function addMenuEntry() {
@@ -87,25 +175,23 @@
         }
 
         const link = JT.el('a', {
-            href: '#',
-            className: 'emby-button listItem-border jt-prefs-link',
-            style: 'display:block;margin:0;padding:0',
-            onClick: (e) => {
-                e.preventDefault();
-                openDialog();
-            }
+            href: '#/mypreferencesmenu?jellytwiggy=1',
+            className: 'listItem-border jt-prefs-link'
         }, JT.el('div', { className: 'listItem' }, [
-            JT.el('span', { className: 'listItemIcon listItemIcon-transparent jt-mono-icon', 'aria-hidden': 'true' }),
+            JT.icon('tune', 'listItemIcon listItemIcon-transparent'),
             JT.el('div', { className: 'listItemBody' }, JT.el('div', { className: 'listItemBodyText', text: JT.t('menuEntry') }))
         ]));
         anchor.insertAdjacentElement('afterend', link);
     }
 
-    JT.openSettings = openDialog;
-
     JT.register({
         init() {
-            JT.onDomChange(addMenuEntry);
+            JT.onDomChange(() => {
+                addMenuEntry();
+                render();
+            });
+            JT.onNavigate(render);
+            JT.onUserChange(render);
         }
     });
 })(window.JellyTwiggy);
