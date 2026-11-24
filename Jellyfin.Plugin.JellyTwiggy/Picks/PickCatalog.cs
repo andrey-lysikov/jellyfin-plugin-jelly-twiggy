@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 
 namespace Jellyfin.Plugin.JellyTwiggy.Picks;
 
-/// <summary>Which channel a pick belongs to and how it is chosen.</summary>
+/// <summary>Which collection a pick belongs to and how it is chosen.</summary>
 public enum PickKind
 {
     /// <summary>A holiday or season, chosen by tags, titles, genres or country.</summary>
@@ -11,7 +11,7 @@ public enum PickKind
     /// <summary>A film series or studio, in release order.</summary>
     Franchise,
 
-    /// <summary>A server-wide top for the «Best» channel.</summary>
+    /// <summary>A server-wide top for the «Best» collection.</summary>
     Top
 }
 
@@ -65,7 +65,7 @@ public sealed record ThemeRule(
 /// <summary>Films of a franchise: TMDb collections, studios or exact original titles.</summary>
 public sealed record FranchiseRule(IReadOnlySet<string> Collections, IReadOnlySet<string> Studios, IReadOnlySet<string> OriginalTitles);
 
-/// <summary>One pick: a theme of the «Themed» channel or a top of the «Best» channel.</summary>
+/// <summary>One pick: a theme of the «Themed» collection or a top of the «Best» collection.</summary>
 // Religious holidays give way to others on the same day; a season shows only when no holiday is due.
 public sealed record PickDefinition(
     string Id,
@@ -102,7 +102,7 @@ public static class PickCatalog
 
     private static readonly string[] FaithWeak = ["religion", "faith", "church", "priest", "monk", "nun", "god", "angel", "miracle", "prayer"];
 
-    /// <summary>Gets the themes of the «Themed» channel: holidays in calendar order, then franchises.</summary>
+    /// <summary>Gets the themes of the «Themed» collection: holidays in calendar order, then franchises.</summary>
     public static IReadOnlyList<PickDefinition> Themes { get; } =
     [
         // Through the New Year holidays of 1–8 January, Orthodox Christmas included.
@@ -292,7 +292,7 @@ public static class PickCatalog
         Franchise("ghibli", studios: ["Studio Ghibli"])
     ];
 
-    /// <summary>Gets the tops of the «Best» channel in rotation order.</summary>
+    /// <summary>Gets the tops of the «Best» collection in rotation order.</summary>
     public static IReadOnlyList<PickDefinition> Tops { get; } =
     [
         new("top50", PickKind.Top, Limit: 50),

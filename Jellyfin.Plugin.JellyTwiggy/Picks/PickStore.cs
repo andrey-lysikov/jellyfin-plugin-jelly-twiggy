@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.JellyTwiggy.Picks;
 
-/// <summary>One pick a channel shows: a holiday, film series or top.</summary>
+/// <summary>One pick a collection shows: a holiday, film series or top.</summary>
 public sealed class PickGroup
 {
     /// <summary>Gets or sets the pick id from <see cref="PickCatalog"/>.</summary>
@@ -18,33 +18,42 @@ public sealed class PickGroup
     public List<Guid> ItemIds { get; set; } = [];
 }
 
-/// <summary>The current content of one channel: its picks in display order.</summary>
+/// <summary>The current content of one collection: its picks in display order.</summary>
 public sealed class PickResult
 {
-    /// <summary>Gets or sets the picks; the «Best» channel has one, «Coming soon!» one per nearby holiday.</summary>
+    /// <summary>Gets or sets the picks; «Best» has one, «Coming soon!» one per nearby holiday.</summary>
     public List<PickGroup> Groups { get; set; } = [];
 
-    /// <summary>Gets or sets when the pick was computed (UTC); copies get creation dates just before it.</summary>
+    /// <summary>Gets or sets when the pick was computed (UTC).</summary>
     public DateTime GeneratedUtc { get; set; }
 
     /// <summary>Gets or sets the server-local day it was computed for.</summary>
     public DateOnly Date { get; set; }
 
-    /// <summary>Gets every film of all picks in display order; the rank in it sets the copy's creation date.</summary>
+    /// <summary>Gets every film of all picks in display order.</summary>
     public IEnumerable<Guid> AllItemIds() => Groups.SelectMany(g => g.ItemIds);
 }
 
-/// <summary>Saved state of both channels.</summary>
+/// <summary>Saved state of both collections.</summary>
 public sealed class PickState
 {
-    /// <summary>Gets or sets the «Themed» channel content; null when nothing fits.</summary>
+    /// <summary>Gets or sets the «Themed» collection content; null when nothing has fitted yet.</summary>
     public PickResult? Themed { get; set; }
 
-    /// <summary>Gets or sets the «Best» channel content; null when no top has enough films.</summary>
+    /// <summary>Gets or sets the «Best» collection content; null when no top has fitted yet.</summary>
     public PickResult? Best { get; set; }
 
     /// <summary>Gets or sets how many times each person top has come round; it picks the next director or star.</summary>
     public Dictionary<string, int> Rounds { get; set; } = [];
+
+    /// <summary>Gets or sets the managed «Themed» collection id.</summary>
+    public Guid? ThemedCollectionId { get; set; }
+
+    /// <summary>Gets or sets the managed «Best» collection id.</summary>
+    public Guid? BestCollectionId { get; set; }
+
+    /// <summary>Gets or sets whether the one-time channel cleanup has completed.</summary>
+    public bool LegacyChannelsRemoved { get; set; }
 }
 
 /// <summary>Keeps <see cref="PickState"/> in memory and in picks.json.</summary>
@@ -78,6 +87,26 @@ public class PickStore
         {
             JsonFiles.WriteAtomic(_path, state);
             _state = state;
+        }
+    }
+
+    /// <summary>Marks the completed channel cleanup without changing the current picks.</summary>
+    public void MarkLegacyChannelsRemoved()
+    {
+        lock (_lock)
+        {
+            var state = _state ??= Load();
+            var updated = new PickState
+            {
+                Themed = state.Themed,
+                Best = state.Best,
+                Rounds = state.Rounds,
+                ThemedCollectionId = state.ThemedCollectionId,
+                BestCollectionId = state.BestCollectionId,
+                LegacyChannelsRemoved = true
+            };
+            JsonFiles.WriteAtomic(_path, updated);
+            _state = updated;
         }
     }
 

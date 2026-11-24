@@ -1301,3 +1301,62 @@ html.jt-ui-radius-large :is(.emby-button, .button-flat, .raised, .emby-input, .e
 }
 
 .jt-handoff-menu-empty { padding: 0.6em 0.8em; color: var(--jt-muted); }
+
+/* ---- Managed collection rows ------------------------------------------------------------ */
+.jt-pick-section[hidden] { display: none !important; }
+.jt-pick-items {
+    display: flex;
+    gap: 1em;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.6em 3.3em 1.2em;
+    scroll-padding-inline: 3.3em;
+    scrollbar-width: thin;
+}
+.jt-pick-card {
+    flex: 0 0 11em;
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
+}
+.jt-pick-card .cardBox { position: relative; }
+.jt-pick-card .cardScalable {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    border-radius: var(--jt-radius);
+    background: rgba(128, 128, 128, 0.12);
+    box-shadow: 0 0.2em 0.8em rgba(0, 0, 0, 0.2);
+}
+.jt-pick-card .cardImageContainer {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.jt-pick-card .cardImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.jt-pick-placeholder { font-size: 3em; opacity: 0.35; }
+.jt-pick-title {
+    margin-top: 0.45em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.jt-pick-progress {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 0.25em;
+    background: rgba(0, 0, 0, 0.55);
+}
+.jt-pick-progress > span { display: block; height: 100%; background: var(--jt-accent); }
+@media (max-width: 768px) {
+    .jt-pick-items { gap: 0.7em; padding-inline: 1.2em; scroll-padding-inline: 1.2em; }
+    .jt-pick-card { flex-basis: 8.5em; }
+}

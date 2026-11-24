@@ -15,6 +15,10 @@
             autoPipOnTabSwitch: 'Auto Picture-in-Picture on tab switch',
             longPressSpeedUp: 'Long press / hold for 2x speed',
             settingsInterfaceSection: 'Interface',
+            settingsCollectionsSection: 'Themed collections',
+            showPickCollections: 'Show themed collections',
+            showThemedCollection: 'Coming soon!',
+            showBestCollection: 'Best',
             hideFavorites: 'Hide favorites everywhere',
             hideCast: 'Hide the Google Cast button',
             hideWatchedFromResume: 'Hide watched items from Continue Watching',
@@ -106,12 +110,10 @@
             cfgStyleCards: 'Add media info to posters',
             cfgEnablePicks: 'Show',
             cfgPickSources: 'Libraries for picks',
-            cfgPickSourcesHint: 'Films from these libraries appear in the channels for everyone with channel access, even without access to the library. Close the channels for children in the user\'s channel access settings.',
+            cfgPickSourcesHint: 'Films from these libraries appear in the collections. Users only see films from libraries they can access.',
             cfgFranchises: 'Favourite franchises',
-            cfgMovedFirst: 'Done',
-            cfgMoveFirst: 'Put first',
             cfgTabMain: 'General',
-            cfgTabChannels: 'Themed channels'
+            cfgTabCollections: 'Themed collections'
         },
         ru: {
             settingsTitle: 'Jelly Twiggy',
@@ -125,6 +127,10 @@
             autoPipOnTabSwitch: '«Картинка в картинке» при переключении вкладки',
             longPressSpeedUp: 'Удержание — ускорение 2x',
             settingsInterfaceSection: 'Интерфейс',
+            settingsCollectionsSection: 'Тематические коллекции',
+            showPickCollections: 'Показывать тематические коллекции',
+            showThemedCollection: 'Уже скоро!',
+            showBestCollection: 'Лучшие',
             hideFavorites: 'Скрыть избранное везде',
             hideCast: 'Скрыть кнопку Google Cast',
             hideWatchedFromResume: 'Скрыть просмотренное из «Продолжить просмотр»',
@@ -216,12 +222,10 @@
             cfgStyleCards: 'Добавить на постеры информацию о медиа',
             cfgEnablePicks: 'Отображать',
             cfgPickSources: 'Медиатеки для подборок',
-            cfgPickSourcesHint: 'Фильмы из этих медиатек попадают в каналы для всех, у кого есть доступ к каналам, даже без доступа к самой медиатеке. Детям закройте каналы в настройках доступа пользователя.',
+            cfgPickSourcesHint: 'Фильмы из этих медиатек попадают в коллекции. Пользователи видят только фильмы из доступных им медиатек.',
             cfgFranchises: 'Любимые франшизы',
-            cfgMovedFirst: 'Готово',
-            cfgMoveFirst: 'Поставить первым',
             cfgTabMain: 'Основные',
-            cfgTabChannels: 'Тематические каналы'
+            cfgTabCollections: 'Тематические коллекции'
         },
         de: {
             settingsTitle: 'Jelly Twiggy',
@@ -235,6 +239,10 @@
             autoPipOnTabSwitch: 'Bild-in-Bild beim Tab-Wechsel',
             longPressSpeedUp: 'Gedrückt halten für 2x Geschwindigkeit',
             settingsInterfaceSection: 'Oberfläche',
+            settingsCollectionsSection: 'Themensammlungen',
+            showPickCollections: 'Themensammlungen anzeigen',
+            showThemedCollection: 'Demnächst!',
+            showBestCollection: 'Das Beste',
             hideFavorites: 'Favoriten überall ausblenden',
             hideCast: 'Google-Cast-Schaltfläche ausblenden',
             hideWatchedFromResume: 'Gesehenes aus „Weiterschauen“ ausblenden',
@@ -326,12 +334,10 @@
             cfgStyleCards: 'Medieninfos auf Postern hinzufügen',
             cfgEnablePicks: 'Anzeigen',
             cfgPickSources: 'Mediatheken für Auswahlen',
-            cfgPickSourcesHint: 'Filme aus diesen Mediatheken erscheinen in den Kanälen für alle mit Kanalzugriff, auch ohne Zugriff auf die Mediathek. Sperren Sie die Kanäle für Kinder in den Zugriffseinstellungen des Benutzers.',
+            cfgPickSourcesHint: 'Filme aus diesen Mediatheken erscheinen in den Sammlungen. Benutzer sehen nur Filme aus Mediatheken, auf die sie Zugriff haben.',
             cfgFranchises: 'Lieblingsfilmreihen',
-            cfgMovedFirst: 'Erledigt',
-            cfgMoveFirst: 'An erste Stelle setzen',
             cfgTabMain: 'Allgemein',
-            cfgTabChannels: 'Themenkanäle'
+            cfgTabCollections: 'Themensammlungen'
         },
         ar: {
             settingsTitle: 'Jelly Twiggy',
@@ -345,6 +351,10 @@
             autoPipOnTabSwitch: 'صورة داخل صورة عند تبديل علامة التبويب',
             longPressSpeedUp: 'الضغط المطوّل للتشغيل بسرعة 2x',
             settingsInterfaceSection: 'الواجهة',
+            settingsCollectionsSection: 'المجموعات الموضوعية',
+            showPickCollections: 'إظهار المجموعات الموضوعية',
+            showThemedCollection: 'قريبًا!',
+            showBestCollection: 'الأفضل',
             hideFavorites: 'إخفاء المفضلة في كل مكان',
             hideCast: 'إخفاء زر Google Cast',
             hideWatchedFromResume: 'إخفاء ما تمت مشاهدته من «متابعة المشاهدة»',
@@ -436,12 +446,10 @@
             cfgStyleCards: 'إضافة معلومات الوسائط إلى الملصقات',
             cfgEnablePicks: 'إظهار',
             cfgPickSources: 'المكتبات المستخدمة للمختارات',
-            cfgPickSourcesHint: 'تظهر أفلام هذه المكتبات في القنوات لكل من لديه وصول إلى القنوات، حتى دون وصول إلى المكتبة. أغلق القنوات أمام الأطفال من إعدادات وصول المستخدم إلى القنوات.',
+            cfgPickSourcesHint: 'تظهر أفلام هذه المكتبات في المجموعات. يرى المستخدمون فقط الأفلام من المكتبات التي يمكنهم الوصول إليها.',
             cfgFranchises: 'السلاسل المفضلة',
-            cfgMovedFirst: 'تم',
-            cfgMoveFirst: 'وضعها أولًا',
             cfgTabMain: 'عام',
-            cfgTabChannels: 'القنوات الموضوعية'
+            cfgTabCollections: 'المجموعات الموضوعية'
         },
         be: {
             settingsTitle: 'Jelly Twiggy',
@@ -455,6 +463,10 @@
             autoPipOnTabSwitch: '«Карцінка ў карцінцы» пры пераключэнні ўкладкі',
             longPressSpeedUp: 'Утрыманне — паскарэнне 2x',
             settingsInterfaceSection: 'Інтэрфейс',
+            settingsCollectionsSection: 'Тэматычныя калекцыі',
+            showPickCollections: 'Паказваць тэматычныя калекцыі',
+            showThemedCollection: 'Ужо хутка!',
+            showBestCollection: 'Лепшыя',
             hideFavorites: 'Схаваць абранае ўсюды',
             hideCast: 'Схаваць кнопку Google Cast',
             hideWatchedFromResume: 'Схаваць прагледжанае з «Працягнуць прагляд»',
@@ -546,12 +558,10 @@
             cfgStyleCards: 'Дадаць на постэры звесткі пра медыя',
             cfgEnablePicks: 'Паказваць',
             cfgPickSources: 'Медыятэкі для падборак',
-            cfgPickSourcesHint: 'Фільмы з гэтых медыятэк трапляюць у каналы для ўсіх, у каго ёсць доступ да каналаў, нават без доступу да самой медыятэкі. Дзецям закрыйце каналы ў наладах доступу карыстальніка.',
+            cfgPickSourcesHint: 'Фільмы з гэтых медыятэк трапляюць у калекцыі. Карыстальнікі бачаць толькі фільмы з медыятэк, да якіх у іх ёсць доступ.',
             cfgFranchises: 'Любімыя франшызы',
-            cfgMovedFirst: 'Гатова',
-            cfgMoveFirst: 'Паставіць першым',
             cfgTabMain: 'Асноўныя',
-            cfgTabChannels: 'Тэматычныя каналы'
+            cfgTabCollections: 'Тэматычныя калекцыі'
         },
         cs: {
             settingsTitle: 'Jelly Twiggy',
@@ -565,6 +575,10 @@
             autoPipOnTabSwitch: 'Obraz v obraze při přepnutí karty',
             longPressSpeedUp: 'Podržením zrychlit na 2x',
             settingsInterfaceSection: 'Rozhraní',
+            settingsCollectionsSection: 'Tematické kolekce',
+            showPickCollections: 'Zobrazovat tematické kolekce',
+            showThemedCollection: 'Už brzy!',
+            showBestCollection: 'Nejlepší',
             hideFavorites: 'Skrýt oblíbené všude',
             hideCast: 'Skrýt tlačítko Google Cast',
             hideWatchedFromResume: 'Skrýt zhlédnuté z „Pokračovat ve sledování“',
@@ -656,12 +670,10 @@
             cfgStyleCards: 'Přidat na plakáty informace o médiu',
             cfgEnablePicks: 'Zobrazit',
             cfgPickSources: 'Knihovny pro výběry',
-            cfgPickSourcesHint: 'Filmy z těchto knihoven se v kanálech zobrazí všem s přístupem ke kanálům, i bez přístupu ke knihovně. Dětem kanály zavřete v nastavení přístupu uživatele ke kanálům.',
+            cfgPickSourcesHint: 'Filmy z těchto knihoven se objeví v kolekcích. Uživatelé vidí pouze filmy z knihoven, ke kterým mají přístup.',
             cfgFranchises: 'Oblíbené filmové série',
-            cfgMovedFirst: 'Hotovo',
-            cfgMoveFirst: 'Dát na první místo',
             cfgTabMain: 'Obecné',
-            cfgTabChannels: 'Tematické kanály'
+            cfgTabCollections: 'Tematické kolekce'
         },
         fr: {
             settingsTitle: 'Jelly Twiggy',
@@ -675,6 +687,10 @@
             autoPipOnTabSwitch: 'Incrustation vidéo au changement d’onglet',
             longPressSpeedUp: 'Appui long pour la vitesse 2x',
             settingsInterfaceSection: 'Interface',
+            settingsCollectionsSection: 'Collections thématiques',
+            showPickCollections: 'Afficher les collections thématiques',
+            showThemedCollection: 'Bientôt !',
+            showBestCollection: 'Le meilleur',
             hideFavorites: 'Masquer les favoris partout',
             hideCast: 'Masquer le bouton Google Cast',
             hideWatchedFromResume: 'Masquer les éléments vus de « Continuer de regarder »',
@@ -766,12 +782,10 @@
             cfgStyleCards: 'Ajouter des infos sur le média aux affiches',
             cfgEnablePicks: 'Afficher',
             cfgPickSources: 'Médiathèques des sélections',
-            cfgPickSourcesHint: 'Les films de ces médiathèques apparaissent dans les chaînes pour toute personne ayant accès aux chaînes, même sans accès à la médiathèque. Fermez les chaînes aux enfants dans les réglages d’accès de l’utilisateur.',
+            cfgPickSourcesHint: 'Les films de ces médiathèques apparaissent dans les collections. Les utilisateurs ne voient que les films des médiathèques auxquelles ils ont accès.',
             cfgFranchises: 'Sagas préférées',
-            cfgMovedFirst: 'Terminé',
-            cfgMoveFirst: 'Mettre en premier',
             cfgTabMain: 'Général',
-            cfgTabChannels: 'Chaînes thématiques'
+            cfgTabCollections: 'Collections thématiques'
         },
         it: {
             settingsTitle: 'Jelly Twiggy',
@@ -785,6 +799,10 @@
             autoPipOnTabSwitch: 'Mini-schermo al cambio di scheda',
             longPressSpeedUp: 'Tieni premuto per la velocità 2x',
             settingsInterfaceSection: 'Interfaccia',
+            settingsCollectionsSection: 'Collezioni tematiche',
+            showPickCollections: 'Mostra le collezioni tematiche',
+            showThemedCollection: 'Presto!',
+            showBestCollection: 'Il meglio',
             hideFavorites: 'Nascondi i preferiti ovunque',
             hideCast: 'Nascondi il pulsante Google Cast',
             hideWatchedFromResume: 'Nascondi i contenuti visti da «Continua a guardare»',
@@ -876,12 +894,10 @@
             cfgStyleCards: 'Aggiungi informazioni sul contenuto alle locandine',
             cfgEnablePicks: 'Mostra',
             cfgPickSources: 'Librerie per le selezioni',
-            cfgPickSourcesHint: 'I film di queste librerie compaiono nei canali per chiunque abbia accesso ai canali, anche senza accesso alla libreria. Chiudi i canali ai bambini nelle impostazioni di accesso dell’utente.',
+            cfgPickSourcesHint: 'I film di queste librerie compaiono nelle collezioni. Gli utenti vedono solo i film delle librerie a cui hanno accesso.',
             cfgFranchises: 'Saghe preferite',
-            cfgMovedFirst: 'Fatto',
-            cfgMoveFirst: 'Metti per primo',
             cfgTabMain: 'Generale',
-            cfgTabChannels: 'Canali tematici'
+            cfgTabCollections: 'Collezioni tematiche'
         },
         ja: {
             settingsTitle: 'Jelly Twiggy',
@@ -895,6 +911,10 @@
             autoPipOnTabSwitch: 'タブ切り替え時にピクチャーインピクチャー',
             longPressSpeedUp: '長押しで 2 倍速',
             settingsInterfaceSection: 'インターフェース',
+            settingsCollectionsSection: 'テーマコレクション',
+            showPickCollections: 'テーマコレクションを表示',
+            showThemedCollection: 'もうすぐ！',
+            showBestCollection: 'ベスト',
             hideFavorites: 'お気に入りをすべて非表示',
             hideCast: 'Google Cast ボタンを非表示',
             hideWatchedFromResume: '「視聴をつづける」から視聴済みを非表示',
@@ -986,12 +1006,10 @@
             cfgStyleCards: 'ポスターにメディア情報を追加',
             cfgEnablePicks: '表示する',
             cfgPickSources: 'セレクションに使うライブラリー',
-            cfgPickSourcesHint: 'これらのライブラリーの映画は、ライブラリーへのアクセス権がなくても、チャンネルにアクセスできる全員に表示されます。子どもにはユーザーのチャンネルアクセス設定でチャンネルを閉じてください。',
+            cfgPickSourcesHint: 'これらのライブラリーの映画がコレクションに表示されます。ユーザーには、アクセス権のあるライブラリーの映画だけが表示されます。',
             cfgFranchises: 'お気に入りのシリーズ',
-            cfgMovedFirst: '完了',
-            cfgMoveFirst: '先頭に表示',
             cfgTabMain: '全般',
-            cfgTabChannels: 'テーマチャンネル'
+            cfgTabCollections: 'テーマコレクション'
         },
         kk: {
             settingsTitle: 'Jelly Twiggy',
@@ -1005,6 +1023,10 @@
             autoPipOnTabSwitch: 'Qoiyndyny auystyrğanda «Surettegı suret»',
             longPressSpeedUp: 'Basyp tūryp 2x jyldamdatu',
             settingsInterfaceSection: 'İnterfeis',
+            settingsCollectionsSection: 'Taqyryptyq jinaqtar',
+            showPickCollections: 'Taqyryptyq jinaqtardy körsetu',
+            showThemedCollection: 'Jaqynda!',
+            showBestCollection: 'Üzdıkter',
             hideFavorites: 'Tañdaulylardy barlyq jerde jasyru',
             hideCast: 'Google Cast tüimesın jasyru',
             hideWatchedFromResume: '«Qaraudy jalğastyru» ışınen qaralğandardy jasyru',
@@ -1096,12 +1118,10 @@
             cfgStyleCards: 'Posterlerge media turaly aqparat qosu',
             cfgEnablePicks: 'Körsetu',
             cfgPickSources: 'Irıktemelerge arnalğan tasyğyşhanalar',
-            cfgPickSourcesHint: 'Osy tasyğyşhanalardağy filmder tasyğyşhanağa qatynauy bolmasa da, arnalarğa qatynauy bar barlyq adamğa arnalarde körınedı. Balalarğa arnalardy paidalanuşynyñ arnağa qatynau parametrlerınde jabyñyz.',
+            cfgPickSourcesHint: 'Osy tasyğyşhanalardağy filmder jinaqtarğa tüsedi. Paidalanuşylar tek qatynauy bar tasyğyşhanalardağy filmderdı körinedi.',
             cfgFranchises: 'Süiıktı franşizalar',
-            cfgMovedFirst: 'Daiyn',
-            cfgMoveFirst: 'Bırınşı orynğa qoiu',
             cfgTabMain: 'Negızgı',
-            cfgTabChannels: 'Taqyryptyq arnalar'
+            cfgTabCollections: 'Taqyryptyq jinaqtar'
         },
         pl: {
             settingsTitle: 'Jelly Twiggy',
@@ -1115,6 +1135,10 @@
             autoPipOnTabSwitch: 'Obraz w obrazie przy przełączeniu karty',
             longPressSpeedUp: 'Przytrzymaj, aby przyspieszyć 2x',
             settingsInterfaceSection: 'Interfejs',
+            settingsCollectionsSection: 'Kolekcje tematyczne',
+            showPickCollections: 'Pokazuj kolekcje tematyczne',
+            showThemedCollection: 'Już wkrótce!',
+            showBestCollection: 'Najlepsze',
             hideFavorites: 'Ukryj ulubione wszędzie',
             hideCast: 'Ukryj przycisk Google Cast',
             hideWatchedFromResume: 'Ukryj obejrzane w „Kontynuuj odtwarzanie”',
@@ -1206,12 +1230,10 @@
             cfgStyleCards: 'Dodaj informacje o mediach do plakatów',
             cfgEnablePicks: 'Pokazuj',
             cfgPickSources: 'Biblioteki dla wyborów',
-            cfgPickSourcesHint: 'Filmy z tych bibliotek pojawiają się w kanałach dla wszystkich z dostępem do kanałów, nawet bez dostępu do biblioteki. Dzieciom zamknij kanały w ustawieniach dostępu użytkownika.',
+            cfgPickSourcesHint: 'Filmy z tych bibliotek pojawiają się w kolekcjach. Użytkownicy widzą tylko filmy z bibliotek, do których mają dostęp.',
             cfgFranchises: 'Ulubione serie filmowe',
-            cfgMovedFirst: 'Gotowe',
-            cfgMoveFirst: 'Ustaw jako pierwszy',
             cfgTabMain: 'Ogólne',
-            cfgTabChannels: 'Kanały tematyczne'
+            cfgTabCollections: 'Kolekcje tematyczne'
         },
         sr: {
             settingsTitle: 'Jelly Twiggy',
@@ -1225,6 +1247,10 @@
             autoPipOnTabSwitch: 'Слика у слици при промени картице',
             longPressSpeedUp: 'Задржи притисак за брзину 2x',
             settingsInterfaceSection: 'Интерфејс',
+            settingsCollectionsSection: 'Тематске колекције',
+            showPickCollections: 'Прикажи тематске колекције',
+            showThemedCollection: 'Ускоро!',
+            showBestCollection: 'Најбоље',
             hideFavorites: 'Сакриј омиљено свуда',
             hideCast: 'Сакриј дугме Google Cast',
             hideWatchedFromResume: 'Сакриј погледано из „Настави гледање“',
@@ -1316,12 +1342,10 @@
             cfgStyleCards: 'Додај информације о медијима на постере',
             cfgEnablePicks: 'Приказуј',
             cfgPickSources: 'Библиотеке за изборе',
-            cfgPickSourcesHint: 'Филмови из ових библиотека појављују се у каналима свима који имају приступ каналима, чак и без приступа библиотеци. Деци затворите канале у подешавањима приступа корисника.',
+            cfgPickSourcesHint: 'Филмови из ових библиотека појављују се у колекцијама. Корисници виде само филмове из библиотека којима имају приступ.',
             cfgFranchises: 'Омиљене франшизе',
-            cfgMovedFirst: 'Готово',
-            cfgMoveFirst: 'Постави на прво место',
             cfgTabMain: 'Опште',
-            cfgTabChannels: 'Тематски канали'
+            cfgTabCollections: 'Тематске колекције'
         },
         zh: {
             settingsTitle: 'Jelly Twiggy',
@@ -1335,6 +1359,10 @@
             autoPipOnTabSwitch: '切换标签页时进入画中画',
             longPressSpeedUp: '长按以 2 倍速播放',
             settingsInterfaceSection: '界面',
+            settingsCollectionsSection: '主题合集',
+            showPickCollections: '显示主题合集',
+            showThemedCollection: '即将到来！',
+            showBestCollection: '最佳',
             hideFavorites: '隐藏所有收藏',
             hideCast: '隐藏 Google Cast 按钮',
             hideWatchedFromResume: '在“继续观看”中隐藏已观看的内容',
@@ -1426,12 +1454,10 @@
             cfgStyleCards: '在海报上添加媒体信息',
             cfgEnablePicks: '显示',
             cfgPickSources: '用于精选的媒体库',
-            cfgPickSourcesHint: '这些媒体库中的电影会出现在频道中，所有有频道访问权限的人都能看到，即使他们无权访问该媒体库。请在用户的频道访问设置中为儿童关闭这些频道。',
+            cfgPickSourcesHint: '这些媒体库中的电影会出现在合集中。用户只能看到其有权访问的媒体库中的电影。',
             cfgFranchises: '喜爱的系列',
-            cfgMovedFirst: '完成',
-            cfgMoveFirst: '置于首位',
             cfgTabMain: '常规',
-            cfgTabChannels: '主题频道'
+            cfgTabCollections: '主题合集'
         }
     };
 

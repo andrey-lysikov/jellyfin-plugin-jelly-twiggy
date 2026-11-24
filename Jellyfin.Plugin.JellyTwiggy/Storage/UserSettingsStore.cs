@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.JellyTwiggy.Storage;
 
-/// <summary>Per-user plugin settings. Everything is off by default.</summary>
+/// <summary>Per-user plugin settings.</summary>
 public class UserSettings
 {
     /// <summary>Gets or sets a value indicating whether intro segments are skipped automatically.</summary>
@@ -37,6 +37,15 @@ public class UserSettings
 
     /// <summary>Gets or sets a value indicating whether watched items are left out of Continue Watching.</summary>
     public bool HideWatchedFromResume { get; set; }
+
+    /// <summary>Gets or sets a value indicating whether the managed collections are shown on the web home page.</summary>
+    public bool ShowPickCollections { get; set; } = true;
+
+    /// <summary>Gets or sets a value indicating whether the «Coming soon!» collection is shown.</summary>
+    public bool ShowThemedCollection { get; set; } = true;
+
+    /// <summary>Gets or sets a value indicating whether the «Best» collection is shown.</summary>
+    public bool ShowBestCollection { get; set; } = true;
 
     /// <summary>Gets or sets the corner radius of posters and cards: none, default or large.</summary>
     public string CardRadius { get; set; } = "default";

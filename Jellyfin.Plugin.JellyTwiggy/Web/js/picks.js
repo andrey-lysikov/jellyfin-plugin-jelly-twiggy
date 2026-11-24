@@ -1,27 +1,183 @@
-// Home screen rows of the picks channels: just the channel name instead of jellyfin-web's "Latest: …".
+// Managed collections as independent home rows, directly after Next Up when it is present.
 (function (JT) {
     'use strict';
 
-    function update() {
-        const channels = JT.config?.PickChannels || [];
-        if (!channels.length || !/^#\/home(\.html)?(\?|$)|^$|^#\/?$/.test(JT.route())) {
+    let run = 0;
+    let refreshedAt = 0;
+
+    function visible(collection) {
+        const settings = JT.settings || {};
+        return settings.ShowPickCollections !== false
+            && settings[collection.Key === 'themed' ? 'ShowThemedCollection' : 'ShowBestCollection'] !== false;
+    }
+
+    function home() {
+        if (!/^#\/home(\.html)?(\?|$)|^$|^#\/?$/.test(JT.route())) {
+            return null;
+        }
+        return JT.visiblePage('.homePage')?.querySelector('.homeSectionsContainer') || null;
+    }
+
+    function nextUp(container) {
+        return Array.from(container.querySelectorAll(':scope > .verticalSection')).find((section) =>
+            section.querySelector('a[href*="#/nextup"], a[href*="/nextup"]')) || null;
+    }
+
+    function imageUrl(item) {
+        return JT.imageUrl(`Items/${item.Id}/Images/Primary`, {
+            tag: item.ImageTags?.Primary || undefined,
+            maxWidth: 360,
+            quality: 90
+        });
+    }
+
+    function card(item) {
+        const id = JT.normalizeId(item.Id);
+        const image = item.ImageTags?.Primary
+            ? JT.el('img', { className: 'cardImage', src: imageUrl(item), alt: '', loading: 'lazy' })
+            : JT.el('span', { className: 'material-icons jt-pick-placeholder', 'aria-hidden': 'true' }, 'movie');
+        const scalable = JT.el('div', { className: 'cardScalable' }, [
+            JT.el('div', { className: 'cardImageContainer' }, image)
+        ]);
+        const percentage = item.UserData?.PlayedPercentage;
+        if (percentage > 0) {
+            scalable.appendChild(JT.el('div', { className: 'jt-pick-progress', 'aria-hidden': 'true' },
+                JT.el('span', { style: `width:${Math.min(100, Math.max(0, percentage))}%` })));
+        }
+
+        return JT.el('a', {
+            className: 'card portraitCard card-hoverable jt-pick-card',
+            href: `#/details?id=${id}`,
+            'data-id': id,
+            'data-type': item.Type || 'Movie'
+        }, [
+            JT.el('div', { className: 'cardBox' }, scalable),
+            JT.el('div', { className: 'cardText cardTextCentered jt-pick-title', text: item.Name || '' })
+        ]);
+    }
+
+    async function load(section, collection, expectedRun) {
+        const result = await JT.get(`Items?userId=${encodeURIComponent(JT.userId)}&ParentId=${collection.Id}`
+            + '&IncludeItemTypes=Movie&Recursive=false&SortBy=SortName&SortOrder=Ascending&Limit=24'
+            + '&EnableUserData=true&EnableImages=true&ImageTypeLimit=1&EnableImageTypes=Primary'
+            + '&Fields=PrimaryImageAspectRatio').catch((error) => {
+            console.error('[JellyTwiggy] collection row', error);
+            return null;
+        });
+        if (expectedRun !== run || !section.isConnected) {
             return;
         }
 
-        // The row title links to the channel; its id is in the link.
-        document.querySelectorAll('.homeSectionsContainer .sectionTitleContainer a[href]').forEach((link) => {
-            const href = link.getAttribute('href').toLowerCase();
-            const channel = channels.find((c) => href.includes(JT.normalizeId(c.Id)));
-            const title = channel && link.querySelector('.sectionTitle');
-            if (title && title.textContent !== channel.Name) {
-                title.textContent = channel.Name;
+        const items = result?.Items || [];
+        if (!items.length) {
+            section.remove();
+            return;
+        }
+
+        const content = section.querySelector('.jt-pick-items');
+        content.replaceChildren(...items.map(card));
+        section.hidden = false;
+    }
+
+    function place(container, section, previous) {
+        const anchor = nextUp(container);
+        if (anchor) {
+            const expected = previous || anchor;
+            if (section.previousElementSibling !== expected) {
+                expected.insertAdjacentElement('afterend', section);
+            }
+            return section;
+        }
+
+        const latest = Array.from(container.querySelectorAll(':scope > .verticalSection')).find((candidate) =>
+            candidate !== section && candidate.querySelector('a[href*="#/movies"], a[href*="#/shows"]'));
+        if (latest) {
+            if (section.nextElementSibling !== latest) {
+                latest.before(section);
+            }
+        } else if (container.lastElementChild !== section) {
+            container.appendChild(section);
+        }
+        return section;
+    }
+
+    function update() {
+        const container = home();
+        if (!container) {
+            document.querySelectorAll('.jt-pick-section').forEach((section) => section.remove());
+            run++;
+            return;
+        }
+
+        const collections = (JT.config?.PickCollections || []).filter(visible);
+        const wanted = new Set(collections.map((collection) => collection.Key));
+        container.querySelectorAll(':scope > .jt-pick-section').forEach((section) => {
+            if (!wanted.has(section.dataset.jtPick)) {
+                section.remove();
             }
         });
+
+        let previous = null;
+        for (const collection of collections) {
+            let section = container.querySelector(`:scope > .jt-pick-section[data-jt-pick="${collection.Key}"]`);
+            if (!section) {
+                section = JT.el('div', {
+                    className: 'verticalSection jt-pick-section',
+                    'data-jt-pick': collection.Key,
+                    hidden: true
+                }, [
+                    JT.el('div', { className: 'sectionTitleContainer sectionTitleContainer-cards padded-left' },
+                        JT.el('a', {
+                            className: 'button-flat button-flat-mini sectionTitleTextButton',
+                            href: `#/details?id=${JT.normalizeId(collection.Id)}`
+                        }, [
+                            JT.el('h2', { className: 'sectionTitle sectionTitle-cards', text: collection.Name }),
+                            JT.icon('chevron_right')
+                        ])),
+                    JT.el('div', { className: 'jt-pick-items focuscontainer-x' })
+                ]);
+            }
+
+            section.querySelector('h2').textContent = collection.Name;
+            section.querySelector('a').href = `#/details?id=${JT.normalizeId(collection.Id)}`;
+            previous = place(container, section, previous);
+            if (section.dataset.jtLoaded !== `${JT.userId}:${collection.Id}`) {
+                section.dataset.jtLoaded = `${JT.userId}:${collection.Id}`;
+                load(section, collection, run);
+            }
+        }
     }
+
+    async function refresh() {
+        const now = Date.now();
+        if (now - refreshedAt < 60000) {
+            return;
+        }
+        refreshedAt = now;
+        const config = await JT.get('JellyTwiggy/ClientConfig').catch(() => null);
+        if (config && JT.config) {
+            JT.config.PickCollections = config.PickCollections || [];
+            update();
+        }
+    }
+
+    JT.refreshPicks = update;
 
     JT.register({
         init() {
             JT.onDomChange(update);
+            JT.onUserChange(() => {
+                run++;
+                refreshedAt = 0;
+                update();
+            });
+            JT.onNavigate(() => {
+                run++;
+                update();
+                if (home()) {
+                    refresh();
+                }
+            });
         }
     });
 })(window.JellyTwiggy);

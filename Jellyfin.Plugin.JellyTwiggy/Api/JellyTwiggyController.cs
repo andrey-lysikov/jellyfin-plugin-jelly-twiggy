@@ -52,7 +52,8 @@ public class JellyTwiggyController : ControllerBase
     private readonly SessionsService _sessions;
     private readonly StatisticsService _statistics;
     private readonly IUserManager _userManager;
-    private readonly PickCopies _pickCopies;
+    private readonly PickStore _pickStore;
+    private readonly PickCollections _pickCollections;
 
     /// <summary>Initializes a new instance of the <see cref="JellyTwiggyController"/> class.</summary>
     public JellyTwiggyController(
@@ -62,7 +63,8 @@ public class JellyTwiggyController : ControllerBase
         SessionsService sessions,
         StatisticsService statistics,
         IUserManager userManager,
-        PickCopies pickCopies)
+        PickStore pickStore,
+        PickCollections pickCollections)
     {
         _userSettings = userSettings;
         _badges = badges;
@@ -70,7 +72,8 @@ public class JellyTwiggyController : ControllerBase
         _sessions = sessions;
         _statistics = statistics;
         _userManager = userManager;
-        _pickCopies = pickCopies;
+        _pickStore = pickStore;
+        _pickCollections = pickCollections;
     }
 
     private bool IsAdmin => User.IsInRole(AdministratorRole);
@@ -126,9 +129,7 @@ public class JellyTwiggyController : ControllerBase
             config.TweakItemPage,
             config.TweakPlayer,
             config.StyleCards,
-            config.EnablePicks
-                ? [new PickChannelDto(_pickCopies.ChannelId(_pickCopies.ThemedName), _pickCopies.ThemedName), new PickChannelDto(_pickCopies.ChannelId(_pickCopies.BestName), _pickCopies.BestName)]
-                : []);
+            config.EnablePicks ? GetPickCollections() : []);
     }
 
     /// <summary>Gets the current user's settings.</summary>
@@ -344,6 +345,23 @@ public class JellyTwiggyController : ControllerBase
         return _statistics.GetStatistics(days);
     }
 
+    private List<PickCollectionDto> GetPickCollections()
+    {
+        var state = _pickStore.Get();
+        var result = new List<PickCollectionDto>();
+        if (state.ThemedCollectionId is { } themed)
+        {
+            result.Add(new PickCollectionDto("themed", themed, _pickCollections.Name(PickCollectionKind.Themed, state.Themed)));
+        }
+
+        if (state.BestCollectionId is { } best)
+        {
+            result.Add(new PickCollectionDto("best", best, _pickCollections.Name(PickCollectionKind.Best, state.Best)));
+        }
+
+        return result;
+    }
+
     private static bool IsValidLayout(DashboardLayout layout)
     {
         static bool IsId(string? id) => !string.IsNullOrEmpty(id) && id.Length <= MaxBlockIdLength;
@@ -381,10 +399,10 @@ public record ClientConfigDto(
     bool TweakItemPage,
     bool TweakPlayer,
     bool StyleCards,
-    List<PickChannelDto> PickChannels);
+    List<PickCollectionDto> PickCollections);
 
-/// <summary>A picks channel: its id (the home screen row links to it) and name.</summary>
-public record PickChannelDto(Guid Id, string Name);
+/// <summary>A managed collection shown as a home screen row.</summary>
+public record PickCollectionDto(string Key, Guid Id, string Name);
 
 /// <summary>Badges request.</summary>
 public class BadgesRequest

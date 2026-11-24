@@ -40,7 +40,7 @@
 
                     <div class="jtTabs" role="tablist">
                         <button is="emby-button" type="button" class="button-flat jtTab jtTabActive" role="tab" data-tab="main" data-jt-i18n="cfgTabMain">General</button>
-                        <button is="emby-button" type="button" class="button-flat jtTab" role="tab" data-tab="channels" data-jt-i18n="cfgTabChannels">Themed channels</button>
+                        <button is="emby-button" type="button" class="button-flat jtTab" role="tab" data-tab="collections" data-jt-i18n="cfgTabCollections">Themed collections</button>
                     </div>
 
                     <div data-tab-panel="main">
@@ -101,26 +101,18 @@
                     </div>
                     </div>
 
-                    <div data-tab-panel="channels" hidden>
+                    <div data-tab-panel="collections" hidden>
                     <div class="verticalSection">
-                        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1em">
-                            <div class="checkboxContainer" style="margin:0">
-                                <label>
-                                    <input is="emby-checkbox" type="checkbox" id="EnablePicks" />
-                                    <span data-jt-i18n="cfgEnablePicks">Show</span>
-                                </label>
-                            </div>
-                            <div style="display:flex;align-items:center;gap:0.75em">
-                                <b id="jtMoveFirstResult"></b>
-                                <button is="emby-button" type="button" id="jtMoveFirst" class="raised emby-button" style="margin:0">
-                                    <span data-jt-i18n="cfgMoveFirst">Put first</span>
-                                </button>
-                            </div>
+                        <div class="checkboxContainer">
+                            <label>
+                                <input is="emby-checkbox" type="checkbox" id="EnablePicks" />
+                                <span data-jt-i18n="cfgEnablePicks">Show</span>
+                            </label>
                         </div>
 
                         <h4 data-jt-i18n="cfgPickSources">Libraries for picks</h4>
                         <div id="jtPickSources" class="jtPickSources"></div>
-                        <p class="fieldDescription" data-jt-i18n="cfgPickSourcesHint">Films from these libraries appear in the channels for everyone with channel access, even without access to the library. Close the channels for children in the user's channel access settings.</p>
+                        <p class="fieldDescription" data-jt-i18n="cfgPickSourcesHint">Films from these libraries appear in the collections. Users only see films from libraries they can access.</p>
 
                         <div id="jtPickList"></div>
                     </div>
@@ -162,15 +154,15 @@
                         .join('');
 
                     const disabled = config.DisabledPicks || [];
-                    // A column per channel; franchises are switched together by one checkbox under the holidays.
+                    // A column per collection; franchises are switched together by one checkbox under the holidays.
                     const list = (kind) => picks.Catalog.filter((pick) => pick.Kind === kind)
                         .map((pick) => checkbox('data-pick="' + escapeHtml(pick.Id) + '"', !disabled.includes(pick.Id), pick.Name))
                         .join('');
                     const franchises = checkbox('data-franchises', franchiseIds(picks).some((id) => !disabled.includes(id)), t('cfgFranchises', 'Favourite franchises'));
                     const column = (title, content) => '<div><p><b>' + escapeHtml(title) + '</b></p>' + content + '</div>';
                     page.querySelector('#jtPickList').innerHTML = '<div class="jtPickColumns">'
-                        + column(picks.ThemedChannel, '<div class="jtPickTwo">' + list('Holiday') + franchises + '</div>')
-                        + column(picks.BestChannel, list('Top'))
+                        + column(picks.ThemedCollection, '<div class="jtPickTwo">' + list('Holiday') + franchises + '</div>')
+                        + column(picks.BestCollection, list('Top'))
                         + '</div>';
 
                 }
@@ -187,30 +179,7 @@
                     });
                 });
 
-                // Once done, the button says so and stays disabled until the page is opened again.
-                page.querySelector('#jtMoveFirst').addEventListener('click', function () {
-                    const button = this;
-                    const result = page.querySelector('#jtMoveFirstResult');
-                    result.textContent = '';
-                    button.disabled = true;
-                    fetch(ApiClient.getUrl('JellyTwiggy/Picks/MoveFirst'), {
-                        method: 'POST',
-                        headers: { Authorization: 'MediaBrowser Token="' + ApiClient.accessToken() + '"' }
-                    }).then(function (response) {
-                        if (!response.ok) {
-                            throw new Error(String(response.status));
-                        }
-                        button.querySelector('span').textContent = t('cfgMovedFirst', 'Done');
-                    }).catch(function () {
-                        result.textContent = t('loadFailed', 'Failed');
-                        button.disabled = false;
-                    });
-                });
-
                 page.addEventListener('pageshow', function () {
-                    const moveFirst = page.querySelector('#jtMoveFirst');
-                    moveFirst.disabled = false;
-                    page.querySelector('#jtMoveFirstResult').textContent = '';
                     page.querySelectorAll('[data-jt-i18n]').forEach(function (element) {
                         element.textContent = t(element.dataset.jtI18n, element.textContent);
                     });

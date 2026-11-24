@@ -21,7 +21,7 @@ Jelly Twiggy extends the Jellyfin web client with poster badges, playback option
 - "Continue in browser", "Play on…" and moving playback between your devices with Swiftly Player
 - Dashboard: move, resize, show and hide blocks, and more
 - "Watched" row on item pages with who watched, how many times and when
-- «Coming soon!» and «Best» channels: films for the nearest holiday or a film series, and a server-wide top that changes weekly, in every client
+- «Coming soon!» and «Best» collections: films for the nearest holiday or a film series, and a server-wide top that changes weekly, with original library items in every client
 - Localization: Arabic, Belarusian, Chinese (Simplified), Czech, English, French, German, Italian, Japanese, Kazakh, Polish, Russian, Serbian
 
 ## Recommended player
@@ -38,7 +38,7 @@ We recommend [Swiftly Player](https://swiftlyplayer.com/) ([GitHub](https://gith
   <img src="assets/previews/streams.png" width="34%" alt="Active streams">
 </p>
 <p align="center">
-  <img src="assets/previews/channels.jpg" alt="Coming soon! and Best channels on the home screen">
+  <img src="assets/previews/channels.jpg" alt="Coming soon! and Best collections on the home screen">
 </p>
 <p align="center">
   <img src="assets/previews/dashboard.png" alt="Dashboard edit mode">
@@ -58,7 +58,7 @@ Add the repository in **Dashboard → Plugins → Repositories**:
 
 Install **Jelly Twiggy** from the catalog and restart the server.
 
-To fill the «Coming soon!» and «Best» channels, pick the film libraries in the plugin settings. Everyone with channel access sees these films, so close the channels for children in their user settings.
+To fill the «Coming soon!» and «Best» collections, pick the film libraries in the plugin settings. Users see only original films from libraries they can access. In the web client, each user can hide either collection from the home screen in the Jelly Twiggy settings.
 
 ## Tech
 

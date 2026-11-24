@@ -29,10 +29,10 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Gets or sets a value indicating whether cards get badge depth, stream backdrops and the watched circle.</summary>
     public bool StyleCards { get; set; } = true;
 
-    /// <summary>Gets or sets a value indicating whether the «Themed» and «Best» channels are shown.</summary>
+    /// <summary>Gets or sets a value indicating whether the «Themed» and «Best» collections are managed.</summary>
     public bool EnablePicks { get; set; } = true;
 
-    /// <summary>Gets or sets the libraries whose films may appear in the channels; none means the channels stay empty.</summary>
+    /// <summary>Gets or sets the libraries whose films may appear in the collections.</summary>
     public Guid[] PickSourceLibraries { get; set; } = [];
 
     /// <summary>Gets or sets the ids of themes and tops that are never picked.</summary>

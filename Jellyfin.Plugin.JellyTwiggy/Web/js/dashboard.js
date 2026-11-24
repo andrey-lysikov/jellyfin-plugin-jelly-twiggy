@@ -614,7 +614,7 @@
         }
     }
 
-    // ---- Picks channels: two cards next to the library counts --------------------------------
+    // ---- Pick collections: two cards next to the library counts -----------------------------
 
     const PICKS_REFRESH_MS = 60 * 1000;
 
@@ -627,9 +627,9 @@
             return;
         }
 
-        // Switched off (or no source libraries): users see no channels, so no cards either.
+        // Switched off (or no source libraries): users see no collections, so no cards either.
         const cards = picks.Enabled
-            ? [['themed', picks.ThemedChannel, picks.Themed, 'celebration'], ['best', picks.BestChannel, picks.Best, 'emoji_events']]
+            ? [['themed', picks.ThemedCollection, picks.Themed, 'celebration'], ['best', picks.BestCollection, picks.Best, 'emoji_events']]
             : [];
         grid.querySelectorAll(':scope > .jt-pick-item').forEach((element) => {
             if (!cards.some(([key]) => key === element.dataset.jtPick)) {

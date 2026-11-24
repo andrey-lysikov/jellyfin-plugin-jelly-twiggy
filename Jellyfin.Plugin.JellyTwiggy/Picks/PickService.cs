@@ -2,7 +2,6 @@ using System.Globalization;
 using Jellyfin.Data.Enums;
 using Jellyfin.Plugin.JellyTwiggy.Configuration;
 using Jellyfin.Plugin.JellyTwiggy.History;
-using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
@@ -11,17 +10,16 @@ using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.JellyTwiggy.Picks;
 
-/// <summary>Computes the picks from the library and the playback log, saves them and syncs the channels.</summary>
+/// <summary>Computes the picks from the library and the playback log, saves them and syncs the collections.</summary>
 public class PickService
 {
     private readonly ILibraryManager _libraryManager;
     private readonly IUserManager _userManager;
     private readonly IUserDataManager _userDataManager;
-    private readonly IChannelManager _channelManager;
     private readonly IServerConfigurationManager _serverConfiguration;
     private readonly PlaybackHistoryStore _history;
     private readonly PickStore _store;
-    private readonly PickCopies _copies;
+    private readonly PickCollections _collections;
     private readonly ILogger<PickService> _logger;
     private readonly SemaphoreSlim _gate = new(1, 1);
 
@@ -30,21 +28,19 @@ public class PickService
         ILibraryManager libraryManager,
         IUserManager userManager,
         IUserDataManager userDataManager,
-        IChannelManager channelManager,
         IServerConfigurationManager serverConfiguration,
         PlaybackHistoryStore history,
         PickStore store,
-        PickCopies copies,
+        PickCollections collections,
         ILogger<PickService> logger)
     {
         _libraryManager = libraryManager;
         _userManager = userManager;
         _userDataManager = userDataManager;
-        _channelManager = channelManager;
         _serverConfiguration = serverConfiguration;
         _history = history;
         _store = store;
-        _copies = copies;
+        _collections = collections;
         _logger = logger;
     }
 
@@ -52,7 +48,7 @@ public class PickService
 
     private static DateOnly Today => DateOnly.FromDateTime(DateTime.Now);
 
-    /// <summary>Picks today's theme for the «Themed» channel; the content changes only when the theme or its films do.</summary>
+    /// <summary>Picks today's theme; the content changes only when the theme or its films do.</summary>
     public async Task RefreshThemedAsync(CancellationToken cancellationToken)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -66,7 +62,7 @@ public class PickService
         }
     }
 
-    /// <summary>Fills the «Best» channel: the next top when rotating, else the current one recomputed.</summary>
+    /// <summary>Fills «Best»: the next top when rotating, else the current one recomputed.</summary>
     public async Task UpdateBestAsync(bool rotate, CancellationToken cancellationToken)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -80,8 +76,7 @@ public class PickService
         }
     }
 
-    /// <summary>Catches up after downtime (today's theme, a first top if there is none yet) and syncs both channels.</summary>
-    // The sync also applies changes in how the plugin builds its channels after an update.
+    /// <summary>Catches up after downtime and removes deleted films from the saved picks.</summary>
     public async Task EnsureFreshAsync(CancellationToken cancellationToken)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -94,7 +89,7 @@ public class PickService
             }
             else
             {
-                await SyncChannelAsync(_copies.ThemedName, state.Themed, cancellationToken).ConfigureAwait(false);
+                await SyncExistingAsync(PickCollectionKind.Themed, cancellationToken).ConfigureAwait(false);
             }
 
             if (state.Best is null || state.Best.Groups.Count == 0)
@@ -103,7 +98,7 @@ public class PickService
             }
             else
             {
-                await SyncChannelAsync(_copies.BestName, state.Best, cancellationToken).ConfigureAwait(false);
+                await SyncExistingAsync(PickCollectionKind.Best, cancellationToken).ConfigureAwait(false);
             }
         }
         finally
@@ -112,7 +107,7 @@ public class PickService
         }
     }
 
-    /// <summary>Recomputes both channels after a settings change, without moving to the next top.</summary>
+    /// <summary>Recomputes both collections after a settings change, without moving to the next top.</summary>
     public async Task RebuildAsync(CancellationToken cancellationToken)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -130,14 +125,17 @@ public class PickService
     private async Task RefreshThemedCoreAsync(CancellationToken cancellationToken)
     {
         var config = Config;
-        var movies = LoadMovies(config, out var libraries);
-        movies = PickSelector.NotRecentlyWatched(movies, LoadUsage(movies, libraries), Today);
+        var all = LoadMovies(config, out var libraries);
+        var movies = PickSelector.NotRecentlyWatched(all, LoadUsage(all, libraries), Today);
         var chosen = PickSelector.ChooseThemes(Today, movies, Disabled(config));
         var state = _store.Get();
-        var themed = chosen.Count > 0 ? MakeResult(chosen.Select(c => (c.Pick.Id, c.Items, (string?)null)).ToList(), state.Themed) : null;
-        _store.Save(new PickState { Themed = themed, Best = state.Best, Rounds = state.Rounds });
+        var themed = config.EnablePicks
+            ? chosen.Count > 0
+                ? MakeResult(chosen.Select(c => (c.Pick.Id, c.Items, (string?)null)).ToList(), state.Themed)
+                : Previous(state.Themed, config, all)
+            : null;
         _logger.LogInformation("Jelly Twiggy: themed picks are {Picks}", Describe(themed));
-        await SyncChannelAsync(_copies.ThemedName, themed, cancellationToken).ConfigureAwait(false);
+        await SyncAndSaveAsync(PickCollectionKind.Themed, themed, state, null, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task UpdateBestCoreAsync(bool rotate, CancellationToken cancellationToken)
@@ -165,10 +163,18 @@ public class PickService
             rounds[id] = RoundOf(id);
             best = MakeResult([(id, n.Choice.Items, n.Choice.Subject)], state.Best);
         }
+        else
+        {
+            best = Previous(state.Best, config, all);
+        }
 
-        _store.Save(new PickState { Themed = state.Themed, Best = best, Rounds = rounds });
+        if (!config.EnablePicks)
+        {
+            best = null;
+        }
+
         _logger.LogInformation("Jelly Twiggy: best pick is {Picks}", Describe(best));
-        await SyncChannelAsync(_copies.BestName, best, cancellationToken).ConfigureAwait(false);
+        await SyncAndSaveAsync(PickCollectionKind.Best, best, state, rounds, cancellationToken).ConfigureAwait(false);
     }
 
     // The current top is known by id: the list of tops may change between plugin versions.
@@ -181,7 +187,7 @@ public class PickService
     private static string Describe(PickResult? pick) =>
         pick is null ? "none" : string.Join(", ", pick.Groups.Select(g => $"{g.PickId} ({g.ItemIds.Count})"));
 
-    // An unchanged pick keeps its timestamp: the channel cache and the copies stay as they are.
+    // An unchanged pick keeps its timestamp.
     // A person top is named after its director or star: "Director of the week — Steven Spielberg".
     private PickResult MakeResult(IReadOnlyList<(string PickId, IReadOnlyList<Guid> Items, string? Subject)> groups, PickResult? previous)
     {
@@ -212,40 +218,51 @@ public class PickService
         };
     }
 
-    // Jellyfin compares the channel with its saved copies, adds and deletes them; then the order is set by creation date.
-    private async Task SyncChannelAsync(string channelName, PickResult? pick, CancellationToken cancellationToken)
+    private static PickResult? Previous(PickResult? previous, PluginConfiguration config, List<MovieFacts> movies)
     {
-        var channelId = _copies.ChannelId(channelName);
-        await _channelManager.GetLatestChannelItemsInternal(new InternalItemsQuery { ChannelIds = [channelId] }, cancellationToken).ConfigureAwait(false);
-        if (pick is null || _libraryManager.GetItemById(channelId) is not { } channel)
+        if (config is not { EnablePicks: true, PickSourceLibraries.Length: > 0 })
         {
-            return;
+            return null;
         }
 
-        var ranks = pick.AllItemIds()
-            .Select((id, rank) => (Key: id.ToString("N"), Rank: rank))
-            .ToDictionary(x => x.Key, x => x.Rank, StringComparer.OrdinalIgnoreCase);
-        var copies = _libraryManager.GetItemList(new InternalItemsQuery { ChannelIds = [channelId], IsFolder = false, Recursive = true });
-        foreach (var copy in copies)
-        {
-            if (copy.ExternalId is null || !ranks.TryGetValue(copy.ExternalId, out var rank))
-            {
-                continue;
-            }
+        return PickCollectionRules.RetainPrevious(
+            previous,
+            movies.Select(m => m.Id).ToHashSet(),
+            Disabled(config));
+    }
 
-            // The server sets the date only when it creates a copy; a film that moved needs it set again.
-            var createdAt = PickChannel.CreatedAt(pick, rank);
-            if (Math.Abs((copy.DateCreated - createdAt).TotalSeconds) >= 0.5)
-            {
-                copy.DateCreated = createdAt;
-                await _libraryManager.UpdateItemAsync(copy, copy.GetParent() ?? channel, ItemUpdateType.MetadataEdit, cancellationToken).ConfigureAwait(false);
-            }
-        }
+    private async Task SyncExistingAsync(PickCollectionKind kind, CancellationToken cancellationToken)
+    {
+        var config = Config;
+        var movies = LoadMovies(config, out _);
+        var state = _store.Get();
+        var result = Previous(kind == PickCollectionKind.Themed ? state.Themed : state.Best, config, movies);
+        await SyncAndSaveAsync(kind, result, state, null, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task SyncAndSaveAsync(
+        PickCollectionKind kind,
+        PickResult? result,
+        PickState state,
+        Dictionary<string, int>? rounds,
+        CancellationToken cancellationToken)
+    {
+        var previousId = kind == PickCollectionKind.Themed ? state.ThemedCollectionId : state.BestCollectionId;
+        var collectionId = await _collections.SyncAsync(kind, result, previousId, cancellationToken).ConfigureAwait(false);
+        _store.Save(new PickState
+        {
+            Themed = kind == PickCollectionKind.Themed ? result : state.Themed,
+            Best = kind == PickCollectionKind.Best ? result : state.Best,
+            Rounds = rounds ?? state.Rounds,
+            ThemedCollectionId = kind == PickCollectionKind.Themed ? collectionId : state.ThemedCollectionId,
+            BestCollectionId = kind == PickCollectionKind.Best ? collectionId : state.BestCollectionId,
+            LegacyChannelsRemoved = state.LegacyChannelsRemoved
+        });
     }
 
     private static HashSet<string> Disabled(PluginConfiguration config) => new(config.DisabledPicks, StringComparer.Ordinal);
 
-    // Only the libraries the admin chose: the channels are shared, so a film there is visible to everyone with channel access.
+    // Only the libraries the admin chose.
     private List<MovieFacts> LoadMovies(PluginConfiguration config, out List<BaseItem> libraries, bool withPeople = false)
     {
         libraries = config.PickSourceLibraries

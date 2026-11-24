@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using Jellyfin.Database.Implementations.Entities;
-using Jellyfin.Plugin.JellyTwiggy.Picks;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
@@ -45,8 +44,6 @@ public sealed class PlaybackTracker : IHostedService, IDisposable
     private readonly IUserManager _userManager;
     private readonly IServerConfigurationManager _serverConfiguration;
     private readonly PlaybackHistoryStore _store;
-    private readonly PickCopies _copies;
-    private readonly PickWatchedTransfer _transfer;
     private readonly ILogger<PlaybackTracker> _logger;
     private readonly ConcurrentDictionary<string, ActivePlayback> _active = new();
     private readonly ConcurrentDictionary<string, DateTime> _recentlyStopped = new();
@@ -60,8 +57,6 @@ public sealed class PlaybackTracker : IHostedService, IDisposable
         IUserManager userManager,
         IServerConfigurationManager serverConfiguration,
         PlaybackHistoryStore store,
-        PickCopies copies,
-        PickWatchedTransfer transfer,
         ILogger<PlaybackTracker> logger)
     {
         _sessionManager = sessionManager;
@@ -69,8 +64,6 @@ public sealed class PlaybackTracker : IHostedService, IDisposable
         _userManager = userManager;
         _serverConfiguration = serverConfiguration;
         _store = store;
-        _copies = copies;
-        _transfer = transfer;
         _logger = logger;
     }
 
@@ -127,12 +120,9 @@ public sealed class PlaybackTracker : IHostedService, IDisposable
         var now = DateTime.UtcNow;
         var key = GetKey(e);
         _recentlyStopped.TryRemove(key, out _);
-        // A channel copy is logged as its library film.
-        var original = _copies.GetOriginal(e.Item);
         _active[key] = new ActivePlayback
         {
-            Item = original ?? e.Item,
-            IsCopy = original is not null,
+            Item = e.Item,
             Users = [.. e.Users],
             Client = e.ClientName ?? e.Session?.Client,
             Device = e.DeviceName ?? e.Session?.DeviceName,
@@ -278,10 +268,7 @@ public sealed class PlaybackTracker : IHostedService, IDisposable
             record.Client = Truncate(playback.Client);
             record.Device = Truncate(playback.Device);
             record.PlayMethod = playback.PlayMethod?.ToString();
-            if (AddRecord(record, completed) && playback.IsCopy)
-            {
-                _transfer.Apply(user, playback.Item);
-            }
+            AddRecord(record, completed);
         }
     }
 
@@ -300,14 +287,10 @@ public sealed class PlaybackTracker : IHostedService, IDisposable
                 return;
             }
 
-            var original = _copies.GetOriginal(e.Item);
-            var record = CreateRecord(user, original ?? e.Item);
+            var record = CreateRecord(user, e.Item);
             record.StartedUtc = record.EndedUtc = DateTime.UtcNow;
             record.Manual = true;
-            if (AddRecord(record, completed: true) && original is not null)
-            {
-                _transfer.Apply(user, original);
-            }
+            AddRecord(record, completed: true);
         }
         catch (Exception ex)
         {
@@ -391,8 +374,6 @@ public sealed class PlaybackTracker : IHostedService, IDisposable
     private sealed class ActivePlayback
     {
         public required BaseItem Item { get; init; }
-
-        public bool IsCopy { get; init; }
 
         public required List<User> Users { get; init; }
 
