@@ -188,19 +188,6 @@
         return { root, body, footer, close };
     };
 
-    JT.toggle = function (label, checked, hint) {
-        const input = JT.el('input', { type: 'checkbox', checked: !!checked });
-        const row = JT.el('label', { className: 'jt-toggle' }, [
-            input,
-            JT.el('span', { className: 'jt-toggle-track' }, JT.el('span', { className: 'jt-toggle-thumb' })),
-            JT.el('span', { className: 'jt-toggle-text' }, [
-                JT.el('span', { text: label }),
-                hint ? JT.el('span', { className: 'jt-hint', text: hint }) : null
-            ])
-        ]);
-        return { row, input };
-    };
-
     // ---- Page tracking ---------------------------------------------------------------------
 
     // Called (throttled to one animation frame) after DOM changes with the changed subtrees,
