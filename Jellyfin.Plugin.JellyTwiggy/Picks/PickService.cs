@@ -140,7 +140,7 @@ public class PickService
     {
         var config = Config;
         var all = LoadMovies(config, out _, withPeople: true);
-        return LibraryProfile.Build(all, _serverConfiguration.Configuration.MetadataLanguage);
+        return LibraryProfile.Build(all, _serverConfiguration.Configuration.PreferredMetadataLanguage);
     }
 
     private async Task RefreshThemedCoreAsync(CancellationToken cancellationToken)
