@@ -20,7 +20,7 @@ public class LibraryProfileTests
         var movies = new List<MovieFacts>
         {
             Film("A", "Drama", "space", "US", 1999, "Nolan"),
-            Film("B", "Drama", "space", "US", 2001, "Nolan"),
+            Film("B", "Drama", "space", "US", 1997, "Nolan"),
             Film("C", "Comedy", "dog", "FR", 2010, "Other")
         };
 
@@ -33,6 +33,7 @@ public class LibraryProfileTests
         Assert.Equal(2, profile.Genres[0].Count);
         Assert.Equal("Nolan", profile.Directors[0].Name);
         Assert.Contains(profile.Decades, d => d.Name == "1990s" && d.Count == 2);
+        Assert.Contains(profile.Decades, d => d.Name == "2010s" && d.Count == 1);
     }
 
     [Fact]
