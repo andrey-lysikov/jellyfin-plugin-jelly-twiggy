@@ -5,7 +5,7 @@
     <RootNamespace>Jellyfin.Plugin.JellyTwiggy</RootNamespace>
     <AssemblyName>Jellyfin.Plugin.JellyTwiggy</AssemblyName>
     <!-- Overridden by the release workflow from the tag (vX.Y.Z.W). -->
-    <Version>0.6.0.0</Version>
+    <Version>0.6.1.0</Version>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
@@ -21,6 +21,8 @@
   <ItemGroup>
     <None Remove="Configuration\configPage.html" />
     <EmbeddedResource Include="Configuration\configPage.html" />
+    <!-- The built-in pick catalog, mirrored for export and as the source of window definitions. -->
+    <EmbeddedResource Include="Picks\catalog.default.json" LogicalName="Jellyfin.Plugin.JellyTwiggy.Picks.catalog.default.json" />
     <!-- Client files served by JellyTwiggyController under /JellyTwiggy/client/... -->
     <EmbeddedResource Include="Web\**\*" LogicalName="Web/%(RecursiveDir)%(Filename)%(Extension)" WithCulture="false" />
   </ItemGroup>

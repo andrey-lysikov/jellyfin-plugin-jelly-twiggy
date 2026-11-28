@@ -28,11 +28,19 @@ public static class PickSelector
     /// <summary>The most holidays the «Coming soon!» collection shows at once.</summary>
     public const int MaxThemes = 3;
 
-    /// <summary>Gets today's themes: the nearest holiday with enough films and up to two more due within a week of it, else a franchise of the week.</summary>
+    /// <summary>Gets today's themes from the effective catalog (built-in plus custom): the nearest holiday with enough films and up to two more due within a week of it, else a franchise of the week.</summary>
+    public static IReadOnlyList<(PickDefinition Pick, IReadOnlyList<Guid> Items)> ChooseThemes(DateOnly date, IReadOnlyList<MovieFacts> movies, IReadOnlySet<string> disabled) =>
+        ChooseThemes(date, movies, disabled, PickCatalogLoader.EffectiveThemes);
+
+    /// <summary>Gets today's themes from the given catalog: the nearest holiday with enough films and up to two more due within a week of it, else a franchise of the week.</summary>
     // A film goes to the first theme it fits, so the collection lists it once.
-    public static IReadOnlyList<(PickDefinition Pick, IReadOnlyList<Guid> Items)> ChooseThemes(DateOnly date, IReadOnlyList<MovieFacts> movies, IReadOnlySet<string> disabled)
+    public static IReadOnlyList<(PickDefinition Pick, IReadOnlyList<Guid> Items)> ChooseThemes(
+        DateOnly date,
+        IReadOnlyList<MovieFacts> movies,
+        IReadOnlySet<string> disabled,
+        IReadOnlyList<PickDefinition> catalog)
     {
-        var themes = PickCatalog.Themes.Where(t => !disabled.Contains(t.Id)).ToList();
+        var themes = catalog.Where(t => !disabled.Contains(t.Id)).ToList();
         var chosen = new List<(PickDefinition Pick, IReadOnlyList<Guid> Items)>();
         var used = new HashSet<Guid>();
         int? firstDays = null;

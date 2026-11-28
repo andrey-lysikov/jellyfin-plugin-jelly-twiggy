@@ -20,7 +20,7 @@ public record HandoffSession(
     int? SubtitleStreamIndex,
     DateTime LastActivityDate);
 
-/// <summary>"Continue here" and "Play on" with Swiftly Player, in line with its Takeover.fits / startPoint.</summary>
+/// <summary>"Continue here" from video clients and "Play on" with Swiftly Player, in line with its Takeover.fits / startPoint.</summary>
 public static class HandoffRules
 {
     /// <summary>Hint header Swiftly reads to tell a takeover from a stop. A protocol string: never change it.</summary>
@@ -76,8 +76,9 @@ public static class HandoffRules
             return "stale";
         }
 
-        // Swiftly's own checks end here; this plugin offers only Swiftly sessions.
-        return IsSwiftly(session.Client) ? null : "client";
+        // Any remote-controllable video client can be stopped and continued here.
+        // Only receivers are limited to Swiftly: see WhyNotTarget.
+        return null;
     }
 
     /// <summary>Sessions the caller can take over, freshest first.</summary>

@@ -30,6 +30,9 @@
                     @media (max-width: 50em) { #JellyTwiggyConfigPage .jtPickSources { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
                     @media (max-width: 50em) { #JellyTwiggyConfigPage .jtPickColumns { grid-template-columns: minmax(0, 1fr); } }
                     @media (max-width: 30em) { #JellyTwiggyConfigPage .jtPickTwo, #JellyTwiggyConfigPage .jtPickSources { grid-template-columns: minmax(0, 1fr); } }
+                    #JellyTwiggyConfigPage .jtCatalogButtons { display: flex; flex-wrap: wrap; gap: 0.6em; margin-top: 0.5em; }
+                    #JellyTwiggyConfigPage .jtCatalogReport { margin-top: 0.8em; font-size: 0.9em; white-space: pre-wrap; }
+                    #JellyTwiggyConfigPage .jtCatalogReport .jtBad { color: #e57373; }
                 </style>
                 <form id="JellyTwiggyConfigForm">
                     <h2 class="sectionTitle" style="display:flex;align-items:center;gap:0.75em">
@@ -115,6 +118,19 @@
                         <p class="fieldDescription" data-jt-i18n="cfgPickSourcesHint">Films from these libraries appear in the collections. Users only see films from libraries they can access.</p>
 
                         <div id="jtPickList"></div>
+
+                        <h4 data-jt-i18n="cfgCatalog">Category catalog</h4>
+                        <p class="fieldDescription" data-jt-i18n="cfgCatalogHint">The categories are rules the plugin matches films against. Export them, edit or generate your own (for example with an LLM), and import the JSON back. Custom categories extend or replace the built-in ones.</p>
+                        <div class="jtCatalogButtons">
+                            <button is="emby-button" type="button" class="raised emby-button" id="jtCatalogExport" data-jt-i18n="cfgCatalogExport">Export JSON</button>
+                            <button is="emby-button" type="button" class="raised emby-button" id="jtCatalogImport" data-jt-i18n="cfgCatalogImport">Import JSON…</button>
+                            <button is="emby-button" type="button" class="raised emby-button" id="jtCatalogRollback" data-jt-i18n="cfgCatalogRollback" hidden>Roll back</button>
+                            <button is="emby-button" type="button" class="raised emby-button" id="jtCatalogReset" data-jt-i18n="cfgCatalogReset" hidden>Reset to built-in</button>
+                            <button is="emby-button" type="button" class="button-flat emby-button" id="jtProfileExport" data-jt-i18n="cfgProfileExport">Download library profile</button>
+                            <input type="file" id="jtCatalogFile" accept="application/json,.json" hidden />
+                        </div>
+                        <div id="jtCatalogStatus" class="fieldDescription" style="margin-top:0.6em"></div>
+                        <div id="jtCatalogReport" class="jtCatalogReport"></div>
                     </div>
                     </div>
 
@@ -165,7 +181,108 @@
                         + column(picks.BestCollection, list('Top'))
                         + '</div>';
 
+                    page.querySelector('#jtCatalogRollback').hidden = !picks.HasCatalogBackup;
+                    page.querySelector('#jtCatalogReset').hidden = !picks.HasCustomCatalog;
+                    page.querySelector('#jtCatalogStatus').textContent = picks.HasCustomCatalog
+                        ? t('cfgCatalogCustom', 'A custom catalog is in use.')
+                        : t('cfgCatalogBuiltIn', 'The built-in catalog is in use.');
                 }
+
+                function catalogReport(report) {
+                    const box = page.querySelector('#jtCatalogReport');
+                    if (report.Error) {
+                        box.innerHTML = '<span class="jtBad">' + escapeHtml(report.Error) + '</span>';
+                        return;
+                    }
+                    const lines = report.Categories.map((c) => {
+                        const mark = c.Valid ? '✓' : '✗';
+                        const films = c.FilmCount === null ? '' : ' — ' + c.FilmCount + ' ' + t('cfgCatalogFilms', 'films');
+                        const tag = c.Overridden ? ' (' + t('cfgCatalogOverride', 'replaces built-in') + ')' : c.IsNew ? ' (' + t('cfgCatalogNew', 'new') + ')' : '';
+                        const err = c.Error ? ': ' + c.Error : '';
+                        return mark + ' ' + c.Id + films + tag + err;
+                    });
+                    box.innerHTML = lines.map((l) => l.startsWith('✗') ? '<span class="jtBad">' + escapeHtml(l) + '</span>' : escapeHtml(l)).join('\n');
+                }
+
+                function reloadPicks() {
+                    return Promise.all([
+                        ApiClient.getPluginConfiguration(pluginId),
+                        ApiClient.getVirtualFolders(),
+                        ApiClient.getJSON(ApiClient.getUrl('JellyTwiggy/Picks'))
+                    ]).then(function ([config, folders, picks]) {
+                        picksConfig = picks;
+                        renderPicks(config, folders || [], picks);
+                    });
+                }
+
+                function download(filename, text) {
+                    const blob = new Blob([text], { type: 'application/json' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = filename;
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                }
+
+                page.querySelector('#jtCatalogExport').addEventListener('click', function () {
+                    ApiClient.getJSON(ApiClient.getUrl('JellyTwiggy/Picks/Catalog')).then(function (catalog) {
+                        download('jellytwiggy-catalog.json', JSON.stringify(catalog, null, 2));
+                    });
+                });
+
+                page.querySelector('#jtProfileExport').addEventListener('click', function () {
+                    ApiClient.getJSON(ApiClient.getUrl('JellyTwiggy/Picks/Profile')).then(function (profile) {
+                        download('jellytwiggy-profile.json', JSON.stringify(profile, null, 2));
+                    });
+                });
+
+                page.querySelector('#jtCatalogImport').addEventListener('click', function () {
+                    page.querySelector('#jtCatalogFile').click();
+                });
+
+                page.querySelector('#jtCatalogFile').addEventListener('change', function (e) {
+                    const file = e.target.files[0];
+                    e.target.value = '';
+                    if (!file) {
+                        return;
+                    }
+                    file.text().then(function (json) {
+                        Dashboard.showLoadingMsg();
+                        fetch(ApiClient.getUrl('JellyTwiggy/Picks/Catalog'), {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-Emby-Token': ApiClient.accessToken() },
+                            body: json
+                        }).then(function (r) { return r.json(); }).then(function (report) {
+                            Dashboard.hideLoadingMsg();
+                            catalogReport(report);
+                            if (report.Ok) {
+                                reloadPicks();
+                            }
+                        }, function () { Dashboard.hideLoadingMsg(); });
+                    });
+                });
+
+                page.querySelector('#jtCatalogReset').addEventListener('click', function () {
+                    Dashboard.showLoadingMsg();
+                    fetch(ApiClient.getUrl('JellyTwiggy/Picks/Catalog'), {
+                        method: 'DELETE',
+                        headers: { 'X-Emby-Token': ApiClient.accessToken() }
+                    }).then(function () {
+                        page.querySelector('#jtCatalogReport').textContent = '';
+                        reloadPicks().then(function () { Dashboard.hideLoadingMsg(); });
+                    }, function () { Dashboard.hideLoadingMsg(); });
+                });
+
+                page.querySelector('#jtCatalogRollback').addEventListener('click', function () {
+                    Dashboard.showLoadingMsg();
+                    fetch(ApiClient.getUrl('JellyTwiggy/Picks/Catalog/Rollback'), {
+                        method: 'POST',
+                        headers: { 'X-Emby-Token': ApiClient.accessToken() }
+                    }).then(function () {
+                        page.querySelector('#jtCatalogReport').textContent = '';
+                        reloadPicks().then(function () { Dashboard.hideLoadingMsg(); });
+                    }, function () { Dashboard.hideLoadingMsg(); });
+                });
 
                 page.querySelectorAll('[data-tab]').forEach(function (tab) {
                     tab.addEventListener('click', function () {
@@ -186,16 +303,12 @@
                     page.querySelector('#jtIcon').src = ApiClient.getUrl('JellyTwiggy/client/img/wordmark.png');
 
                     Dashboard.showLoadingMsg();
-                    Promise.all([
-                        ApiClient.getPluginConfiguration(pluginId),
-                        ApiClient.getVirtualFolders(),
-                        ApiClient.getJSON(ApiClient.getUrl('JellyTwiggy/Picks'))
-                    ]).then(function ([config, folders, picks]) {
-                        flags.forEach(function (flag) {
-                            page.querySelector('#' + flag).checked = config[flag];
+                    reloadPicks().then(function () {
+                        ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                            flags.forEach(function (flag) {
+                                page.querySelector('#' + flag).checked = config[flag];
+                            });
                         });
-                        picksConfig = picks;
-                        renderPicks(config, folders || [], picks);
                         Dashboard.hideLoadingMsg();
                     }, function () {
                         Dashboard.hideLoadingMsg();

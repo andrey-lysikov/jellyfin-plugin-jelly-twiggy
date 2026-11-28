@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1.0
+
+- Custom collection categories
+- Bugfix
 ## 0.6.0.0
 
 - Replaced generated channels and their copies with managed collections containing the original library films

@@ -22,6 +22,7 @@ Jelly Twiggy extends the Jellyfin web client with poster badges, playback option
 - Dashboard: move, resize, show and hide blocks, and more
 - "Watched" row on item pages with who watched, how many times and when
 - «Coming soon!» and «Best» collections: films for the nearest holiday or a film series, and a server-wide top that changes weekly, with original library items in every client
+- Custom collection categories: export the category rules as JSON, generate your own for your library (for example with an LLM), and import them back — see [Custom category catalog](CUSTOM_CATALOG.md)
 - Localization: Arabic, Belarusian, Chinese (Simplified), Czech, English, French, German, Italian, Japanese, Kazakh, Polish, Russian, Serbian
 
 ## Recommended player

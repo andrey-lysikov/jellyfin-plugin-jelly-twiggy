@@ -77,7 +77,7 @@ public class HandoffRulesTests
     public void TakeoverRejectsStaleSession() => Assert.Equal("stale", WhyNot(Session(secondsAgo: 91)));
 
     [Fact]
-    public void TakeoverRejectsOtherClient() => Assert.Equal("client", WhyNot(Session(client: "Jellyfin Web")));
+    public void TakeoverAcceptsOtherClient() => Assert.Null(WhyNot(Session(client: "Jellyfin Web")));
 
     [Fact]
     public void TakeoverAcceptsSessionAtFreshnessLimit() => Assert.Null(WhyNot(Session(secondsAgo: 90)));
@@ -102,6 +102,24 @@ public class HandoffRulesTests
             Session("mid", deviceId: "mac", secondsAgo: 20)
         };
         Assert.Equal(new[] { "new", "mid", "old" }, HandoffRules.TakeoverSources(sessions, Me, MyDevice, Now).Select(s => s.Id));
+    }
+
+    [Fact]
+    public void TakeoverIncludesEveryPlayingDeviceRegardlessOfClient()
+    {
+        var sessions = new[]
+        {
+            Session("swiftly", deviceId: "tv", client: "Swiftly Player"),
+            Session("android", deviceId: "phone", client: "Jellyfin Android"),
+            Session("web", deviceId: "second-browser", client: "Jellyfin Web"),
+            Session("self", deviceId: MyDevice, client: "Jellyfin Web"),
+            Session("other-user", deviceId: "other-tv", userId: Other)
+        };
+
+        var sources = HandoffRules.TakeoverSources(sessions, Me, MyDevice, Now);
+
+        Assert.Equal(new[] { "swiftly", "android", "web" }, sources.Select(s => s.Id));
+        Assert.All(sources, s => Assert.Equal(Me, s.UserId));
     }
 
     [Fact]

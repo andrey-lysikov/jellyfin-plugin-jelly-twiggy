@@ -126,6 +126,23 @@ public class PickService
         }
     }
 
+    /// <summary>Counts the films a theme would pick right now, for the dry-run of an imported catalog.</summary>
+    public int CountFilms(PickDefinition theme)
+    {
+        var config = Config;
+        var all = LoadMovies(config, out var libraries);
+        var movies = PickSelector.NotRecentlyWatched(all, LoadUsage(all, libraries), Today);
+        return PickSelector.SelectTheme(theme, movies).Count;
+    }
+
+    /// <summary>Builds the statistical profile of the pick libraries for category generation (with an LLM or by hand).</summary>
+    public LibraryProfileDto BuildProfile()
+    {
+        var config = Config;
+        var all = LoadMovies(config, out _, withPeople: true);
+        return LibraryProfile.Build(all, _serverConfiguration.Configuration.MetadataLanguage);
+    }
+
     private async Task RefreshThemedCoreAsync(CancellationToken cancellationToken)
     {
         var config = Config;
@@ -197,7 +214,9 @@ public class PickService
     {
         var culture = _serverConfiguration.Configuration.UICulture;
         string NameOf(string pickId, string? subject) =>
-            subject is null ? PickNames.Get(pickId, culture) : string.Format(CultureInfo.InvariantCulture, PickNames.Get(pickId + "Title", culture), subject);
+            subject is null
+                ? PickCatalogLoader.NameOf(pickId) ?? PickNames.Get(pickId, culture)
+                : string.Format(CultureInfo.InvariantCulture, PickNames.Get(pickId + "Title", culture), subject);
 
         if (previous is not null
             && previous.Groups.Count == groups.Count

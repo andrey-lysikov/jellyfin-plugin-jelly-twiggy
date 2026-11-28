@@ -1,0 +1,364 @@
+{
+  "version": 1,
+  "categories": [
+    {
+      "id": "newyear",
+      "kind": "holiday",
+      "window": { "type": "annual", "month": 12, "day": 31, "through": 8 },
+      "rule": {
+        "strongTags": ["christmas", "new year's eve", "new year", "santa claus", "christmas eve", "christmas party", "christmas romance", "saving christmas", "christmas tree", "christmas spirit", "christmas story", "christmas day", "christmas carol", "christmas carols", "christmas movie", "north pole", "reindeer", "elf", "holiday season", "gingerbread"],
+        "weakTags": ["holiday", "holidays", "winter", "snow", "gift", "holiday get-together", "snowman", "family reunion"],
+        "titlePattern": "рождеств|новогод|нов(ый|ого|ому|ым|ом) год|(?<!\\p{L})[её]лк|санта|гринч|щелкунчик|christmas|xmas|santa|grinch|nutcracker|weihnacht|silvester",
+        "overviewPattern": "рождеств|новогод|нов(ый|ого|ому|ым|ом) год|сочельник|санта|дед(а|ом|у)? мороз|christmas|santa claus|weihnacht|heiligabend|new year's eve"
+      }
+    },
+    {
+      "id": "epiphany",
+      "kind": "holiday",
+      "religious": true,
+      "window": { "type": "annual", "month": 1, "day": 19 },
+      "rule": {
+        "strongTags": ["jesus christ", "bible", "christianity", "easter", "resurrection", "crucifixion", "apostle", "biblical epic", "easter bunny", "old testament", "new testament", "moses", "nativity", "baptism"],
+        "weakTags": ["religion", "faith", "church", "priest", "monk", "nun", "god", "angel", "miracle", "prayer"],
+        "titlePattern": "крещени|библ|христ|иисус|bible|christ|jesus",
+        "overviewPattern": "крещени|иисус|христ|библи",
+        "requireStrong": true
+      }
+    },
+    {
+      "id": "valentine",
+      "kind": "holiday",
+      "window": { "type": "annual", "month": 2, "day": 14 },
+      "rule": {
+        "strongTags": ["valentine's day", "romcom", "romantic comedy", "love at first sight", "falling in love", "true love", "love story", "first love", "soulmates", "wedding"],
+        "weakTags": ["romance", "love", "lovers", "love letter", "dating", "new love", "love affair", "kiss", "marriage proposal"],
+        "titlePattern": "валентин|любов|love|valentin|liebe",
+        "overviewPattern": "день (святого )?валентина|valentine|влюбл",
+        "genres": ["мелодрама", "romance", "liebesfilm"]
+      }
+    },
+    {
+      "id": "defender",
+      "kind": "holiday",
+      "window": { "type": "annual", "month": 2, "day": 23 },
+      "rule": {
+        "strongTags": ["military", "army", "soldier", "soldiers", "special forces", "marine corps", "navy seal", "military operation", "war hero", "fighter pilot", "commando", "sniper", "military officer", "navy", "military academy", "military life", "world war ii", "world war i"],
+        "weakTags": ["war", "combat", "battlefield", "tank", "action hero", "hero", "brotherhood", "rescue mission", "mercenary", "pilot"],
+        "titlePattern": "солдат|арми|десант|спецназ|soldier|army|top gun",
+        "overviewPattern": "арми|солдат|спецназ|военн|десант|фронт",
+        "genres": ["военный", "war", "kriegsfilm", "krieg"],
+        "requireStrong": true
+      }
+    },
+    {
+      "id": "chinesenewyear",
+      "kind": "holiday",
+      "window": { "type": "computed", "dateProvider": "chineseNewYear" },
+      "rule": {
+        "strongTags": ["chinese new year", "china", "hong kong", "wuxia", "chinese", "beijing", "shanghai", "shaolin", "dragon dance", "lunar new year", "ancient china", "chinese culture"],
+        "weakTags": ["asia", "asian", "dragon", "temple", "kung fu", "martial arts"],
+        "titlePattern": "китай|кунг-фу|шаолин|china|kung fu|shaolin",
+        "overviewPattern": "китай|кунг-фу|гонконг|пекин|шанха",
+        "countries": ["китай", "china", "гонконг", "hong kong", "тайвань", "taiwan"],
+        "requireStrong": true
+      }
+    },
+    {
+      "id": "maslenitsa",
+      "kind": "holiday",
+      "religious": true,
+      "window": { "type": "computed", "dateProvider": "maslenitsa" },
+      "rule": {
+        "strongTags": ["fairy tale", "folklore", "russian folklore", "slavic mythology", "winter", "snow", "based on fairy tale", "tale"],
+        "weakTags": ["magic", "dragon", "village", "animation", "cartoon", "musical"],
+        "overviewPattern": "сказк|богатыр|змей горыныч|баба яга|зим",
+        "genres": ["мультфильм", "семейный", "детский", "фэнтези", "animation", "family", "fantasy"],
+        "countries": ["россия", "russia", "russian federation", "ссср", "soviet union", "ussr"],
+        "threshold": 3
+      }
+    },
+    {
+      "id": "womensday",
+      "kind": "holiday",
+      "window": { "type": "annual", "month": 3, "day": 8 },
+      "rule": {
+        "strongTags": ["female protagonist", "woman director", "strong woman", "sisterhood", "female friendship", "women's rights", "feminism", "independent woman", "female empowerment"],
+        "weakTags": ["romcom", "romance", "fashion", "wedding", "mother daughter relationship"],
+        "titlePattern": "женщин|девушк|леди|woman|women|girl|lady|frau|mädchen",
+        "requireStrong": true
+      }
+    },
+    {
+      "id": "stpatrick",
+      "kind": "holiday",
+      "window": { "type": "annual", "month": 3, "day": 17 },
+      "rule": {
+        "strongTags": ["ireland", "irish", "dublin", "st. patrick's day", "leprechaun", "irish american", "belfast", "northern ireland"],
+        "weakTags": ["pub", "whiskey", "folk music"],
+        "titlePattern": "ирланд|ireland|irish|dublin",
+        "overviewPattern": "ирланд|дублин",
+        "countries": ["ирландия", "ireland"],
+        "requireStrong": true
+      }
+    },
+    {
+      "id": "aprilfools",
+      "kind": "holiday",
+      "window": { "type": "annual", "month": 4, "day": 1 },
+      "rule": {
+        "strongTags": ["hilarious", "slapstick comedy", "parody", "spoof", "prank", "satire", "absurd", "comedy of errors", "farce", "mockumentary"],
+        "weakTags": ["amused", "cheerful", "lighthearted", "comedy", "dark comedy", "buddy comedy"],
+        "genres": ["комедия", "comedy", "komödie"]
+      }
+    },
+    {
+      "id": "easter",
+      "kind": "holiday",
+      "religious": true,
+      "window": { "type": "computed", "dateProvider": "orthodoxEaster", "through": 1 },
+      "rule": {
+        "strongTags": ["jesus christ", "bible", "christianity", "easter", "resurrection", "crucifixion", "apostle", "biblical epic", "easter bunny", "old testament", "new testament", "moses", "nativity", "baptism"],
+        "weakTags": ["religion", "faith", "church", "priest", "monk", "nun", "god", "angel", "miracle", "prayer"],
+        "titlePattern": "пасх|воскрес|иисус|христ|библ|easter|jesus|christ|bible|passion|ostern",
+        "overviewPattern": "пасх|иисус|христ|библи|воскресени",
+        "requireStrong": true
+      }
+    },
+    {
+      "id": "cosmonautics",
+      "kind": "holiday",
+      "window": { "type": "annual", "month": 4, "day": 12 },
+      "rule": {
+        "strongTags": ["space", "space travel", "astronaut", "nasa", "spacecraft", "space mission", "outer space", "space station", "moon", "mars", "cosmonaut", "space exploration", "rocket", "space program", "spaceship", "moon landing", "space race", "international space station"],
+        "weakTags": ["alien planet", "planet", "alien", "galaxy", "space colony", "satellite"],
+        "titlePattern": "космос|космич|космонавт|(?<!\\p{L})луна|(?<!\\p{L})марс|гагарин|space|(?<!\\p{L})moon|(?<!\\p{L})mars(?!\\p{L})|apollo|weltraum",
+        "overviewPattern": "космос|космонавт|астронавт|космическ|орбит|nasa|наса"
+      }
+    },
+    {
+      "id": "earthday",
+      "kind": "holiday",
+      "window": { "type": "annual", "month": 4, "day": 22 },
+      "rule": {
+        "strongTags": ["nature", "environmental", "ecology", "climate change", "global warming", "planet earth", "environmentalism", "deforestation", "pollution", "wildlife", "nature documentary", "endangered species", "rainforest", "attachment to nature"],
+        "weakTags": ["animals", "forest", "jungle", "ocean", "island"],
+        "titlePattern": "(?<!\\p{L})земл|природ|планет|earth|planet|nature",
+        "overviewPattern": "природ|эколог|планет|климат",
+        "requireStrong": true
+      }
+    },
+    {
+      "id": "mayday",
+      "kind": "holiday",
+      "window": { "type": "annual", "month": 5, "day": 1 },
+      "rule": {
+        "strongTags": ["worker", "working class", "factory", "labor union", "strike", "trade union", "factory worker", "blue collar", "coal mine", "workplace", "office", "coworker", "boss", "workaholic", "job", "career", "office romance", "spring"],
+        "weakTags": ["employee", "employer", "business", "work", "unemployment"],
+        "titlePattern": "служебн|завод|бригад|трудов|(?<!\\p{L})весн|spring|office",
+        "overviewPattern": "завод|на работ|сослужив|начальни|офис|(?<!\\p{L})весн",
+        "requireStrong": true
+      }
+    },
+    {
+      "id": "starwars",
+      "kind": "franchise",
+      "window": { "type": "annual", "month": 5, "day": 4 },
+      "franchise": {
+        "collections": ["10"],
+        "originalTitles": ["Rogue One", "Rogue One: A Star Wars Story", "Solo: A Star Wars Story"]
+      }
+    },
+    {
+      "id": "victory",
+      "kind": "holiday",
+      "window": { "type": "annual", "month": 5, "day": 9 },
+      "rule": {
+        "strongTags": ["world war ii", "nazi", "eastern front", "red army", "battle of stalingrad", "soviet union", "soviet army", "great patriotic war", "battle of berlin", "wehrmacht", "siege of leningrad", "partisan"],
+        "weakTags": ["war", "soldier", "army", "military", "tank"],
+        "titlePattern": "войн|сталинград|брест|блокад|ржев|т-34|панфилов",
+        "overviewPattern": "великой отечественной|(?<!\\d)194[1-5](?!\\d)|фашист|нацист|сталинград|блокад",
+        "genres": ["военный", "war", "kriegsfilm", "krieg"],
+        "requireStrong": true
+      }
+    },
+    {
+      "id": "childrensday",
+      "kind": "holiday",
+      "window": { "type": "annual", "month": 6, "day": 1 },
+      "rule": {
+        "strongTags": ["children", "kids", "child hero", "childhood", "talking animal"],
+        "weakTags": ["friendship", "family", "adventure", "school"],
+        "genres": ["семейный", "детский", "мультфильм", "family", "kids", "animation", "familie"],
+        "requireGenre": true,
+        "threshold": 3
+      }
+    },
+    {
+      "id": "russiaday",
+      "kind": "holiday",
+      "window": { "type": "annual", "month": 6, "day": 12 },
+      "rule": {
+        "countries": ["россия", "russia", "russian federation"],
+        "threshold": 0
+      }
+    },
+    {
+      "id": "music",
+      "kind": "holiday",
+      "window": { "type": "annual", "month": 6, "day": 21 },
+      "rule": {
+        "strongTags": ["musical", "music", "singer", "band", "rock and roll", "concert", "musician", "rock band", "jazz", "opera", "singing", "dance", "dancer", "songwriter", "music band", "hip-hop", "rock star", "pop star", "composer", "piano"],
+        "weakTags": ["song", "guitar", "dancing", "talent show", "performance"],
+        "titlePattern": "мюзикл|музык|песн|music|song|sing|rock",
+        "overviewPattern": "музыкант|певиц|певец|концерт|мюзикл",
+        "genres": ["мюзикл", "музыка", "musical", "music", "musik"]
+      }
+    },
+    {
+      "id": "summer",
+      "kind": "holiday",
+      "season": true,
+      "window": { "type": "fixed", "startMonth": 6, "startDay": 1, "endMonth": 8, "endDay": 31, "anchorMonth": 7, "anchorDay": 15 },
+      "rule": {
+        "strongTags": ["summer", "summer vacation", "beach", "summer camp", "road trip", "vacation", "surfing", "island", "beach house"],
+        "weakTags": ["swimming", "swimming pool", "sea", "ocean", "travel", "sailing"],
+        "titlePattern": "(?<!\\p{L})лет[оа](?!\\p{L})|пляж|каникул|summer|beach|sommer|urlaub",
+        "overviewPattern": "летн|(?<!\\p{L})лето|каникул|пляж|отпуск"
+      }
+    },
+    {
+      "id": "friendship",
+      "kind": "holiday",
+      "window": { "type": "annual", "month": 7, "day": 30 },
+      "rule": {
+        "strongTags": ["friendship", "best friend", "unlikely friendship", "male friendship", "female friendship", "childhood friends", "buddy", "friends", "friendship between children", "teamwork"],
+        "weakTags": ["loyalty", "road trip", "buddy comedy", "reunion"],
+        "titlePattern": "друз|дружб|friend",
+        "overviewPattern": "(?<!\\p{L})друз|дружб",
+        "requireStrong": true
+      }
+    },
+    {
+      "id": "harrypotter",
+      "kind": "franchise",
+      "window": { "type": "annual", "month": 7, "day": 31, "through": 7 },
+      "franchise": {
+        "collections": ["1241", "435259"]
+      }
+    },
+    {
+      "id": "cinemaday",
+      "kind": "holiday",
+      "window": { "type": "annual", "month": 8, "day": 27 },
+      "rule": {
+        "strongTags": ["filmmaking", "movie business", "hollywood", "film director", "film production", "making of", "behind the scenes", "film within a film", "movie star", "actor", "actress", "screenwriter", "film set", "cinema", "silent film", "film industry", "stuntman", "movie theater"],
+        "weakTags": ["fame", "celebrity", "los angeles, california"],
+        "titlePattern": "(?<!\\p{L})кино|голливуд|hollywood|movie|cinema",
+        "overviewPattern": "съ[её]мк|режисс[её]р|голливуд|киностуди|акт[её]р",
+        "requireStrong": true
+      }
+    },
+    {
+      "id": "school",
+      "kind": "holiday",
+      "window": { "type": "annual", "month": 9, "day": 1 },
+      "rule": {
+        "strongTags": ["high school", "school", "boarding school", "teacher", "student", "school life", "school of witchcraft", "school friend", "college", "university", "prom", "classroom", "schoolteacher", "first day of school"],
+        "weakTags": ["teenager", "coming of age", "teenage romance", "friendship"],
+        "titlePattern": "школ|учител|выпускн|school|teacher|schule|lehrer",
+        "overviewPattern": "школ|учител|ученик|студент|университет|колледж|выпускн"
+      }
+    },
+    {
+      "id": "tolkien",
+      "kind": "franchise",
+      "window": { "type": "annual", "month": 9, "day": 22 },
+      "franchise": {
+        "collections": ["119", "121938"]
+      }
+    },
+    {
+      "id": "animals",
+      "kind": "holiday",
+      "window": { "type": "annual", "month": 10, "day": 4 },
+      "rule": {
+        "strongTags": ["dog", "cat", "talking animal", "animal", "pet", "horse", "animals", "anthropomorphism", "wildlife", "zoo", "puppy", "kitten", "bear", "penguin", "lion", "dolphin", "elephant", "talking dog", "talking cat", "animal protagonist"],
+        "weakTags": ["nature", "forest", "jungle", "farm", "animal rescue"],
+        "titlePattern": "собак|(?<!\\p{L})кот|(?<!\\p{L})п[её]с|звер|животн|(?<!\\p{L})dog|(?<!\\p{L})cat(?!\\p{L})|animal",
+        "overviewPattern": "собак|(?<!\\p{L})кот|животн|звер",
+        "requireStrong": true
+      }
+    },
+    {
+      "id": "halloween",
+      "kind": "holiday",
+      "window": { "type": "annual", "month": 10, "day": 31 },
+      "rule": {
+        "strongTags": ["halloween", "haunted house", "trick or treating", "jack-o'-lantern", "ghost story", "haunting", "slasher", "vampire", "werewolf", "zombie", "possession", "exorcism", "poltergeist", "pumpkin", "haunted", "horror"],
+        "weakTags": ["ghost", "witch", "monster", "supernatural", "curse", "skeleton", "black magic", "witchcraft", "graveyard", "demon", "dark fantasy"],
+        "titlePattern": "хэллоуин|хеллоуин|halloween|призрак|вампир|зомби|ведьм|привидени|ghost|vampire|zombie|gespenst",
+        "overviewPattern": "хэллоуин|хеллоуин|halloween|нечист|привидени|призрак|вампир|зомби",
+        "genres": ["ужасы", "horror"],
+        "requireStrong": true
+      }
+    },
+    {
+      "id": "unityday",
+      "kind": "holiday",
+      "window": { "type": "annual", "month": 11, "day": 4 },
+      "rule": {
+        "countries": ["ссср", "soviet union", "ussr"],
+        "threshold": 0
+      }
+    },
+    {
+      "id": "thanksgiving",
+      "kind": "holiday",
+      "window": { "type": "computed", "dateProvider": "thanksgiving" },
+      "rule": {
+        "strongTags": ["thanksgiving", "family dinner", "turkey dinner", "gratitude", "thanksgiving dinner"],
+        "weakTags": ["family", "holiday", "family relationships", "dysfunctional family", "family reunion"],
+        "titlePattern": "благодарени|thanksgiving",
+        "overviewPattern": "благодарени|thanksgiving",
+        "requireStrong": true
+      }
+    },
+    {
+      "id": "friday13",
+      "kind": "holiday",
+      "window": { "type": "computed", "dateProvider": "friday13" },
+      "rule": {
+        "strongTags": ["friday the 13th", "slasher", "haunted house", "ghost story", "haunting", "possession", "exorcism", "poltergeist", "horror", "serial killer", "zombie", "vampire"],
+        "weakTags": ["ghost", "witch", "monster", "supernatural", "skeleton", "black magic", "demon", "killer", "werewolf", "curse"],
+        "titlePattern": "пятниц[аы] 13|friday the 13th|(?<!\\p{L})ужас|кошмар|horror|nightmare",
+        "genres": ["ужасы", "horror"],
+        "requireStrong": true
+      }
+    },
+    {
+      "id": "bond",
+      "kind": "franchise",
+      "franchise": { "collections": ["645"] }
+    },
+    {
+      "id": "bttf",
+      "kind": "franchise",
+      "franchise": { "collections": ["264"] }
+    },
+    {
+      "id": "marvel",
+      "kind": "franchise",
+      "franchise": { "studios": ["Marvel Studios"] }
+    },
+    {
+      "id": "pixar",
+      "kind": "franchise",
+      "franchise": { "studios": ["Pixar", "Pixar Animation Studios"] }
+    },
+    {
+      "id": "ghibli",
+      "kind": "franchise",
+      "franchise": { "studios": ["Studio Ghibli"] }
+    }
+  ]
+}

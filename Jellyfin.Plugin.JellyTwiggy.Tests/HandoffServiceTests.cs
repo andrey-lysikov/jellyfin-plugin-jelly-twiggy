@@ -69,13 +69,25 @@ public class HandoffServiceTests
     }
 
     [Fact]
-    public async Task TakeoverOfOtherClientTouchesNothing()
+    public async Task TakeoverOfOtherClientStopsItWithoutSwiftlyHintThenPlaysHere()
     {
-        var fake = new FakeSessions(Browser, Session("web", client: "Jellyfin Web"));
+        var fake = new FakeSessions(
+            Browser,
+            Session("swiftly", deviceId: "tv"),
+            Session("web", deviceId: "second-browser", client: "Jellyfin Web", position: 120 * Second),
+            Session("android", deviceId: "phone", client: "Jellyfin Android"))
+        { StoppedAt = 124 * Second };
+
         var result = await Service(fake).TakeOver(Me, MyDevice, "web", CancellationToken.None);
 
-        Assert.Equal(HandoffStatus.SourceGone, result.Status);
-        Assert.Empty(fake.Calls);
+        Assert.Equal(HandoffStatus.Ok, result.Status);
+        Assert.Equal(new[] { "stop web", "play own" }, fake.Calls);
+        var play = fake.Plays.Single();
+        Assert.Equal("own", play.Target);
+        Assert.Equal(124 * Second, play.Request.StartPositionTicks);
+        Assert.DoesNotContain(fake.Calls, call => call.StartsWith("message ", StringComparison.Ordinal));
+        Assert.DoesNotContain("stop swiftly", fake.Calls);
+        Assert.DoesNotContain("stop android", fake.Calls);
     }
 
     [Fact]
@@ -168,6 +180,22 @@ public class HandoffServiceTests
         Assert.Equal(304 * Second, play.StartPositionTicks);
         Assert.Equal(1, play.AudioStreamIndex);
         Assert.Equal(2, play.SubtitleStreamIndex);
+    }
+
+    [Fact]
+    public async Task MoveFromOtherClientStopsOnlyThatSourceWithoutSwiftlyHint()
+    {
+        var browserSource = Session("web", deviceId: "second-browser", client: "Jellyfin Web", position: 90 * Second);
+        var otherSource = Session("android", deviceId: "phone", client: "Jellyfin Android");
+        var target = Session("tv", idle: true);
+        var fake = new FakeSessions(Browser, browserSource, otherSource, target) { StoppedAt = 94 * Second };
+
+        var result = await Service(fake).Move(Me, MyDevice, "web", "tv-wohnzimmer", CancellationToken.None);
+
+        Assert.Equal(HandoffStatus.Ok, result.Status);
+        Assert.Equal(new[] { "stop web", "play tv" }, fake.Calls);
+        Assert.Equal(94 * Second, fake.Plays.Single().Request.StartPositionTicks);
+        Assert.DoesNotContain("stop android", fake.Calls);
     }
 
     [Fact]
